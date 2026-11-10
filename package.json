@@ -1,0 +1,18 @@
+{
+  "name": "sexteto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sexteto — harmonia vocal, técnica vocal e produção musical (PWA). Proprietário único e exclusivo: Bruno Moura.",
+  "author": "Bruno Moura",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node tools/gen-precache.mjs --check && node --test tests/*.test.mjs",
+    "precache": "node tools/gen-precache.mjs",
+    "e2e": "node tests/e2e/run.mjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.0.0"
+  }
+}

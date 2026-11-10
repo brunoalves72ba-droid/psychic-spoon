@@ -1,0 +1,3 @@
+// Gerado por tools/gen-precache.mjs — não edite à mão.
+self.SEXTETO_VERSION = '0d6d33a9c7b3';
+self.SEXTETO_ASSETS = ["./","index.html","manifest.webmanifest","css/app.css","js/app.js","js/audio/engine.js","js/audio/mic-worklet.js","js/audio/mic.js","js/audio/pitch-core.js","js/audio/wav.js","js/core/store.js","js/core/ui.js","js/core/widgets.js","js/music/theory.js","js/views/ajustes.js","js/views/inicio.js","assets/fonts/bricolage-grotesque-latin-wght-normal.woff2","assets/fonts/figtree-latin-wght-normal.woff2","assets/icons/apple-touch-icon.png","assets/icons/favicon-32.png","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/icons/icon.svg","assets/icons/maskable-192.png","assets/icons/maskable-512.png"];
