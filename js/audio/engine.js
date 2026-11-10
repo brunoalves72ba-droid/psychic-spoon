@@ -2,7 +2,7 @@
 // Motor de áudio: tudo sintetizado. Coro (dente de serra + formantes + vibrato), piano,
 // reverb por convolução com impulso gerado em código e agendamento pelo relógio do AudioContext.
 
-import { midiToFreq } from '../music/theory.js';
+import { midiToFreq, voiceIndex } from '../music/theory.js';
 
 let ctx = null, out = null, bus = null, wet = null, pre = null;
 const active = new Set();      // notas soando (para parar tudo)
@@ -209,8 +209,8 @@ export function choirChord(notes, t0, dur, opts = {}) {
   const n = notes.length;
   return notes.map((m, i) => {
     if (opts.mute && opts.mute[i]) return null;
-    const voice = opts.voices ? opts.voices[i] : Math.round((i / Math.max(1, n - 1)) * 5);
-    return choirNote(m, t0 + (opts.strum || 0) * i, dur, { gain: (opts.gain ?? 0.15) * (i === 0 ? 1.25 : 1), vowel: opts.vowel || (i === 0 ? 'o' : 'u'), voice, pan: n > 1 ? (i / (n - 1) - 0.5) * (opts.width ?? 0.9) : 0, ctx: opts.ctx, dest: opts.dest });
+    const voice = opts.voices ? opts.voices[i] : voiceIndex(i, n);
+    return choirNote(m, t0 + (opts.strum || 0) * i, dur, { gain: (opts.gain ?? 0.15) * (i === 0 && n > 1 ? 1.25 : 1), vowel: opts.vowel || (i === 0 && n > 1 ? 'o' : 'u'), voice, pan: n > 1 ? (i / (n - 1) - 0.5) * (opts.width ?? 0.9) : 0, ctx: opts.ctx, dest: opts.dest });
   });
 }
 export function pianoChord(notes, t0, dur, opts = {}) { return notes.map((m, i) => pianoNote(m, t0 + (opts.strum || 0) * i, dur, opts)); }

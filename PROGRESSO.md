@@ -22,12 +22,17 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 ## Fases
 
 - [x] **1. Base** — PWA (manifest, ícones, service worker com pré-cache), navegação por 5 abas, identidade visual, fontes locais (OFL), motor de áudio, detecção de altura (pior erro 8,3 cents nos testes), armazenamento, testes, tela Início e Ajustes.
-- [ ] 2. Harmonia
+- [x] **2. Harmonia** — 16 aulas (`js/data/aulas.js`, laboratórios em `js/core/lab.js`), estúdio de acordes (27 tipos, 4 aberturas), imersão, cante a sua voz, ouvido adaptativo (`js/music/ear.js`), glossário, 7 arranjos (`js/music/arrangements.js`). Teste confere cada nota contra a cifra.
 - [ ] 3. Voz e Evolução
 - [ ] 4. Estúdio (curso, imagens, simuladores, mesa)
 - [ ] 5. Gravador multipista e projeto final
 - [ ] 6. Extras
 - [ ] 7. Polimento
+
+## Pendências conhecidas
+
+- `git push` recusado pelo GitHub (app do Claude sem acesso de escrita ao repositório). Commits estão locais; tentar de novo a cada fase.
+- Rotas extras (`harmonia-metronomo`, `-ritmo`, `-partitura`, `-teclado`) já têm link no hub e serão criadas na Fase 6.
 
 ## Decisões
 

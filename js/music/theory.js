@@ -4,6 +4,9 @@
 export const VOICE_COLORS = ['#58d6a0', '#5cc8e8', '#b79cf0', '#f06a98', '#ff8f66', '#ffd166'];
 export const VOICE_NAMES = ['Baixo', 'Barítono', 'Tenor 2', 'Tenor 1', 'Alto', 'Líder'];
 
+/** Cor/voz (0..5) da i-ésima de n vozes: melodia sozinha usa a cor do líder. */
+export const voiceIndex = (i, n) => (n >= 6 ? Math.min(i, 5) : n <= 1 ? 5 : Math.round((i / (n - 1)) * 5));
+
 const LETTERS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 const SOLFEGE = ['Dó', 'Ré♭', 'Ré', 'Mi♭', 'Mi', 'Fá', 'Fá♯', 'Sol', 'Lá♭', 'Lá', 'Si♭', 'Si'];
 let useSolfege = true;
@@ -111,14 +114,7 @@ export function voiceChord(sym, opts = {}) {
   const n = opts.n || 6;
   const prev = opts.prev || null;
   const tones = ch.tones.map((t) => ({ ...t, pc: pc(ch.root + t.iv), p: prio(t.deg) }));
-  // baixo
-  const bLo = opts.bassLo ?? 36, bHi = opts.bassHi ?? 52;
-  let bass = null, bestB = 1e9;
-  for (let mnote = bLo; mnote <= bHi; mnote++) if (pc(mnote) === ch.bass) {
-    const c = prev ? Math.abs(mnote - prev[0]) + (mnote > 50 ? 2 : 0) : Math.abs(mnote - 43);
-    if (c < bestB) { bestB = c; bass = mnote; }
-  }
-  // topo
+  // topo (melodia)
   let top = opts.top;
   if (top == null) {
     const want = prev ? prev[prev.length - 1] : 69;
@@ -129,6 +125,15 @@ export function voiceChord(sym, opts = {}) {
       if (c < best) { best = c; top = mnote; }
     }
   }
+  // baixo: perto do anterior, no centro da tessitura e com espaço para o miolo
+  const bLo = opts.bassLo ?? 40, bHi = opts.bassHi ?? 53;
+  const room = 4 + (n - 2) * 2.5;
+  let bass = null, bestB = 1e9;
+  for (let mnote = bLo; mnote <= bHi; mnote++) if (pc(mnote) === ch.bass) {
+    const c = (prev ? Math.abs(mnote - prev[0]) : 0) + Math.abs(mnote - 46) * 0.7 + (top - mnote < room ? 40 : 0);
+    if (c < bestB) { bestB = c; bass = mnote; }
+  }
+  if (bass == null) { bass = bLo; while (pc(bass) !== ch.bass) bass--; }
   const inner = n - 2;
   const lo = Math.max(opts.lo ?? 48, bass + 3);
   const cands = [];
@@ -171,6 +176,7 @@ export function voiceChord(sym, opts = {}) {
   };
   rec(0, top);
   if (!best) { // acorde com poucas notas ou espaço curto: relaxa os limites
+    if (bass - 12 >= 36 && !opts._low) return voiceChord(ch, { ...opts, top, bassHi: bass - 1, bassLo: 36, _low: true });
     if ((opts.lo ?? 48) > 40) return voiceChord(ch, { ...opts, top, lo: (opts.lo ?? 48) - 4, spread: true });
     best = cands.slice(0, inner).map((k) => k.m);
     while (best.length < inner) best.push((best[best.length - 1] ?? top) - 12);

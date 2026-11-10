@@ -2,7 +2,7 @@
 // Componentes compartilhados: teclado colorido por voz, botões de voz, mapa das vozes, traço de altura.
 
 import { h, canvas, clamp } from './ui.js';
-import { VOICE_COLORS, VOICE_NAMES, pcName, noteName, pc, freqToMidi } from '../music/theory.js';
+import { VOICE_COLORS, VOICE_NAMES, pcName, noteName, pc, freqToMidi, voiceIndex } from '../music/theory.js';
 
 const BLACK = new Set([1, 3, 6, 8, 10]);
 
@@ -46,16 +46,17 @@ export function kbdRange(notes, pad = 2) {
  */
 export function voiceChips(n, state, onChange, { names, solo = true } = {}) {
   const box = h('div.seg.wrap', { role: 'group', 'aria-label': 'Vozes: toque para silenciar' });
-  const idx = (i) => (n === 6 ? i : Math.round((i / Math.max(1, n - 1)) * 5));
+  const idx = (i) => voiceIndex(i, n);
+  const nm = (i) => (names && names.length === n ? names[i] : (names || VOICE_NAMES)[idx(i)]);
   const paint = () => [...box.children].forEach((b, k) => {
     if (k >= n) { b.setAttribute('aria-pressed', String(state.solo != null)); return; }
     const i = n - 1 - k; const muted = state.solo != null ? state.solo !== i : !!state.mute[i];
     b.setAttribute('aria-pressed', String(!muted)); b.classList.toggle('muted-v', muted);
-    b.setAttribute('aria-label', `${(names || VOICE_NAMES)[idx(i)]}: ${muted ? 'em silêncio' : 'soando'}`);
+    b.setAttribute('aria-label', `${nm(i)}: ${muted ? 'em silêncio' : 'soando'}`);
   });
   for (let i = n - 1; i >= 0; i--) {
     let timer = 0, long = false;
-    const b = h('button.chip.v', { type: 'button', css: { '--c': VOICE_COLORS[idx(i)] } }, (names || VOICE_NAMES)[idx(i)]);
+    const b = h('button.chip.v', { type: 'button', css: { '--c': VOICE_COLORS[idx(i)] } }, nm(i));
     b.addEventListener('pointerdown', () => { long = false; if (solo) timer = setTimeout(() => { long = true; state.solo = state.solo === i ? null : i; paint(); onChange(state); }, 450); });
     b.addEventListener('pointerup', () => clearTimeout(timer)); b.addEventListener('pointerleave', () => clearTimeout(timer));
     b.addEventListener('click', () => { if (long) return; if (state.solo != null) state.solo = null; else state.mute[i] = !state.mute[i]; paint(); onChange(state); });
@@ -78,7 +79,7 @@ export function voiceMap(steps, { height = 150, colors } = {}) {
   const lo = Math.min(...all) - 2, hi = Math.max(...all) + 2;
   const starts = []; let acc = 0; for (const s of steps) { starts.push(acc); acc += s.d || 1; }
   const nV = Math.max(...steps.map((s) => s.n.length));
-  const col = (v, n) => (colors || VOICE_COLORS)[n === 6 ? v : Math.round((v / Math.max(1, n - 1)) * 5)];
+  const col = (v, n) => (colors || VOICE_COLORS)[voiceIndex(v, n)];
   c.draw = (pos, state, trace) => {
     const { g, w, h: hh } = c._fit();
     g.clearRect(0, 0, w, hh);
@@ -146,3 +147,24 @@ export const pitchToMidi = (p, a4 = 440, minC = 0.8, minRms = 0.006) => (p.f > 0
 
 /** Traz m para a oitava mais próxima do alvo (quem canta pode estar uma oitava acima ou abaixo). */
 export const foldToTarget = (m, target) => m - 12 * Math.round((m - target) / 12);
+
+/** Medidor de cents: bolinha que anda da esquerda (grave) para a direita (agudo). .set(cents|null, rótulo) */
+export function centsMeter({ height = 70, range = 50 } = {}) {
+  const c = canvas(height); let cur = null, shown = 0, label = '';
+  c.set = (v, l) => { cur = v; if (l != null) label = l; };
+  c.draw = () => {
+    const { g, w, h: hh } = c._fit(); g.clearRect(0, 0, w, hh);
+    const X = (ct) => w / 2 + clamp(ct / range, -1, 1) * (w / 2 - 14);
+    g.fillStyle = 'rgba(88,214,160,.18)'; g.fillRect(X(-10), 0, X(10) - X(-10), hh);
+    g.strokeStyle = 'rgba(244,236,220,.25)'; g.lineWidth = 1;
+    for (const t of [-50, -25, 0, 25, 50]) { g.beginPath(); g.moveTo(X(t), hh - (t === 0 ? hh : 12)); g.lineTo(X(t), hh); g.stroke(); }
+    g.fillStyle = 'rgba(244,236,220,.5)'; g.font = '11px Figtree, sans-serif'; g.fillText('grave', 4, 12); g.fillText('agudo', w - 36, 12);
+    if (cur != null) {
+      shown += (cur - shown) * 0.35;
+      g.fillStyle = Math.abs(shown) <= 10 ? '#58d6a0' : Math.abs(shown) <= 25 ? '#ffd166' : '#f06a98';
+      g.beginPath(); g.arc(X(shown), hh / 2 + 4, 11, 0, 7); g.fill();
+      g.fillStyle = '#f4ecdc'; g.font = '600 13px Figtree, sans-serif'; const txt = `${shown > 0 ? '+' : ''}${Math.round(shown)} cents${label ? ' · ' + label : ''}`; g.fillText(txt, w / 2 - g.measureText(txt).width / 2, hh - 4);
+    }
+  };
+  return c;
+}
