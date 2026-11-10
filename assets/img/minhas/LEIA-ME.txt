@@ -1,0 +1,5 @@
+Coloque aqui as suas próprias fotos para o curso do Estúdio.
+Use o mesmo nome da foto que quer substituir (ex.: mesa.jpg, canal.webp, dinamico.jpg).
+Nomes aceitos: dinamico, condensador, fita, interface, xlr, p10, mesa, canal, digital,
+fones, monitores, sala, cabine, rack, vu, daw.
+Depois rode "npm run precache" para o app passar a usá-las.

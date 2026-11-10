@@ -146,3 +146,93 @@ scenarios.push(
     await tap(page.getByRole('button', { name: '▶ Ouvir' }).first()); await wait(300);
   } },
 );
+
+// ---------- Fase 4: Estúdio ----------
+const LIC = ['1.1','1.2','1.3','1.4','1.5','1.6','1.7','2.1','2.2','2.3','2.4','2.5','3.1','3.2','3.3','3.4','3.5','3.6','3.7','4.1','4.2','4.3','4.4'];
+scenarios.push(
+  { name: '40-estudio', hash: '#/estudio', run: async ({ page, assert }) => { assert(await page.locator('a.item').count() === 23, 'esperava 23 lições'); } },
+  ...LIC.map((id) => ({ name: `41-licao-${id}`, hash: `#/estudio/licao/${id}`, wait: 700, run: async ({ page, tap, wait, assert }) => {
+    assert(await page.locator('figure.photo').count() >= 1, 'lição sem foto');
+    const cards = page.locator('section.card');
+    const nSims = (await cards.count()) - 1;
+    for (let k = 0; k < nSims; k++) {
+      const card = cards.nth(k); const play = card.getByRole('button', { name: 'Tocar' }).first();
+      const hnd = await play.elementHandle(); await tap(play); await page.waitForFunction((el) => !el.disabled && el.textContent === 'Parar', hnd, { timeout: 25000 }).catch(() => {});
+      await wait(500);
+      // mexe nos controles do simulador
+      const ranges = card.locator('input[type=range]'); const nr = Math.min(await ranges.count(), 4);
+      for (let j = 0; j < nr; j++) await ranges.nth(j).evaluate((e) => { e.value = +e.min + (+e.max - +e.min) * 0.8; e.dispatchEvent(new Event('input')); });
+      const chips = card.locator('.chip'); const nc = Math.min(await chips.count(), 3); for (let j = 0; j < nc; j++) { await tap(chips.nth(j)); await wait(60); }
+      const sw = card.locator('.switch input'); const ns = Math.min(await sw.count(), 3); for (let j = 0; j < ns; j++) { await sw.nth(j).scrollIntoViewIfNeeded(); await sw.nth(j).click(); await wait(60); }
+      const op = card.locator('.opt').first(); if (await op.count()) { await tap(op); await wait(100); }
+      await wait(700);
+      if (k === 0) await card.screenshot({ path: `tests/e2e/shots/41-sim-${id}.png` }).catch(() => {});
+      const stop = card.getByRole('button', { name: 'Parar' }).first(); if (await stop.count()) await tap(stop);
+    }
+    const qs = page.locator('.quiz .q'); const nq = await qs.count(); assert(nq >= 3, 'esperava 3 perguntas');
+    const last3 = [nq - 3, nq - 2, nq - 1]; for (const k of last3) await tap(qs.nth(k).locator('.opt').first());
+    await wait(300); assert(await page.getByText(/Lição concluída/).count(), 'lição não concluída');
+  } })),
+  { name: '42-mesa', hash: '#/estudio/mesa', wait: 1500, run: async ({ page, tap, wait, assert }) => {
+    await page.waitForSelector('.mesa', { timeout: 30000 });
+    await tap(page.getByRole('button', { name: 'Tocar' })); await wait(1500);
+    // gira o ganho do canal 1 até clipar
+    const k = page.getByRole('slider', { name: 'Ganho' }).first(); await k.focus(); for (let i = 0; i < 30; i++) await page.keyboard.press('ArrowUp'); await wait(900);
+    assert(await page.locator('.strip .clip.on').count() >= 1, 'luz de clip não acendeu com ganho alto');
+    await page.screenshot({ path: 'tests/e2e/shots/42-mesa-clip.png' });
+    await page.keyboard.press('Home'); for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowUp');
+    // missão "limpar o grave": resolve pelos botões e confere a verificação automática
+    await tap(page.getByRole('button', { name: 'Limpar o grave' })); await wait(500);
+    await page.evaluate(() => { const strips = [...document.querySelectorAll('.pager .strip')].slice(0, 6); strips.forEach((s, i) => { const b = [...s.querySelectorAll('.sq')].find((x) => x.textContent === 'HPF 100'); const on = b.getAttribute('aria-pressed') === 'true'; if ((i === 0 && on) || (i > 0 && !on)) b.click(); }); });
+    for (let ch = 1; ch < 6; ch++) { const g = page.getByRole('slider', { name: 'Graves' }).nth(ch); await g.focus(); for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowDown'); }
+    await page.waitForFunction(() => document.body.textContent.includes('Missão cumprida'), null, { timeout: 15000 });
+    await page.screenshot({ path: 'tests/e2e/shots/42-mesa-missao.png', fullPage: true });
+  } },
+  { name: '43-mesa-paisagem', hash: '#/estudio/mesa', wait: 1500, run: async ({ page, tap, wait, assert }) => {
+    await page.setViewportSize({ width: 844, height: 390 }); await page.waitForSelector('.mesa', { timeout: 30000 }); await wait(400);
+    assert(await page.locator('.overview .ov').count() === 7, 'visão geral deveria ter 6 canais + master');
+    assert(await page.locator('.overview').isVisible(), 'visão geral não aparece em paisagem');
+    await tap(page.getByRole('button', { name: 'Tocar' })); await wait(1200); await page.screenshot({ path: 'tests/e2e/shots/43-paisagem-lado.png' });
+    await tap(page.getByRole('button', { name: 'Parar' })); await page.setViewportSize({ width: 390, height: 844 });
+  } },
+  { name: '44-creditos', hash: '#/estudio/creditos', run: async ({ page, assert }) => { assert(await page.getByText('Bruno Moura').count() >= 1, 'proprietário ausente'); } },
+);
+
+// ---------- Fase 5: gravador e projeto final ----------
+scenarios.push(
+  { name: '50-gravador', hash: '#/estudio/gravador', run: async ({ page, tap, wait, assert }) => {
+    await tap(page.getByRole('button', { name: 'Criar e abrir' })); await wait(900);
+    await tap(page.getByRole('button', { name: 'Calibrar latência' })); await wait(4200);
+    assert(await page.getByText(/Latência medida|Não ouvi os cliques/).count(), 'calibração não terminou');
+    // grava a pista do líder com o microfone falso e para depois de alguns segundos
+    await tap(page.getByRole('button', { name: 'Gravar Líder' })); await wait(9000);
+    await page.screenshot({ path: 'tests/e2e/shots/50-gravando.png' });
+    assert(await page.getByText(/Gravando “Líder”/).count(), 'não entrou em gravação');
+    await tap(page.getByRole('button', { name: 'Parar a gravação de Líder' })); await wait(1200);
+    assert(await page.getByText(/Pista “Líder” gravada/).count(), 'pista não foi salva');
+    const info = await page.evaluate(async () => { const s = await import('./js/core/store.js'); const ps = await s.listProjects(); const t = ps[0].tracks.find((x) => x.recId); const m = await s.getRecordingMeta(t.recId); const pcm = await s.getRecordingPcm(t.recId); let pk = 0; for (const v of pcm) pk = Math.max(pk, Math.abs(v)); return { sec: m.length / m.sampleRate, sr: m.sampleRate, pk }; });
+    assert(info.sec > 3 && info.pk > 0.05, `gravação vazia ou curta: ${JSON.stringify(info)}`);
+    await tap(page.getByRole('button', { name: 'Gravar Baixo' })); await wait(6500); await tap(page.getByRole('button', { name: 'Parar a gravação de Baixo' })); await wait(1000);
+    await tap(page.getByRole('button', { name: '▶ Ouvir tudo' })); await wait(1500); await tap(page.getByRole('button', { name: '■ Parar' }));
+    const dl = page.waitForEvent('download', { timeout: 8000 }).catch(() => null); await tap(page.getByRole('button', { name: 'Exportar mixagem rápida em WAV' })); const d = await dl; assert(d && /\.wav$/.test(d.suggestedFilename()), 'WAV não foi exportado');
+    await tap(page.getByRole('button', { name: 'Mais opções de Baixo' })); await tap(page.getByRole('button', { name: 'Apagar pista' })); await tap(page.getByRole('button', { name: 'Apagar', exact: true })); await wait(500);
+    assert(await page.getByText('Baixo · vazia').count(), 'pista não foi apagada');
+  } },
+  { name: '51-mesa-projeto', hash: '#/estudio/gravador', wait: 600, run: async ({ page, tap, wait, assert }) => {
+    await tap(page.locator('a.item').first()); await wait(600); await tap(page.getByRole('link', { name: 'Mixar na mesa virtual' })); await page.waitForSelector('.mesa', { timeout: 40000 });
+    assert(await page.locator('.pager .strip').count() === 7, 'mesa do projeto deveria ter 6 canais + master');
+    assert(await page.getByText('Baixo (app)').count() >= 1, 'pista vazia deveria usar a voz do app'); await tap(page.getByRole('button', { name: 'Tocar' })); await wait(1200);
+  } },
+  { name: '52-projeto', hash: '#/estudio/projeto', wait: 600, run: async ({ page, tap, wait, assert }) => {
+    await tap(page.getByRole('button', { name: 'Começar o projeto' })); await wait(600);
+    await tap(page.getByRole('link', { name: 'Abrir o gravador' })); await wait(800); await tap(page.getByRole('button', { name: 'Gravar Tenor 1' })); await wait(7000); await tap(page.getByRole('button', { name: 'Parar a gravação de Tenor 1' })); await wait(1000);
+    await page.evaluate(() => { location.hash = '#/estudio/projeto'; }); await wait(800);
+    assert(await page.getByText('1 de 6 vozes gravadas').count(), 'projeto não viu a pista gravada');
+    await tap(page.getByRole('button', { name: 'Renderizar a mixagem e masterizar' }));
+    await page.waitForFunction(() => document.body.textContent.includes('LUFS integrado'), null, { timeout: 90000 });
+    const lufs = parseFloat((await page.locator('.stat b').first().textContent()).replace(',', '.').replace('−', '-')); assert(lufs < -5 && lufs > -40, 'LUFS fora do esperado: ' + lufs);
+    await page.screenshot({ path: 'tests/e2e/shots/52-master.png', fullPage: true });
+    const dl = page.waitForEvent('download', { timeout: 15000 }).catch(() => null); await tap(page.getByRole('button', { name: 'Exportar e compartilhar' })); const d = await dl; assert(d && /master/.test(d.suggestedFilename()), 'master não exportada');
+    await wait(800); const ev = await page.evaluate(async () => { const s = await import('./js/core/store.js'); return (await s.events('project')).length; }); assert(ev === 1, 'projeto não entrou no histórico');
+  } },
+);

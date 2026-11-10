@@ -147,7 +147,7 @@ export function createMicCore(sampleRate, emit) {
   const ring = new Float32Array(size), frame = new Float32Array(size);
   let w = 0, since = 0, total = 0, peak = 0;
   let wantPitch = false, wantPcm = false, wantSpec = false;
-  let pcm = new Float32Array(2048), pw = 0, pcmStart = 0;
+  let pcm = new Float32Array(2048), pw = 0, pcmStart = 0, pcmTime = 0;
   return {
     config(o) { if ('pitch' in o) { wantPitch = !!o.pitch; if (!wantPitch) guard.reset(); } if ('pcm' in o) { wantPcm = !!o.pcm; pw = 0; } if ('spec' in o) wantSpec = !!o.spec; },
     process(inp, time) {
@@ -156,7 +156,7 @@ export function createMicCore(sampleRate, emit) {
         const v = inp[i];
         const a = v < 0 ? -v : v; if (a > peak) peak = a;
         ring[w] = v; w = (w + 1) % size; since++;
-        if (wantPcm) { if (pw === 0) pcmStart = total + i; pcm[pw++] = v; if (pw === pcm.length) { emit({ type: 'pcm', data: pcm, at: pcmStart }, [pcm.buffer]); pcm = new Float32Array(2048); pw = 0; } }
+        if (wantPcm) { if (pw === 0) { pcmStart = total + i; pcmTime = time + i / sampleRate; } pcm[pw++] = v; if (pw === pcm.length) { emit({ type: 'pcm', data: pcm, at: pcmStart, t: pcmTime }, [pcm.buffer]); pcm = new Float32Array(2048); pw = 0; } }
         if (since >= hop) {
           since = 0;
           if (wantPitch) {
@@ -172,6 +172,6 @@ export function createMicCore(sampleRate, emit) {
       }
       total += n;
     },
-    flush() { if (wantPcm && pw > 0) { const d = pcm.slice(0, pw); emit({ type: 'pcm', data: d, at: pcmStart }, [d.buffer]); pw = 0; } },
+    flush() { if (wantPcm && pw > 0) { const d = pcm.slice(0, pw); emit({ type: 'pcm', data: d, at: pcmStart, t: pcmTime }, [d.buffer]); pw = 0; } },
   };
 }

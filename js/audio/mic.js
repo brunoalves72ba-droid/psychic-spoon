@@ -35,7 +35,7 @@ async function loadWorklet(ctx) {
 
 function dispatch(msg) {
   if (msg.type === 'pitch') { subs.pitch.forEach((f) => f(msg)); subs.level.forEach((f) => f(msg.peak, msg.rms)); }
-  else if (msg.type === 'pcm') subs.pcm.forEach((f) => f(msg.data, msg.at));
+  else if (msg.type === 'pcm') subs.pcm.forEach((f) => f(msg.data, msg.at, msg.t));
   else if (msg.type === 'level') subs.level.forEach((f) => f(msg.peak, 0));
   else if (msg.type === 'flushed' && flushWait) { flushWait(); flushWait = null; }
 }
@@ -91,7 +91,7 @@ export function closeMic() {
 
 /** Assina leituras de altura: fn({f, c, rms, peak, t, h1h2?, tilt?, hf?}). Retorna função para cancelar. */
 export function onPitch(fn, { spec = false } = {}) { fn.spec = spec; subs.pitch.add(fn); pushConfig(); return () => { subs.pitch.delete(fn); pushConfig(); }; }
-/** Assina PCM cru: fn(Float32Array, posição em amostras). */
+/** Assina PCM cru: fn(Float32Array, posição em amostras, instante do relógio de áudio da primeira amostra). */
 export function onPcm(fn) { subs.pcm.add(fn); pushConfig(); return () => { subs.pcm.delete(fn); pushConfig(); }; }
 export function onLevel(fn) { subs.level.add(fn); pushConfig(); return () => { subs.level.delete(fn); pushConfig(); }; }
 /** Pede o resto do PCM que ainda está no processador. */

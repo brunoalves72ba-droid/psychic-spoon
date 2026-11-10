@@ -12,6 +12,11 @@ const SKIP = [/\.DS_Store$/, /^assets\/img\/minhas\//, /\.txt$/, /\.md$/];
 const files = [];
 const walk = (p) => { const st = statSync(p); if (st.isDirectory()) for (const f of readdirSync(p).sort()) walk(join(p, f)); else files.push(relative(root, p).split('\\').join('/')); };
 for (const i of INCLUDE) if (existsSync(join(root, i))) walk(join(root, i));
+// lista das fotos do dono (assets/img/minhas), lida pelo app para dar prioridade a elas
+const minhasDir = join(root, 'assets/img/minhas');
+const minhas = existsSync(minhasDir) ? readdirSync(minhasDir).filter((f) => /\.(webp|jpe?g|png|avif)$/i.test(f)).sort() : [];
+const minhasJson = JSON.stringify(minhas) + '\n';
+if (!process.argv.includes('--check')) writeFileSync(join(minhasDir, 'minhas.json'), minhasJson);
 const list = files.filter((f) => !SKIP.some((re) => re.test(f)));
 const hash = createHash('sha256');
 for (const f of list) { hash.update(f); hash.update(readFileSync(join(root, f))); }
