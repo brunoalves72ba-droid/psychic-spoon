@@ -335,3 +335,13 @@ export function describeStep(step, tonic) {
   if (tens.length) parts.push(`No miolo: ${[...new Set(tens)].map(degName).join(' e ')}.`);
   return parts.join(' ');
 }
+
+/** Reconhece o acorde formado pelas notas (cifra em letras) ou devolve null. */
+let chordIndex = null;
+export function identifyChord(midis) {
+  const pcs = [...new Set(midis.map(pc))].sort((a, b) => a - b); if (pcs.length < 3) return null;
+  if (!chordIndex) { chordIndex = new Map(); for (const r of ROOT_NAMES) for (const t of CHORD_TYPES) { const ch = parseChord(r + t.id); const key = [...ch.pcs].sort((a, b) => a - b).join(','); if (!chordIndex.has(key)) chordIndex.set(key, []); chordIndex.get(key).push({ sym: r + t.id, root: ch.root, rank: CHORD_TYPES.indexOf(t) }); } }
+  const list = chordIndex.get(pcs.join(',')); if (!list) return null;
+  const bass = pc(Math.min(...midis)); const best = list.find((c) => c.root === bass) || list.slice().sort((a, b) => a.rank - b.rank)[0];
+  return best.root === bass ? best.sym : `${best.sym}/${rootLabel(bass, /b/.test(best.sym) || [5, 10, 3, 8, 1].includes(best.root))}`;
+}

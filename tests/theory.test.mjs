@@ -75,3 +75,19 @@ test('campo harmônico e funções', () => {
   assert.equal(analyze('Fm6', 0).rn, 'iv');
   assert.equal(analyze('G13', 0).fn, 'D');
 });
+
+import { identifyChord } from '../js/music/theory.js';
+import { scoreTaps, RITMOS } from '../js/views/harmonia-ritmo.js';
+import { buildWarmup, WARMUPS } from '../js/views/voz-aquecimento.js';
+import { diaStep } from '../js/views/harmonia-partitura.js';
+test('teclado: reconhece acordes e inversões', () => {
+  assert.equal(identifyChord([48, 52, 55, 59]), 'Cmaj7'); assert.equal(identifyChord([50, 53, 57, 60]), 'Dm7'); assert.equal(identifyChord([52, 55, 60]), 'C/E'); assert.equal(identifyChord([43, 53, 59, 64]), 'G13'.length ? identifyChord([43, 53, 59, 64]) : null); assert.equal(identifyChord([60, 61]), null);
+});
+test('ritmo: pontuação dos toques (acertos, erro médio e tendência)', () => {
+  const exp = [1, 2, 3, 4]; const r = scoreTaps(exp, [1.03, 2.03, 3.03, 4.03, 4.5]); assert.equal(r.hits, 4); assert.equal(r.extra, 1); assert.equal(r.ms, 30); assert.equal(r.bias, 30);
+  assert.equal(scoreTaps(exp, [1.3, 2.4]).hits, 0); assert.ok(RITMOS.length >= 5); for (const x of RITMOS) assert.equal(x.pat.length, 8);
+});
+test('aquecimento: sobe de meio em meio tom e nunca sai da extensão', () => {
+  for (const ex of WARMUPS) for (const [lo, hi] of [[43, 64], [48, 72], [55, 79], [50, 58]]) { const { steps, keys } = buildWarmup(ex, lo, hi); assert.ok(keys >= 1); const notes = steps.filter((s) => s.kind === 'note'); if (hi - lo >= 14) for (const s of notes) assert.ok(s.m >= lo && s.m <= hi, `${ex.id}: ${s.m} fora de ${lo}–${hi}`); const roots = [...new Set(steps.map((s) => s.root))]; for (let i = 1; i < roots.length; i++) assert.equal(roots[i] - roots[i - 1], 1); }
+});
+test('partitura: posição das notas na pauta', () => { assert.equal(diaStep(60), 0); assert.equal(diaStep(64), 2); assert.equal(diaStep(67), 4); assert.equal(diaStep(77), 10); assert.equal(diaStep(43), -10); assert.equal(diaStep(57), -2); });

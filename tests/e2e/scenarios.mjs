@@ -236,3 +236,21 @@ scenarios.push(
     await wait(800); const ev = await page.evaluate(async () => { const s = await import('./js/core/store.js'); return (await s.events('project')).length; }); assert(ev === 1, 'projeto não entrou no histórico');
   } },
 );
+
+// ---------- Fase 6: extras ----------
+scenarios.push(
+  { name: '60-metronomo', hash: '#/harmonia/metronomo', run: async ({ page, tap, wait, assert }) => { await tap(page.getByRole('button', { name: 'Começar' })); await wait(1500); await tap(page.getByRole('button', { name: '3 tempos' })); await tap(page.getByRole('button', { name: 'Colcheias', exact: true })); await wait(900); await tap(page.getByRole('button', { name: '+ 1' })); assert(await page.getByText('81', { exact: true }).count(), 'andamento não mudou'); await page.screenshot({ path: 'tests/e2e/shots/60-metronomo-rodando.png' }); await tap(page.getByRole('button', { name: 'Parar' })); } },
+  { name: '61-ritmo', hash: '#/harmonia/ritmo', run: async ({ page, tap, wait, assert }) => {
+    await tap(page.getByRole('button', { name: 'Colcheias', exact: true })); await tap(page.getByRole('button', { name: 'Pulso' })); await tap(page.getByRole('button', { name: 'Ouvir e tocar' }));
+    // toca junto com o clique nos dois últimos compassos, usando o relógio de áudio da página
+    const res = await page.evaluate(async () => { const e = await import('./js/audio/engine.js'); const c = e.getCtx(); const pad = document.querySelector('[aria-label="Toque aqui no ritmo"]'); const beat = 60 / 72; const t0 = c.currentTime + 0.3 - 0.02; let k = 0;
+      await new Promise((res) => { const iv = setInterval(() => { const target = t0 + (8 + k) * beat; if (c.currentTime >= target) { pad.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); k++; if (k >= 8) { clearInterval(iv); res(); } } }, 4); }); return k; });
+    await page.waitForFunction(() => /toques no lugar/.test(document.body.textContent), null, { timeout: 15000 });
+    const txt = await page.locator('p[aria-live]').last().textContent(); const hits = +txt.match(/(\d+) de 8/)[1]; assert(hits >= 6, 'toques não foram reconhecidos: ' + txt);
+  } },
+  { name: '62-partitura', hash: '#/harmonia/partitura', run: async ({ page, tap, wait, assert }) => { assert(await page.locator('svg ellipse').count() === 1, 'nota não desenhada'); for (let i = 0; i < 3; i++) { await tap(page.locator('.card .btn').nth(i)); await wait(2500); } await page.locator('select').selectOption('fa2'); await wait(200); assert(await page.getByText(/de 0|de 3/).count(), 'placar'); } },
+  { name: '63-teclado', hash: '#/harmonia/teclado', run: async ({ page, tap, wait, assert }) => {
+    await tap(page.locator('.switch input')); for (const m of [48, 52, 55, 59]) { const k = page.locator(`.kbd [data-m="${m}"]`); const b = await k.boundingBox(); await page.mouse.move(b.x + b.width / 2, b.y + b.height - 12); await page.mouse.down(); await page.mouse.up(); await wait(80); }
+    await wait(200); assert(await page.getByText('Cmaj7').count(), 'acorde não reconhecido'); await tap(page.getByRole('button', { name: 'Ligar teclado MIDI' })); await wait(500);
+  } },
+);

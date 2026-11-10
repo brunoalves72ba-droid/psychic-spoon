@@ -26,7 +26,7 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - [x] **3. Voz e Evolução** — respiração (4 padrões + teste de “sss”), aquecimento (7 exercícios na extensão medida), afinação (afinador, nota, harmonia), dicas, medidor de registro (`js/audio/voice-analysis.js` + `js/core/voice-tasks.js`), retrato vocal (8 etapas, grava escala), painel com gráficos (`js/core/charts.js`), comparação A/B de retratos, marcos, backup e gravações.
 - [x] **4. Estúdio** — 23 lições em 4 módulos (`js/data/licoes.js`), 27 simuladores (`js/core/sim.js`, `sim2.js`), LUFS/true peak/limiter validados com EBU Tech 3341 (`js/audio/loudness.js`), mesa virtual com 4 missões (`js/audio/mixer.js`, `js/core/mesa-ui.js`), 16 fotos reais do Commons conferidas (`js/data/imagens.js`, `CREDITOS.md`), marcadores numerados na foto do canal.
 - [x] **5. Gravador e projeto final** — gravador de 6 pistas com PCM cru do worklet alinhado ao relógio de áudio, guia, metrônomo, calibração de latência, forma de onda, exportação WAV (`js/views/estudio-gravador.js`, `js/audio/recorder.js`); projeto “Do zero ao master” (`js/views/estudio-projeto.js`).
-- [ ] 6. Extras
+- [x] **6. Extras** — metrônomo com vibração, 6 aulas de ritmo com toque na tela, leitura de partitura (claves de Sol e Fá), teclado na tela e por Web MIDI com reconhecimento de acordes, 4 melodias de domínio público rearmonizadas em quatro níveis.
 - [ ] 7. Polimento
 
 ## Pendências conhecidas
