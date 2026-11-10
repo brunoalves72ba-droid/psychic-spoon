@@ -168,3 +168,40 @@ export function centsMeter({ height = 70, range = 50 } = {}) {
   };
   return c;
 }
+
+/** Botão giratório (knob): arraste para cima/baixo; setas do teclado; toque duplo volta ao padrão. */
+export function knob(label, { min, max, value, step = 1, unit = '', fmtv, def }, onInput) {
+  const d0 = def ?? value; let v = value;
+  const arc = s2('path', { fill: 'none', stroke: 'var(--c, #ffd166)', 'stroke-width': 4, 'stroke-linecap': 'round' }), ptr = s2('line', { stroke: '#f4ecdc', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+  const svg = s2('svg', { viewBox: '0 0 48 48', 'aria-hidden': 'true' }, s2('circle', { cx: 24, cy: 24, r: 15, fill: '#1a3549', stroke: '#3a5a70' }), s2('path', { d: describeArc(-135, 135), fill: 'none', stroke: '#0a1825', 'stroke-width': 4, 'stroke-linecap': 'round' }), arc, ptr);
+  const val = h('span.kv'), el = h('div.knob', { role: 'slider', tabindex: 0, 'aria-label': label, 'aria-valuemin': min, 'aria-valuemax': max }, svg, val, h('span.kl', label));
+  const show = () => { const t = (v - min) / (max - min), a = -135 + t * 270, zero = min < 0 && max > 0 ? -135 + ((0 - min) / (max - min)) * 270 : -135; arc.setAttribute('d', describeArc(Math.min(a, zero), Math.max(a, zero))); const r = (a - 90) * Math.PI / 180; ptr.setAttribute('x1', 24 + Math.cos(r) * 5); ptr.setAttribute('y1', 24 + Math.sin(r) * 5); ptr.setAttribute('x2', 24 + Math.cos(r) * 14); ptr.setAttribute('y2', 24 + Math.sin(r) * 14); const txt = (fmtv ? fmtv(v) : (Math.round(v * 10) / 10).toLocaleString('pt-BR')) + (unit ? ' ' + unit : ''); val.textContent = txt; el.setAttribute('aria-valuenow', v); el.setAttribute('aria-valuetext', txt); };
+  const set = (nv, fire) => { nv = clamp(Math.round(nv / step) * step, min, max); if (nv === v) return; v = nv; show(); if (fire) onInput(v); };
+  let y0 = 0, v0 = 0, lastTap = 0;
+  el.addEventListener('pointerdown', (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = v; const t = performance.now(); if (t - lastTap < 320) set(d0, true); lastTap = t; el.focus({ preventScroll: true }); });
+  el.addEventListener('pointermove', (e) => { if (!el.hasPointerCapture(e.pointerId)) return; set(v0 + ((y0 - e.clientY) / 140) * (max - min), true); });
+  el.addEventListener('keydown', (e) => { const k = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: 5, PageDown: -5 }[e.key]; if (k) { e.preventDefault(); set(v + k * step, true); } else if (e.key === 'Home') set(min, true); else if (e.key === 'End') set(max, true); });
+  el.set = (nv) => { v = clamp(nv, min, max); show(); }; el.get = () => v; show();
+  return el;
+}
+function s2(tag, attrs, ...kids) { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); e.append(...kids); return e; }
+function describeArc(a0, a1) { const p = (a) => { const r = (a - 90) * Math.PI / 180; return [24 + Math.cos(r) * 20, 24 + Math.sin(r) * 20]; }; const [x0, y0] = p(a0), [x1, y1] = p(a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A20 20 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; }
+
+/** Fader vertical em dB (−60 a +10), com medidor ao lado. .setMeter(dB pico, dB rms) */
+export function vfader(label, value, onInput, { min = -60, max = 10, height = 180 } = {}) {
+  let v = value; const thumb = h('div.fthumb'), fill = h('i'), pk = h('b');
+  const track = h('div.ftrack', h('div.fmeter', fill, pk), h('div.fline'), thumb), val = h('span.kv');
+  const el = h('div.vfader', { role: 'slider', tabindex: 0, 'aria-label': label, 'aria-orientation': 'vertical', 'aria-valuemin': min, 'aria-valuemax': max, style: { '--fh': height + 'px' } }, track, val);
+  // escala: 0 dB a 75% do curso, como em mesas reais
+  const toPos = (d) => (d >= 0 ? 0.75 + (d / max) * 0.25 : d <= -60 ? 0 : 0.75 * Math.pow((d + 60) / 60, 1.6)), toDb = (p) => (p >= 0.75 ? ((p - 0.75) / 0.25) * max : p <= 0.005 ? -60 : -60 + 60 * Math.pow(p / 0.75, 1 / 1.6));
+  const show = () => { thumb.style.bottom = `calc(${toPos(v) * 100}% - 11px)`; const txt = v <= -60 ? '−∞' : `${v > 0 ? '+' : ''}${(Math.round(v * 10) / 10).toLocaleString('pt-BR')} dB`; val.textContent = txt; el.setAttribute('aria-valuenow', Math.round(v)); el.setAttribute('aria-valuetext', txt); };
+  const set = (nv, fire) => { nv = clamp(Math.round(nv * 2) / 2, min, max); if (nv === v) return; v = nv; show(); if (fire) onInput(v); };
+  const at = (e) => { const r = track.getBoundingClientRect(); set(toDb(clamp(1 - (e.clientY - r.top) / r.height, 0, 1)), true); };
+  let lastTap = 0;
+  track.addEventListener('pointerdown', (e) => { e.preventDefault(); track.setPointerCapture(e.pointerId); const t = performance.now(); if (t - lastTap < 320) set(0, true); else at(e); lastTap = t; });
+  track.addEventListener('pointermove', (e) => { if (track.hasPointerCapture(e.pointerId)) at(e); });
+  el.addEventListener('keydown', (e) => { const k = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: 6, PageDown: -6 }[e.key]; if (k) { e.preventDefault(); set(v + k, true); } });
+  el.set = (nv) => { v = clamp(nv, min, max); show(); }; el.get = () => v;
+  el.setMeter = (peak, rms) => { fill.style.height = clamp((rms + 60) / 66, 0, 1) * 100 + '%'; pk.style.bottom = clamp((peak + 60) / 66, 0, 1) * 100 + '%'; pk.style.background = peak >= -0.3 ? '#f06a98' : '#f4ecdc'; };
+  show(); return el;
+}
