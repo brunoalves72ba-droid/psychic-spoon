@@ -97,7 +97,7 @@ const runTask = async ({ page, tap, wait }, scope, ms, { finish = true } = {}) =
   await wait(350);
 };
 scenarios.push(
-  { name: '20-voz', hash: '#/voz' },
+  { name: '20-voz', hash: '#/voz', run: async ({ page, assert }) => { assert(await page.locator('a.card[href="#/voz/tecnicas"]').count(), 'cartão das técnicas ausente na aba Voz'); } },
   { name: '21-respiracao', hash: '#/voz/respiracao', run: async (api) => { const { page, tap, wait, assert } = api;
     await tap(page.getByRole('button', { name: 'Começar' }).first()); await wait(1500); assert(await page.getByText('Inspire pelo nariz').count(), 'respiração não começou'); await page.screenshot({ path: 'tests/e2e/shots/21-respiracao-rodando.png' }); await tap(page.getByRole('button', { name: 'Parar' }));
     await tap(page.getByRole('button', { name: 'Golpes de apoio' })); await tap(page.getByRole('button', { name: 'Começar' }).first()); await wait(1500); await tap(page.getByRole('button', { name: 'Parar' }));
@@ -136,6 +136,32 @@ scenarios.push(
     await runTask(api, card, 10500, { finish: false }); await wait(500); await tap(page.getByRole('button', { name: 'Ver o retrato' })); await wait(700);
     assert(await page.getByText('escala salva').count(), 'escala não foi gravada');
   } },
+  { name: '28-tecnicas', hash: '#/voz/tecnicas', run: async ({ page, tap, wait, assert }) => {
+    assert(await page.locator('a.item').count() === 9, 'esperava 9 técnicas na lista');
+    await tap(page.getByText('A garganta aperta quando a nota sobe')); await wait(200);
+    assert(await page.getByText('Comece por estas').count(), 'sem sugestão depois de marcar um sinal');
+    assert(await page.locator('[aria-live=polite] a.item').count() === 3, 'esperava 3 técnicas sugeridas');
+    assert((await page.locator('[aria-live=polite] a.item b').first().textContent()) === 'Pescoço livre no agudo', 'primeira sugestão errada');
+    await page.screenshot({ path: 'tests/e2e/shots/28-tecnicas-full.png', fullPage: true });
+  } },
+  { name: '29-tecnica-detalhe', hash: '#/voz/tecnicas/bocejo', run: async ({ page, tap, wait, assert }) => {
+    assert(await page.locator('ol.steps li').count() === 4, 'passo a passo ausente');
+    assert(await page.getByText('Evite', { exact: true }).count() && await page.getByText('Faça assim', { exact: true }).count(), 'blocos evite/faça assim ausentes');
+    await tap(page.getByRole('button', { name: 'Ouvir o exemplo' })); await wait(500);
+    const st = await page.evaluate(async () => (await import('./js/audio/engine.js')).getCtx().state);
+    assert(st === 'running', 'áudio do exemplo não começou: ' + st);
+    assert(await page.getByRole('button', { name: 'Parar' }).count(), 'botão não virou Parar');
+    await tap(page.getByRole('button', { name: 'Parar' })); await wait(150);
+    assert(await page.getByRole('button', { name: 'Ouvir o exemplo' }).count(), 'botão não voltou a Ouvir');
+    await tap(page.getByRole('button', { name: 'Marcar como praticada hoje' })); await wait(400);
+    assert(await page.getByText('Praticada 1×').count(), 'prática não registrada');
+    await page.screenshot({ path: 'tests/e2e/shots/29-tecnica-detalhe-full.png', fullPage: true });
+  } },
+  { name: '29b-tecnica-sem-exemplo', hash: '#/voz/tecnicas/musica', run: async ({ page, assert }) => {
+    assert(await page.getByRole('button', { name: 'Ouvir o exemplo' }).count() === 0, 'técnica sem exemplo não deveria ter botão de ouvir');
+    assert(await page.getByRole('link', { name: /Voltar à lista/ }).count(), 'última técnica deveria voltar à lista');
+  } },
+  { name: '29c-tecnica-invalida', hash: '#/voz/tecnicas/nao-existe', run: async ({ page, assert }) => { assert(await page.locator('a.item').count() === 9, 'id inválido deveria mostrar a lista'); } },
   { name: '30-evolucao', hash: '#/evolucao', wait: 900, run: async ({ page, assert }) => { assert(await page.getByText('Primeiro retrato vocal').count(), 'marco do retrato ausente'); assert(await page.getByText('Primeira aula concluída').count(), 'marco da aula ausente'); await page.screenshot({ path: 'tests/e2e/shots/30-evolucao-full.png', fullPage: true }); } },
   { name: '31-comparar', hash: '#/evolucao/comparar', wait: 900, run: async ({ page, tap, wait, assert }) => { assert(await page.getByText('Tessitura lado a lado').count(), 'comparação não abriu'); await tap(page.getByRole('button', { name: /▶ B/ })); await wait(600); await tap(page.getByRole('button', { name: /▶ A|A: sem/ })); await page.screenshot({ path: 'tests/e2e/shots/31-comparar-full.png', fullPage: true }); } },
   { name: '32-backup', hash: '#/evolucao/backup', wait: 700, run: async ({ page, tap, wait, assert }) => {

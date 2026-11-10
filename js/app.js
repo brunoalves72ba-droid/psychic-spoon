@@ -14,7 +14,7 @@ const VIEWS = new Set([
   'inicio', 'ajustes',
   'harmonia', 'harmonia-aula', 'harmonia-acordes', 'harmonia-imersao', 'harmonia-cante', 'harmonia-ouvido', 'harmonia-glossario',
   'harmonia-metronomo', 'harmonia-ritmo', 'harmonia-partitura', 'harmonia-teclado',
-  'voz', 'voz-respiracao', 'voz-aquecimento', 'voz-afinacao', 'voz-dicas', 'voz-registro', 'voz-retrato',
+  'voz', 'voz-respiracao', 'voz-aquecimento', 'voz-afinacao', 'voz-dicas', 'voz-tecnicas', 'voz-registro', 'voz-retrato',
   'estudio', 'estudio-licao', 'estudio-mesa', 'estudio-gravador', 'estudio-projeto', 'estudio-creditos',
   'evolucao', 'evolucao-comparar', 'evolucao-backup',
 ]);

@@ -60,6 +60,9 @@ Marque cada item. Onde algo falhar, anote o aparelho, o navegador e o que aconte
 - [ ] **Medidor › Passagens**: faça três sirenes. A marca aparece perto da mesma nota e coincide com onde você sente a voz virar?
 - [ ] **Vibrato**: com vibrato natural, a taxa fica entre 4 e 8 Hz? Em nota reta, o app diz “nota reta”?
 - [ ] **Retrato vocal** completo (uns 3 minutos, com fones). No fim, a gravação da escala toca em *Evolução › Dados e backup*.
+- [ ] **Tirar a voz da garganta**: a tela rola com **um dedo só**, inclusive passando por cima dos botões e das caixas. Marque um sinal no autodiagnóstico e confira se aparecem as técnicas sugeridas.
+- [ ] **Técnicas › Ouvir o exemplo** (abra pelo menos Bocejo, Lábios e canudo e Zumbido): o som toca, o botão vira *Parar* e para ao tocar nele. Com a extensão medida, a nota inicial fica dentro dela; sem medir, as três faixas (grave, média, aguda) soam em alturas diferentes.
+- [ ] **Técnicas, na prática**: faça uma técnica de cada trilha seguindo o passo a passo. Alguma instrução ficou confusa? Alguma pediu algo que dói ou aperta? Anote qual.
 
 > O medidor de registro é uma estimativa acústica. Ele não substitui a avaliação de um professor de canto, fonoaudiólogo ou otorrinolaringologista.
 

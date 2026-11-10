@@ -14,7 +14,7 @@ App web instalável (PWA) para aprender **harmonia vocal**, **técnica vocal** e
 |---|---|
 | **Início** | Torre das seis vozes (Cmaj13), roteiro do dia e dias seguidos. |
 | **Harmonia** | 16 aulas (texto, experimento, cantar, perguntas), estúdio de acordes, imersão em tela cheia, “cante a sua voz”, treino de ouvido adaptativo, metrônomo, ritmo, partitura, teclado MIDI e glossário. |
-| **Voz** | Respiração guiada, aquecimento na sua extensão, afinação, dicas, medidor de registro vocal e retrato vocal. |
+| **Voz** | Respiração guiada, aquecimento na sua extensão, afinação, dicas, **técnicas para tirar a voz da garganta** (nove técnicas com autodiagnóstico, passo a passo, erro comum, exemplos e melodia-guia para ouvir), medidor de registro vocal e retrato vocal. |
 | **Estúdio** | Curso de 23 lições com fotos reais e 27 simuladores, mesa virtual de seis canais com missões, gravador multipista e o projeto “Do zero ao master”. |
 | **Evolução** | Histórico com gráficos, calendário de prática, marcos, comparação de retratos e backup. |
 

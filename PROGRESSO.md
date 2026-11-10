@@ -17,7 +17,8 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - `js/music/theory.js`: nomes de notas, `parseChord()` (cifra → notas), `voiceChord()` (distribuição em n vozes), `voicings()`, campo harmônico, `analyze()`.
 - `js/audio/engine.js`: contexto, coro (`choirNote`), piano (`pianoNote`), reverb por convolução, `Sequencer`/`Metronome` com lookahead pelo relógio do AudioContext (temporizador em Web Worker só acorda o agendador), `renderOffline`, `stopAll`.
 - `js/audio/pitch-core.js`: MPM via FFT + guarda de oitava + medidas de espectro + núcleo do microfone (puro, testado no Node). `mic-worklet.js` é concatenado a ele em `mic.js` (Blob) para rodar no AudioWorklet; alternativa em ScriptProcessor.
-- Tipos de evento no histórico: `lesson`, `ear`, `sing`, `pitch`, `breath`, `mpt`, `range`, `tessitura`, `passaggio`, `register`, `vibrato`, `portrait`, `recording`, `project`, `studio`.
+- Tipos de evento no histórico: `lesson`, `ear`, `sing`, `pitch`, `breath`, `mpt`, `range`, `tessitura`, `passaggio`, `register`, `vibrato`, `portrait`, `recording`, `project`, `studio`, `tecnica`.
+- `js/data/tecnicas.js`: conteúdo das técnicas vocais, autodiagnóstico (`SINAIS`), `recomendar()` e `pickRoot()` (puros, testados em `tests/tecnicas.test.mjs`). `js/views/voz-tecnicas.js`: rota `#/voz/tecnicas` (lista) e `#/voz/tecnicas/<id>` (detalhe).
 
 ## Fases
 
@@ -28,11 +29,13 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - [x] **5. Gravador e projeto final** — gravador de 6 pistas com PCM cru do worklet alinhado ao relógio de áudio, guia, metrônomo, calibração de latência, forma de onda, exportação WAV (`js/views/estudio-gravador.js`, `js/audio/recorder.js`); projeto “Do zero ao master” (`js/views/estudio-projeto.js`).
 - [x] **6. Extras** — metrônomo com vibração, 6 aulas de ritmo com toque na tela, leitura de partitura (claves de Sol e Fá), teclado na tela e por Web MIDI com reconhecimento de acordes, 4 melodias de domínio público rearmonizadas em quatro níveis.
 - [x] **7. Polimento (parcial)** — teste offline completo (87 arquivos em cache, 29 telas, fotos e fontes), fluidez ≥ 55 quadros/s com CPU 4× mais lenta na Imersão e na Mesa, alvos de toque de 44 px e ausência de rolagem horizontal conferidos em cada cenário, README, TESTES-NO-CELULAR, CREDITOS, LICENCA.
-  - Falta: revisão visual das capturas das telas da Fase 6 (partitura, ritmo), passada com `--reduced`, revisão final dos textos e teste em aparelho real (ver TESTES-NO-CELULAR.md).
+- [x] **8. Técnicas vocais** — seção “Tirar a voz da garganta” na aba Voz: autodiagnóstico, quatro trilhas (soltar, ar, som na frente, na música) e nove técnicas, cada uma com por que ajuda, passo a passo, como saber que deu certo, erro comum, exemplos e melodia-guia para ouvir (`js/data/tecnicas.js`, `js/views/voz-tecnicas.js`). Teste offline passou a cobrir 90 arquivos e 30 telas.
+  - Falta: testar em aparelho real se as instruções ficam claras e se o som do exemplo agrada (ver TESTES-NO-CELULAR.md, seção 5). O conteúdo é pedagógico geral e não substitui um professor de canto ou fonoaudiólogo.
+  - Falta (Fase 7): revisão visual das capturas das telas da Fase 6 (partitura, ritmo), passada com `--reduced`, revisão final dos textos e teste em aparelho real (ver TESTES-NO-CELULAR.md).
 
 ## Pendências conhecidas
 
-- `git push` recusado pelo GitHub (app do Claude sem acesso de escrita ao repositório). Commits estão locais; tentar de novo a cada fase.
+- Publicação: a pasta `Downloads\sexteto-app` do Bruno não é um clone. O push funciona a partir de um clone de `brunoalves72ba-droid/psychic-spoon`; o site (GitHub Pages) publica da branch `claude/sexteto-vocal-harmony-app-brobms`.
 - Rotas extras (`harmonia-metronomo`, `-ritmo`, `-partitura`, `-teclado`) já têm link no hub e serão criadas na Fase 6.
 
 ## Decisões
