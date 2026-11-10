@@ -131,7 +131,7 @@ function envio() {
 function automacao() {
   const PTS = 32, curve = new Float32Array(PTS).fill(0.7); const N = {}; let dur = 10, started = 0;
   const r = rig({ load: voiceBuffer, wire: (c, inp, out, bufs) => { N.g = c.createGain(); inp.connect(N.g); N.g.connect(out); dur = bufs[0].duration; } });
-  const cv = canvas(160);
+  const cv = canvas(160); cv.style.touchAction = 'none';
   const sched = () => { if (!N.g || !r.playing()) return; const c = getCtx(); N.g.gain.cancelScheduledValues(c.currentTime); started = c.currentTime + 0.03; for (let k = 0; k < 6; k++) for (let i = 0; i < PTS; i++) N.g.gain.linearRampToValueAtTime(curve[i] * 1.4, started + k * dur + ((i + 0.5) / PTS) * dur); };
   const pt = (e) => { const b = cv.getBoundingClientRect(); const i = clamp(Math.floor(((e.clientX - b.left) / b.width) * PTS), 0, PTS - 1); curve[i] = clamp(1 - (e.clientY - b.top) / b.height, 0, 1); if (i > 0 && e.movementX > 6) curve[i - 1] = (curve[i - 1] + curve[i]) / 2; };
   cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); pt(e); }); cv.addEventListener('pointermove', (e) => { if (e.buttons || e.pressure > 0) pt(e); }); cv.addEventListener('pointerup', sched);

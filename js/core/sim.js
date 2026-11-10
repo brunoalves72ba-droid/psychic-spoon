@@ -103,7 +103,7 @@ const PATTERNS = { omni: ['Omnidirecional', (c) => 1], cardioide: ['Cardioide', 
 function polar() {
   let pat = 'cardioide', ang = 0, noise = true; const N = {};
   const r = rig({ load: voiceBuffer, wire: (c, inp, out) => { N.v = c.createGain(); N.lp = c.createBiquadFilter(); N.lp.type = 'lowpass'; N.n = c.createGain(); N.n.gain.value = 0; inp.connect(N.lp); N.lp.connect(N.v); N.v.connect(out); pinkBuffer().then((b) => { const s = c.createBufferSource(); s.buffer = b; s.loop = true; s.connect(N.n); N.n.connect(out); s.start(); upd(); }); upd(); } });
-  const info = h('p.small', { 'aria-live': 'polite' }), cv = canvas(250);
+  const info = h('p.small', { 'aria-live': 'polite' }), cv = canvas(250); cv.style.touchAction = 'none';
   const upd = () => { const f = PATTERNS[pat][1], gv = f(Math.cos(ang)), gn = f(Math.cos(Math.PI)); info.textContent = `Voz a ${Math.round((ang * 180) / Math.PI)}° do eixo: ${fmt(g2db(Math.max(gv, 0.001)), 1)} dB. Caixa de retorno atrás (180°): ${gn < 0.002 ? 'rejeição total' : fmt(g2db(gn), 1) + ' dB'}.`; if (!N.v) return; const t = getCtx().currentTime; N.v.gain.setTargetAtTime(Math.max(0.02, gv), t, 0.03); N.lp.frequency.setTargetAtTime(2500 + 15000 * gv, t, 0.03); N.n.gain.setTargetAtTime(noise && r.playing() ? 0.5 * gn : 0, t, 0.05); };
   const pt = (e) => { const b = cv.getBoundingClientRect(); ang = Math.atan2(e.clientX - b.left - b.width / 2, -(e.clientY - b.top - b.height / 2)); upd(); };
   cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture(e.pointerId); pt(e); }); cv.addEventListener('pointermove', (e) => { if (e.buttons || e.pressure > 0) pt(e); });
