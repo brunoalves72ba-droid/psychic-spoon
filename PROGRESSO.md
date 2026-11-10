@@ -27,7 +27,8 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - [x] **4. Estúdio** — 23 lições em 4 módulos (`js/data/licoes.js`), 27 simuladores (`js/core/sim.js`, `sim2.js`), LUFS/true peak/limiter validados com EBU Tech 3341 (`js/audio/loudness.js`), mesa virtual com 4 missões (`js/audio/mixer.js`, `js/core/mesa-ui.js`), 16 fotos reais do Commons conferidas (`js/data/imagens.js`, `CREDITOS.md`), marcadores numerados na foto do canal.
 - [x] **5. Gravador e projeto final** — gravador de 6 pistas com PCM cru do worklet alinhado ao relógio de áudio, guia, metrônomo, calibração de latência, forma de onda, exportação WAV (`js/views/estudio-gravador.js`, `js/audio/recorder.js`); projeto “Do zero ao master” (`js/views/estudio-projeto.js`).
 - [x] **6. Extras** — metrônomo com vibração, 6 aulas de ritmo com toque na tela, leitura de partitura (claves de Sol e Fá), teclado na tela e por Web MIDI com reconhecimento de acordes, 4 melodias de domínio público rearmonizadas em quatro níveis.
-- [ ] 7. Polimento
+- [x] **7. Polimento (parcial)** — teste offline completo (87 arquivos em cache, 29 telas, fotos e fontes), fluidez ≥ 55 quadros/s com CPU 4× mais lenta na Imersão e na Mesa, alvos de toque de 44 px e ausência de rolagem horizontal conferidos em cada cenário, README, TESTES-NO-CELULAR, CREDITOS, LICENCA.
+  - Falta: revisão visual das capturas das telas da Fase 6 (partitura, ritmo), passada com `--reduced`, revisão final dos textos e teste em aparelho real (ver TESTES-NO-CELULAR.md).
 
 ## Pendências conhecidas
 

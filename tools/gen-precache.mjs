@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const INCLUDE = ['index.html', 'manifest.webmanifest', 'css', 'js', 'assets'];
-const SKIP = [/\.DS_Store$/, /^assets\/img\/minhas\//, /\.txt$/, /\.md$/];
+const SKIP = [/\.DS_Store$/, /^assets\/img\/minhas\/(?!minhas\.json$)/, /\.txt$/, /\.md$/];
 const files = [];
 const walk = (p) => { const st = statSync(p); if (st.isDirectory()) for (const f of readdirSync(p).sort()) walk(join(p, f)); else files.push(relative(root, p).split('\\').join('/')); };
 for (const i of INCLUDE) if (existsSync(join(root, i))) walk(join(root, i));
