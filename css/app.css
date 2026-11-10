@@ -205,8 +205,8 @@ ol.marks{margin:8px 0 0;padding-left:1.4em;font-size:.88rem;color:var(--ink2)}
 .sq{min-width:48px;min-height:44px;border-radius:10px;border:1px solid var(--line2);background:var(--bg3);color:var(--ink2);font-weight:800;font-size:.8rem;padding:0 8px;touch-action:manipulation}
 .sq[aria-pressed=true]{background:var(--on,var(--v5));border-color:var(--on,var(--v5));color:#0e2030}
 .clip{width:14px;height:14px;border-radius:50%;background:#3a1e2c;display:inline-block;flex:none}.clip.on{background:var(--bad);box-shadow:0 0 10px var(--bad)}
-.dots{display:flex;justify-content:center;gap:4px}
-.dots button{width:44px;height:44px;border:0;background:none;padding:0;display:grid;place-items:center}
+.dots{display:flex;justify-content:center;gap:0}
+.dots button{flex:none;width:44px;height:44px;border:0;background:none;padding:0;display:grid;place-items:center}
 .dots button i{width:10px;height:10px;border-radius:50%;background:var(--c);opacity:.35;display:block}
 .dots button[aria-current=true] i{opacity:1;transform:scale(1.4)}
 .overview{display:none;gap:6px}
