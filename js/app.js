@@ -63,6 +63,8 @@ async function render() {
   }
   if (my !== token) return;
   const page = h('div.page');
+  // append nativo escreveria "null": aqui, filhos nulos são ignorados
+  page.append = (...kids) => Element.prototype.append.apply(page, kids.flat(3).filter((k) => k != null && k !== false));
   const swap = () => { clear(view).append(page); window.scrollTo(0, 0); };
   let ret;
   try { ret = await mod.default(page, r.args); } catch (e) { console.error(e); page.append(h('div.card', h('h3', 'Algo deu errado nesta tela'), h('p.small.muted', String(e && e.message || e)))); }

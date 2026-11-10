@@ -89,3 +89,60 @@ scenarios.push(
   } },
   { name: '16-glossario', hash: '#/harmonia/glossario', run: async ({ page, assert }) => { await page.locator('input[type=search]').fill('trítono'); assert(await page.locator('.card.tight').count() >= 2, 'busca falhou'); } },
 );
+
+// ---------- Fase 3: Voz e Evolução ----------
+const runTask = async ({ page, tap, wait }, scope, ms, { finish = true } = {}) => {
+  await tap(scope.getByRole('button', { name: /Começar|Repetir/ }).first()); await wait(ms);
+  if (finish) { const c = scope.getByRole('button', { name: 'Concluir' }).first(); if (await c.isVisible().catch(() => false)) await tap(c); }
+  await wait(350);
+};
+scenarios.push(
+  { name: '20-voz', hash: '#/voz' },
+  { name: '21-respiracao', hash: '#/voz/respiracao', run: async (api) => { const { page, tap, wait, assert } = api;
+    await tap(page.getByRole('button', { name: 'Começar' }).first()); await wait(1500); assert(await page.getByText('Inspire pelo nariz').count(), 'respiração não começou'); await page.screenshot({ path: 'tests/e2e/shots/21-respiracao-rodando.png' }); await tap(page.getByRole('button', { name: 'Parar' }));
+    await tap(page.getByRole('button', { name: 'Golpes de apoio' })); await tap(page.getByRole('button', { name: 'Começar' }).first()); await wait(1500); await tap(page.getByRole('button', { name: 'Parar' }));
+    // teste de sss com o microfone falso: espera o trecho de chiado do arquivo (aos ~17 s do laço de 25 s)
+    const card = page.locator('section.card').nth(1); await tap(card.getByRole('button', { name: 'Começar' })); await wait(9000); const c = card.getByRole('button', { name: 'Concluir' }); if (await c.isVisible().catch(() => false)) await tap(c); await wait(400);
+    assert(await page.getByText(/Registrado:|Não consegui medir/).count(), 'teste de sss não terminou');
+  } },
+  { name: '22-aquecimento', hash: '#/voz/aquecimento', run: async ({ page, tap, wait, assert }) => {
+    for (const n of ['Sirene', 'Staccato', 'Vibração de lábios']) { await tap(page.getByRole('button', { name: n })); await wait(80); }
+    await tap(page.getByRole('button', { name: 'Começar' })); await wait(2500); assert(await page.getByText(/Tom 1 de/).count(), 'aquecimento não andou'); await page.screenshot({ path: 'tests/e2e/shots/22-aquecimento-rodando.png' }); await tap(page.getByRole('button', { name: 'Parar' }));
+  } },
+  { name: '23-afinacao', hash: '#/voz/afinacao', run: async ({ page, tap, wait, assert }) => {
+    await tap(page.getByRole('button', { name: 'Ligar microfone' })); await wait(2500);
+    const note = await page.locator('.big').first().textContent(); assert(note && note !== '—', 'afinador não leu a voz falsa'); await page.screenshot({ path: 'tests/e2e/shots/23-afinador.png' });
+    await tap(page.getByRole('button', { name: 'Cante a nota' })); await wait(700); await tap(page.getByRole('button', { name: 'Cante a harmonia' })); await wait(900); assert(await page.getByText(/O bordão segura/).count(), 'harmonia não abriu'); await tap(page.getByRole('button', { name: '5ª justa' })); await wait(500);
+  } },
+  { name: '24-dicas', hash: '#/voz/dicas', run: async ({ page, tap, assert }) => { await tap(page.getByRole('button', { name: 'Saúde vocal' })); assert(await page.getByText(/duas semanas/).count(), 'aviso de saúde ausente'); } },
+  { name: '25-registro', hash: '#/voz/registro', run: async (api) => { const { page, tap, wait, assert } = api; const card = page.locator('section.card').first();
+    await runTask(api, card, 9000); assert(await page.getByText(/Extensão:/).count(), 'extensão não medida'); await page.screenshot({ path: 'tests/e2e/shots/25-registro-extensao.png' }); await tap(page.getByRole('button', { name: 'Salvar esta medida' })); await wait(300);
+    await tap(page.getByRole('button', { name: 'Registro', exact: true })); await wait(300); { const lm = page.getByRole('button', { name: 'Ligar microfone' }); if (await lm.isVisible().catch(() => false)) await tap(lm); } await wait(2500); await page.screenshot({ path: 'tests/e2e/shots/25-registro-tempo-real.png' });
+    assert(await page.getByText(/não é exame/i).count(), 'aviso de estimativa ausente');
+    await tap(page.getByRole('button', { name: 'Passagens' })); await runTask(api, card, 5000); assert(await page.getByText(/Passagem perto|Não encontrei quebra|Não consegui/).count(), 'passagens sem resultado');
+    await tap(page.getByRole('button', { name: 'Vibrato' })); await runTask(api, card, 6000, { finish: false }); await wait(2500);
+    await tap(page.getByRole('button', { name: 'Fonação' })); await runTask(api, card, 5000);
+  } },
+  { name: '26-retrato', hash: '#/voz/retrato', run: async (api) => { const { page, tap, wait, assert } = api;
+    await tap(page.getByRole('button', { name: 'Começar o retrato' })); const card = page.locator('section.card').first();
+    const times = [9000, 7000, 8600, 5400, 5400, 6000, 6000, 10500];
+    for (let k = 0; k < 8; k++) { await runTask(api, card, times[k], { finish: k < 2 || k === 5 || k === 6 }); await wait(400); const nx = page.getByRole('button', { name: /Próxima etapa|Ver o retrato/ }); if (await nx.isVisible().catch(() => false)) await tap(nx); else await tap(page.getByRole('button', { name: 'Pular esta etapa' })); await wait(300); }
+    await wait(600); assert(await page.getByText('Seu retrato vocal').count(), 'retrato não foi concluído'); assert(await page.getByText(/semitons\)/).count(), 'retrato sem extensão');
+  } },
+  { name: '27-retrato-2', hash: '#/voz/retrato', run: async (api) => { const { page, tap, wait, assert } = api; // segundo retrato, curto, para a comparação
+    await tap(page.getByRole('button', { name: 'Começar o retrato' })); const card = page.locator('section.card').first();
+    await runTask(api, card, 7000); await tap(page.getByRole('button', { name: 'Próxima etapa' }));
+    for (let k = 0; k < 6; k++) { await tap(page.getByRole('button', { name: 'Pular esta etapa' })); await wait(150); }
+    await runTask(api, card, 10500, { finish: false }); await wait(500); await tap(page.getByRole('button', { name: 'Ver o retrato' })); await wait(700);
+    assert(await page.getByText('escala salva').count(), 'escala não foi gravada');
+  } },
+  { name: '30-evolucao', hash: '#/evolucao', wait: 900, run: async ({ page, assert }) => { assert(await page.getByText('Primeiro retrato vocal').count(), 'marco do retrato ausente'); assert(await page.getByText('Primeira aula concluída').count(), 'marco da aula ausente'); await page.screenshot({ path: 'tests/e2e/shots/30-evolucao-full.png', fullPage: true }); } },
+  { name: '31-comparar', hash: '#/evolucao/comparar', wait: 900, run: async ({ page, tap, wait, assert }) => { assert(await page.getByText('Tessitura lado a lado').count(), 'comparação não abriu'); await tap(page.getByRole('button', { name: /▶ B/ })); await wait(600); await tap(page.getByRole('button', { name: /▶ A|A: sem/ })); await page.screenshot({ path: 'tests/e2e/shots/31-comparar-full.png', fullPage: true }); } },
+  { name: '32-backup', hash: '#/evolucao/backup', wait: 700, run: async ({ page, tap, wait, assert }) => {
+    assert(await page.getByText(/Retrato vocal ·/).count() >= 1, 'gravação do retrato não aparece');
+    const r = await page.evaluate(async () => { const s = await import('./js/core/store.js'); const d = JSON.parse(JSON.stringify(await s.exportAll())); const before = (await s.events()).length; const res = await s.importAll(d); return { before, after: res.events, recs: res.recordings, schema: d.schema, size: JSON.stringify(d).length }; });
+    assert(r.before === r.after && r.recs >= 1, `backup não fechou: ${JSON.stringify(r)}`);
+    const dl = page.waitForEvent('download', { timeout: 5000 }).catch(() => null); await tap(page.getByRole('button', { name: 'Exportar tudo' })); const d = await dl; assert(d && /sexteto-backup/.test(d.suggestedFilename()), 'download do backup não aconteceu');
+    await tap(page.getByRole('button', { name: '▶ Ouvir' }).first()); await wait(300);
+  } },
+);

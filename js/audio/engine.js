@@ -337,3 +337,13 @@ export function mediaSession(title, { play, pause } = {}) {
   } catch {}
 }
 export const mediaState = (s) => { try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s; } catch {} };
+
+/** Toca PCM mono (Float32Array) ou um AudioBuffer. Retorna { stop(), ended: Promise }. */
+export function playPcm(pcm, sampleRate, { gain = 1, dest, when, offset = 0, onEnd } = {}) {
+  const c = getCtx(); let buf = pcm;
+  if (!(pcm instanceof AudioBuffer)) { buf = c.createBuffer(1, Math.max(1, pcm.length), sampleRate); buf.getChannelData(0).set(pcm); }
+  const src = c.createBufferSource(); src.buffer = buf; const g = c.createGain(); g.gain.value = gain; src.connect(g); g.connect(dest || out);
+  let done = false; const handle = { stop() { if (done) return; done = true; try { src.stop(); } catch {} active.delete(handle); } };
+  src.onended = () => { done = true; active.delete(handle); try { g.disconnect(); } catch {} onEnd && onEnd(); };
+  src.start(when ?? c.currentTime, offset); active.add(handle); return handle;
+}

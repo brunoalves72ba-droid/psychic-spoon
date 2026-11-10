@@ -44,6 +44,7 @@ for (const sc of scenarios) {
   if (filter && !sc.name.includes(filter)) continue;
   currentName = sc.name; n++;
   try {
+    if (await page.evaluate((hsh) => location.hash === hsh, sc.hash)) { await page.evaluate(() => { location.hash = '#/ajustes'; }); await page.waitForTimeout(250); }
     await page.evaluate((hsh) => { location.hash = hsh; }, sc.hash);
     await page.waitForTimeout(sc.wait ?? 450);
     if (sc.run) await sc.run(api);

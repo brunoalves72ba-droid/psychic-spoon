@@ -23,7 +23,7 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 
 - [x] **1. Base** — PWA (manifest, ícones, service worker com pré-cache), navegação por 5 abas, identidade visual, fontes locais (OFL), motor de áudio, detecção de altura (pior erro 8,3 cents nos testes), armazenamento, testes, tela Início e Ajustes.
 - [x] **2. Harmonia** — 16 aulas (`js/data/aulas.js`, laboratórios em `js/core/lab.js`), estúdio de acordes (27 tipos, 4 aberturas), imersão, cante a sua voz, ouvido adaptativo (`js/music/ear.js`), glossário, 7 arranjos (`js/music/arrangements.js`). Teste confere cada nota contra a cifra.
-- [ ] 3. Voz e Evolução
+- [x] **3. Voz e Evolução** — respiração (4 padrões + teste de “sss”), aquecimento (7 exercícios na extensão medida), afinação (afinador, nota, harmonia), dicas, medidor de registro (`js/audio/voice-analysis.js` + `js/core/voice-tasks.js`), retrato vocal (8 etapas, grava escala), painel com gráficos (`js/core/charts.js`), comparação A/B de retratos, marcos, backup e gravações.
 - [ ] 4. Estúdio (curso, imagens, simuladores, mesa)
 - [ ] 5. Gravador multipista e projeto final
 - [ ] 6. Extras
