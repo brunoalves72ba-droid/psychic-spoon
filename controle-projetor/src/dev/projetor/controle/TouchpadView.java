@@ -63,9 +63,9 @@ public class TouchpadView extends View {
         density = context.getResources().getDisplayMetrics().density;
         border.setStyle(Paint.Style.STROKE);
         border.setStrokeWidth(1.5f * density);
-        border.setColor(Style.STROKE);
-        dot.setColor(0x14FFFFFF);
-        strip.setColor(0xFF1C222C);
+        border.setColor(0x553D8BFF);
+        dot.setColor(0x283D8BFF);
+        strip.setColor(0xFF1B2440);
         arrow.setStyle(Paint.Style.STROKE);
         arrow.setStrokeWidth(3f * density);
         arrow.setStrokeCap(Paint.Cap.ROUND);
@@ -95,7 +95,7 @@ public class TouchpadView extends View {
         rect.set(inset, inset, w - inset, h - inset);
         float stripW = 52 * density;
         stripRect.set(rect.right - stripW, rect.top, rect.right, rect.bottom);
-        pad.setShader(new LinearGradient(0, 0, 0, h, 0xFF1A1F28, 0xFF12161C, Shader.TileMode.CLAMP));
+        pad.setShader(new LinearGradient(0, 0, 0, h, 0xFF1B2236, 0xFF101522, Shader.TileMode.CLAMP));
     }
 
     @Override

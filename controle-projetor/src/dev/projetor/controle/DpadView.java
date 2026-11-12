@@ -8,6 +8,7 @@ import android.graphics.Path;
 import android.graphics.RadialGradient;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.SweepGradient;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
@@ -15,7 +16,7 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 
-/** Round directional pad with an OK button in the middle; arrows repeat while held. */
+/** Round directional pad with a glowing rim and an OK button in the middle; arrows repeat while held. */
 public class DpadView extends View {
 
     public interface Listener {
@@ -32,17 +33,22 @@ public class DpadView extends View {
             ProjectorCommands.KEY_CENTER, ProjectorCommands.KEY_UP, ProjectorCommands.KEY_RIGHT,
             ProjectorCommands.KEY_DOWN, ProjectorCommands.KEY_LEFT};
 
+    private final Paint halo = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ringStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint divider = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint groove = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint stud = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint pressedFill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint chevron = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint center = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint centerRim = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint shine = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint centerPressed = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint label = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
     private final RectF outer = new RectF();
     private final RectF inner = new RectF();
+    private final RectF shineOval = new RectF();
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final float density;
     private Listener listener;
@@ -66,17 +72,20 @@ public class DpadView extends View {
         super(context);
         density = context.getResources().getDisplayMetrics().density;
         ringStroke.setStyle(Paint.Style.STROKE);
-        ringStroke.setStrokeWidth(1.5f * density);
-        ringStroke.setColor(0x22FFFFFF);
-        divider.setStrokeWidth(1.5f * density);
-        divider.setColor(0x14FFFFFF);
-        pressedFill.setColor(0x553D8BFF);
+        ringStroke.setStrokeWidth(3f * density);
+        groove.setStyle(Paint.Style.STROKE);
+        groove.setStrokeWidth(7f * density);
+        groove.setColor(0xFF0B0F1C);
+        stud.setColor(0x553D8BFF);
         chevron.setStyle(Paint.Style.STROKE);
-        chevron.setStrokeWidth(3.5f * density);
+        chevron.setStrokeWidth(4f * density);
         chevron.setStrokeCap(Paint.Cap.ROUND);
         chevron.setStrokeJoin(Paint.Join.ROUND);
         chevron.setColor(Style.TEXT);
-        centerPressed.setColor(0x33000000);
+        centerRim.setStyle(Paint.Style.STROKE);
+        centerRim.setStrokeWidth(2f * density);
+        centerRim.setColor(0x66FFFFFF);
+        centerPressed.setColor(0x40000000);
         label.setColor(0xFFFFFFFF);
         label.setTextAlign(Paint.Align.CENTER);
         label.setTypeface(Typeface.DEFAULT_BOLD);
@@ -91,7 +100,7 @@ public class DpadView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
-        int size = Math.min(width, Math.round(300 * density));
+        int size = Math.min(width, Math.round(320 * density));
         setMeasuredDimension(width, size);
     }
 
@@ -99,21 +108,32 @@ public class DpadView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         cx = w / 2f;
         cy = h / 2f;
-        radius = Math.min(w, h) / 2f - 4 * density;
+        radius = Math.min(w, h) / 2f - 18 * density;
         innerRadius = radius * 0.36f;
         outer.set(cx - radius, cy - radius, cx + radius, cy + radius);
         inner.set(cx - innerRadius, cy - innerRadius, cx + innerRadius, cy + innerRadius);
-        ring.setShader(new RadialGradient(cx, cy - radius * 0.35f, radius * 1.5f,
-                0xFF2B3342, 0xFF141820, Shader.TileMode.CLAMP));
+        float haloR = radius + 18 * density;
+        halo.setShader(new RadialGradient(cx, cy, haloR,
+                new int[] {0x003D8BFF, 0x003D8BFF, 0x663D8BFF, 0x008B5CF6},
+                new float[] {0f, (radius - 6 * density) / haloR, radius / haloR, 1f}, Shader.TileMode.CLAMP));
+        ring.setShader(new RadialGradient(cx, cy - radius * 0.45f, radius * 1.6f,
+                0xFF34405E, 0xFF10141F, Shader.TileMode.CLAMP));
+        ringStroke.setShader(new SweepGradient(cx, cy,
+                new int[] {Style.ACCENT, Style.VIOLET, Style.PINK, Style.TEAL, Style.ACCENT}, null));
+        pressedFill.setShader(new RadialGradient(cx, cy, radius,
+                new int[] {0x003D8BFF, 0x553D8BFF, 0x998B5CF6}, new float[] {0f, 0.45f, 1f}, Shader.TileMode.CLAMP));
         center.setShader(new LinearGradient(cx - innerRadius, cy - innerRadius, cx + innerRadius,
-                cy + innerRadius, Style.ACCENT, Style.ACCENT2, Shader.TileMode.CLAMP));
-        label.setTextSize(innerRadius * 0.48f);
+                cy + innerRadius, new int[] {0xFF4C9BFF, Style.ACCENT2, 0xFF9B4DFF}, null, Shader.TileMode.CLAMP));
+        shineOval.set(cx - innerRadius * 0.72f, cy - innerRadius * 0.9f, cx + innerRadius * 0.72f, cy - innerRadius * 0.05f);
+        shine.setShader(new LinearGradient(0, shineOval.top, 0, shineOval.bottom, 0x55FFFFFF, 0x00FFFFFF,
+                Shader.TileMode.CLAMP));
+        label.setTextSize(innerRadius * 0.46f);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        canvas.drawCircle(cx, cy, radius + 18 * density, halo);
         canvas.drawCircle(cx, cy, radius, ring);
-        canvas.drawCircle(cx, cy, radius, ringStroke);
 
         if (pressed > CENTER) {
             float mid = -90 + (pressed - 1) * 90;
@@ -123,18 +143,17 @@ public class DpadView extends View {
             path.close();
             canvas.drawPath(path, pressedFill);
         }
+        canvas.drawCircle(cx, cy, radius - 1.5f * density, ringStroke);
+        canvas.drawCircle(cx, cy, innerRadius + 5 * density, groove);
 
         for (int i = 0; i < 4; i++) {
             double a = Math.toRadians(45 + i * 90);
-            float cos = (float) Math.cos(a);
-            float sin = (float) Math.sin(a);
-            float from = innerRadius + 8 * density;
-            float to = radius - 10 * density;
-            canvas.drawLine(cx + cos * from, cy + sin * from, cx + cos * to, cy + sin * to, divider);
+            float d = (radius + innerRadius) / 2f + radius * 0.06f;
+            canvas.drawCircle(cx + (float) Math.cos(a) * d, cy + (float) Math.sin(a) * d, 3.2f * density, stud);
         }
 
-        float d = (radius + innerRadius) / 2f;
-        float s = radius * 0.085f;
+        float d = (radius + innerRadius) / 2f + radius * 0.02f;
+        float s = radius * 0.09f;
         for (int i = 0; i < 4; i++) {
             canvas.save();
             canvas.rotate(i * 90, cx, cy);
@@ -142,12 +161,14 @@ public class DpadView extends View {
             path.moveTo(cx - s, cy - d + s * 0.55f);
             path.lineTo(cx, cy - d - s * 0.55f);
             path.lineTo(cx + s, cy - d + s * 0.55f);
-            chevron.setAlpha(pressed == i + 1 ? 255 : 200);
+            chevron.setColor(pressed == i + 1 ? 0xFFFFFFFF : 0xFFC9D3E6);
             canvas.drawPath(path, chevron);
             canvas.restore();
         }
 
         canvas.drawCircle(cx, cy, innerRadius, center);
+        canvas.drawOval(shineOval, shine);
+        canvas.drawCircle(cx, cy, innerRadius - 1f * density, centerRim);
         if (pressed == CENTER) canvas.drawCircle(cx, cy, innerRadius, centerPressed);
         canvas.drawText("OK", cx, cy - (label.descent() + label.ascent()) / 2f, label);
     }

@@ -2,7 +2,7 @@
 
 App Android que controla o projetor HY300 pelo Wi-Fi, usando a depuração por rede (ADB) do projetor, e que liga e desliga o projetor pelo infravermelho do celular.
 
-- **Controle:** setas, OK, Voltar, Início, Menu, play/pausa, voltar e avançar, volume com barra e Sem som.
+- **Controle:** setas, OK, Voltar, Início, Menu, play/pausa, voltar e avançar, volume com barra e Sem som, e atalhos para os primeiros apps do projetor.
 - **Touchpad:** move o cursor, clica e rola a tela do projetor.
 - **Apps:** lista os apps instalados no projetor e abre cada um com um toque.
 - **Mais:** digitar texto no projetor, telas de ajustes, Wi-Fi e Bluetooth, Dormir, Acordar e Reiniciar. Também tem o IP do projetor e o botão **Procurar o projetor no Wi-Fi**.

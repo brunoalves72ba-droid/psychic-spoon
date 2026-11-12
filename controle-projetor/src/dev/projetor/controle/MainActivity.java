@@ -10,6 +10,7 @@ import android.graphics.Insets;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.hardware.ConsumerIrManager;
 import android.net.ConnectivityManager;
 import android.net.LinkAddress;
@@ -36,6 +37,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.IOException;
@@ -131,6 +133,9 @@ public class MainActivity extends Activity {
     private EditText textField;
     private EditText hostField;
     private TouchpadView touchpad;
+    private LinearLayout shortcutsCard;
+    private LinearLayout shortcutsRow;
+    private TextView appsCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -750,15 +755,17 @@ public class MainActivity extends Activity {
 
     // ---------------------------------------------------------------- UI
 
+    private static final int[] TAB_COLORS = {Style.ACCENT, Style.TEAL, Style.ORANGE, Style.VIOLET};
+
     private View buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Style.BG);
+        root.setBackground(new Style.Backdrop());
         root.setOnApplyWindowInsetsListener(this::applyInsets);
 
-        root.addView(buildHeader(), matchWrap(dp(16), dp(10), dp(16), 0));
-        root.addView(buildPowerRow(), matchWrap(dp(12), dp(14), dp(12), 0));
-        root.addView(buildTabs(), matchWrap(dp(16), dp(14), dp(16), dp(6)));
+        root.addView(buildHeader(), matchWrap(dp(14), dp(8), dp(14), 0));
+        root.addView(buildPowerRow(), matchWrap(dp(10), dp(10), dp(10), 0));
+        root.addView(buildTabs(), matchWrap(dp(14), dp(10), dp(14), dp(4)));
 
         FrameLayout content = new FrameLayout(this);
         pages[0] = scrolling(buildControlPage());
@@ -792,58 +799,95 @@ public class MainActivity extends Activity {
         return insets;
     }
 
+    /** Gradient card with the projector, its connection status and a shortcut to the settings tab. */
     private View buildHeader() {
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout hero = new LinearLayout(this);
+        hero.setGravity(Gravity.CENTER_VERTICAL);
+        hero.setBackground(new Style.Hero(dp(26), dp(1)));
+        hero.setElevation(dp(8));
+        hero.setPadding(dp(14), dp(14), dp(12), dp(14));
 
-        LinearLayout titles = new LinearLayout(this);
-        titles.setOrientation(LinearLayout.VERTICAL);
-        TextView title = text("Projetor HY300", 23, Style.TEXT, true);
-        titles.addView(title);
-        LinearLayout statusRow = new LinearLayout(this);
-        statusRow.setGravity(Gravity.CENTER_VERTICAL);
+        FrameLayout bubble = new FrameLayout(this);
+        bubble.setBackground(Style.oval(0x33FFFFFF));
+        bubble.addView(icon(R.drawable.ic_projector, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(32), dp(32), Gravity.CENTER));
+        hero.addView(bubble, new LinearLayout.LayoutParams(dp(58), dp(58)));
+
+        LinearLayout titles = vertical();
+        titles.addView(text("Projetor HY300", 22, 0xFFFFFFFF, true));
+        titles.addView(text("Wi-Fi + infravermelho", 12.5f, 0xD9FFFFFF, false));
+        LinearLayout chip = new LinearLayout(this);
+        chip.setGravity(Gravity.CENTER_VERTICAL);
+        chip.setBackground(Style.rounded(0x47000000, dp(14)));
+        chip.setPadding(dp(10), dp(5), dp(12), dp(5));
         statusDot = new View(this);
         statusDot.setBackground(Style.oval(Style.MUTED));
-        statusRow.addView(statusDot, new LinearLayout.LayoutParams(dp(8), dp(8)));
-        statusText = text("Desconectado", 13, Style.MUTED, false);
+        chip.addView(statusDot, new LinearLayout.LayoutParams(dp(9), dp(9)));
+        statusText = text("Desconectado", 12.5f, 0xFFFFFFFF, true);
         statusText.setMaxLines(2);
         statusText.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams stp = new LinearLayout.LayoutParams(-2, -2);
         stp.leftMargin = dp(7);
-        statusRow.addView(statusText, stp);
-        LinearLayout.LayoutParams srp = new LinearLayout.LayoutParams(-2, -2);
-        srp.topMargin = dp(3);
-        titles.addView(statusRow, srp);
-        header.addView(titles, new LinearLayout.LayoutParams(0, -2, 1f));
+        chip.addView(statusText, stp);
+        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, -2);
+        cp.topMargin = dp(8);
+        titles.addView(chip, cp);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, -2, 1f);
+        tp.leftMargin = dp(12);
+        tp.rightMargin = dp(6);
+        hero.addView(titles, tp);
 
-        header.addView(roundButton(R.drawable.ic_settings, 46, Style.ripple(Style.oval(Style.SURFACE2)),
-                Style.TEXT, "Ajustes", () -> selectTab(3)));
-        return header;
+        hero.addView(roundButton(R.drawable.ic_settings, 44, Style.ripple(Style.oval(0x33FFFFFF)),
+                0xFFFFFFFF, "Ajustes", () -> selectTab(3)));
+        return hero;
     }
 
     private View buildPowerRow() {
         LinearLayout row = new LinearLayout(this);
-        row.addView(pill(R.drawable.ic_power, "Ligar", Style.gradient(Style.GREEN, Style.GREEN2, dp(18)),
-                this::powerOn), weighted(dp(4)));
-        row.addView(pill(R.drawable.ic_power, "Desligar", Style.gradient(Style.RED, Style.RED2, dp(18)),
-                this::powerOff), weighted(dp(4)));
+        row.addView(powerButton("Ligar", Style.GREEN, Style.GREEN2, this::powerOn), weighted(dp(4)));
+        row.addView(powerButton("Desligar", Style.RED, Style.RED2, this::powerOff), weighted(dp(4)));
         return row;
+    }
+
+    private View powerButton(String title, int from, int to, Runnable action) {
+        LinearLayout p = new LinearLayout(this);
+        p.setGravity(Gravity.CENTER_VERTICAL);
+        p.setBackground(Style.ripple(Style.gradient(from, to, dp(22))));
+        p.setElevation(dp(6));
+        p.setPadding(dp(12), dp(12), dp(10), dp(12));
+        p.setContentDescription(title + " o projetor por infravermelho");
+        FrameLayout bubble = new FrameLayout(this);
+        bubble.setBackground(Style.oval(0x38FFFFFF));
+        bubble.addView(icon(R.drawable.ic_power, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER));
+        p.addView(bubble, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        LinearLayout t = vertical();
+        t.addView(text(title, 18, 0xFFFFFFFF, true));
+        LinearLayout ir = new LinearLayout(this);
+        ir.setGravity(Gravity.CENTER_VERTICAL);
+        ir.addView(icon(R.drawable.ic_ir, 0xD9FFFFFF), new LinearLayout.LayoutParams(dp(13), dp(13)));
+        TextView sub = text("infravermelho", 11.5f, 0xD9FFFFFF, false);
+        sub.setPadding(dp(3), 0, 0, 0);
+        ir.addView(sub);
+        t.addView(ir);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+        lp.leftMargin = dp(10);
+        p.addView(t, lp);
+        onTap(p, action);
+        return p;
     }
 
     private View buildTabs() {
         LinearLayout bar = new LinearLayout(this);
-        bar.setBackground(Style.outlined(Style.SURFACE, dp(20), dp(1)));
-        bar.setPadding(dp(4), dp(4), dp(4), dp(4));
+        bar.setBackground(Style.outlined(0xE6121828, dp(22), dp(1)));
+        bar.setElevation(dp(4));
+        bar.setPadding(dp(5), dp(5), dp(5), dp(5));
         for (int i = 0; i < 4; i++) {
             final int index = i;
             LinearLayout tab = new LinearLayout(this);
             tab.setOrientation(LinearLayout.VERTICAL);
             tab.setGravity(Gravity.CENTER);
-            tab.setPadding(0, dp(7), 0, dp(7));
-            ImageView icon = new ImageView(this);
-            icon.setImageResource(TAB_ICONS[i]);
-            tab.addView(icon, new LinearLayout.LayoutParams(dp(21), dp(21)));
-            TextView label = text(TAB_NAMES[i], 11.5f, Style.MUTED, true);
+            tab.setPadding(0, dp(8), 0, dp(8));
+            tab.addView(icon(TAB_ICONS[i], TAB_COLORS[i]), new LinearLayout.LayoutParams(dp(23), dp(23)));
+            TextView label = text(TAB_NAMES[i], 12, Style.SOFT, true);
             label.setGravity(Gravity.CENTER);
             label.setPadding(0, dp(3), 0, 0);
             tab.addView(label);
@@ -862,10 +906,10 @@ public class MainActivity extends Activity {
         for (int i = 0; i < 4; i++) {
             boolean on = i == index;
             pages[i].setVisibility(on ? View.VISIBLE : View.GONE);
-            tabs[i].setBackground(on ? Style.gradient(Style.ACCENT, Style.ACCENT2, dp(16)) : null);
-            int color = on ? 0xFFFFFFFF : Style.MUTED;
-            ((ImageView) tabs[i].getChildAt(0)).setImageTintList(ColorStateList.valueOf(color));
-            ((TextView) tabs[i].getChildAt(1)).setTextColor(color);
+            tabs[i].setBackground(on ? Style.gradient(TAB_COLORS[i], Style.mix(TAB_COLORS[i], Style.VIOLET, 0.55f), dp(17)) : null);
+            tabs[i].setElevation(on ? dp(3) : 0);
+            ((ImageView) tabs[i].getChildAt(0)).setImageTintList(ColorStateList.valueOf(on ? 0xFFFFFFFF : TAB_COLORS[i]));
+            ((TextView) tabs[i].getChildAt(1)).setTextColor(on ? 0xFFFFFFFF : Style.SOFT);
         }
         prefs.edit().putInt("tab", index).apply();
     }
@@ -875,39 +919,41 @@ public class MainActivity extends Activity {
 
         LinearLayout nav = new LinearLayout(this);
         nav.setGravity(Gravity.CENTER);
-        nav.addView(labeled(roundButton(R.drawable.ic_back, 58, Style.ripple(Style.oval(Style.SURFACE2)), Style.TEXT,
-                "Voltar", () -> sendKey(ProjectorCommands.KEY_BACK)), "Voltar"), weighted(0));
-        nav.addView(labeled(roundButton(R.drawable.ic_home, 72,
-                Style.ripple(Style.gradient(Style.ACCENT, Style.ACCENT2, dp(36))), 0xFFFFFFFF,
-                "Início", () -> sendKey(ProjectorCommands.KEY_HOME)), "Início"), weighted(0));
-        nav.addView(labeled(roundButton(R.drawable.ic_menu, 58, Style.ripple(Style.oval(Style.SURFACE2)), Style.TEXT,
-                "Menu", () -> sendKey(ProjectorCommands.KEY_MENU)), "Menu"), weighted(0));
-        page.addView(nav, matchWrap(0, dp(4), 0, 0));
+        nav.addView(labeled(roundButton(R.drawable.ic_back, 62, Style.ripple(Style.ovalGradient(Style.TEAL, Style.TEAL2)),
+                0xFFFFFFFF, "Voltar", () -> sendKey(ProjectorCommands.KEY_BACK)), "Voltar", 88), weighted(0));
+        nav.addView(labeled(roundButton(R.drawable.ic_home, 80, Style.ripple(Style.ovalGradient(Style.ACCENT, Style.VIOLET)),
+                0xFFFFFFFF, "Início", () -> sendKey(ProjectorCommands.KEY_HOME)), "Início", 88), weighted(0));
+        nav.addView(labeled(roundButton(R.drawable.ic_menu, 62, Style.ripple(Style.ovalGradient(Style.ORANGE, Style.PINK)),
+                0xFFFFFFFF, "Menu", () -> sendKey(ProjectorCommands.KEY_MENU)), "Menu", 88), weighted(0));
+        page.addView(nav, matchWrap(0, dp(6), 0, 0));
 
         DpadView dpad = new DpadView(this);
         dpad.setListener(this::sendKey);
-        page.addView(dpad, matchWrap(dp(8), dp(14), dp(8), 0));
+        page.addView(dpad, matchWrap(0, dp(6), 0, 0));
 
-        LinearLayout media = new LinearLayout(this);
-        media.setGravity(Gravity.CENTER);
-        media.addView(roundButton(R.drawable.ic_rewind, 54, Style.ripple(Style.oval(Style.SURFACE2)), Style.TEXT,
-                "Voltar vídeo", () -> sendKey(ProjectorCommands.KEY_REWIND)), weighted(0));
-        media.addView(roundButton(R.drawable.ic_play_pause, 62, Style.ripple(Style.oval(Style.SURFACE2)), Style.TEXT,
-                "Play ou pausa", () -> sendKey(ProjectorCommands.KEY_PLAY_PAUSE)), weighted(0));
-        media.addView(roundButton(R.drawable.ic_fast_forward, 54, Style.ripple(Style.oval(Style.SURFACE2)), Style.TEXT,
-                "Avançar vídeo", () -> sendKey(ProjectorCommands.KEY_FAST_FORWARD)), weighted(0));
-        page.addView(media, matchWrap(0, dp(16), 0, 0));
+        LinearLayout media = card(page, "Mídia", R.drawable.ic_play_pause, Style.PINK);
+        LinearLayout mediaRow = new LinearLayout(this);
+        mediaRow.setGravity(Gravity.CENTER);
+        mediaRow.addView(labeled(roundButton(R.drawable.ic_rewind, 56, Style.ripple(Style.tinted(Style.VIOLET, dp(28), dp(1))),
+                0xFFC4B5FD, "Voltar vídeo", () -> sendKey(ProjectorCommands.KEY_REWIND)), "Voltar", 76), weighted(0));
+        mediaRow.addView(labeled(roundButton(R.drawable.ic_play_pause, 68, Style.ripple(Style.ovalGradient(Style.PINK, Style.ORANGE)),
+                0xFFFFFFFF, "Play ou pausa", () -> sendKey(ProjectorCommands.KEY_PLAY_PAUSE)), "Play / Pausa", 76), weighted(0));
+        mediaRow.addView(labeled(roundButton(R.drawable.ic_fast_forward, 56, Style.ripple(Style.tinted(Style.VIOLET, dp(28), dp(1))),
+                0xFFC4B5FD, "Avançar vídeo", () -> sendKey(ProjectorCommands.KEY_FAST_FORWARD)), "Avançar", 76), weighted(0));
+        media.addView(mediaRow);
 
-        LinearLayout vol = card(page, "Volume");
+        LinearLayout vol = card(page, "Volume", R.drawable.ic_volume_up, Style.ACCENT);
         LinearLayout volHeader = (LinearLayout) vol.getChildAt(0);
-        volumeLabel = text("–", 15, Style.TEXT, true);
+        volumeLabel = text("–", 14, 0xFFFFFFFF, true);
+        volumeLabel.setBackground(Style.gradient(Style.ACCENT, Style.VIOLET, dp(12)));
+        volumeLabel.setPadding(dp(12), dp(4), dp(12), dp(4));
         volHeader.addView(volumeLabel);
         volumeBar = new SeekBar(this);
         volumeBar.setMax(maxVolume);
-        volumeBar.setProgressTintList(ColorStateList.valueOf(Style.ACCENT));
-        volumeBar.setThumbTintList(ColorStateList.valueOf(0xFFFFFFFF));
-        volumeBar.setProgressBackgroundTintList(ColorStateList.valueOf(0xFF3A4252));
-        volumeBar.setPadding(dp(18), dp(14), dp(18), dp(14));
+        volumeBar.setProgressDrawable(Style.track(dp(10)));
+        volumeBar.setThumb(Style.thumb(dp(26), dp(4)));
+        volumeBar.setSplitTrack(false);
+        volumeBar.setPadding(dp(18), dp(16), dp(18), dp(16));
         volumeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
@@ -926,21 +972,27 @@ public class MainActivity extends Activity {
         vol.addView(volumeBar);
         LinearLayout volButtons = new LinearLayout(this);
         volButtons.setGravity(Gravity.CENTER_VERTICAL);
-        volButtons.addView(roundButton(R.drawable.ic_volume_down, 52, Style.ripple(Style.oval(Style.SURFACE2)),
-                Style.TEXT, "Diminuir volume",
+        volButtons.addView(roundButton(R.drawable.ic_volume_down, 56, Style.ripple(Style.ovalGradient(Style.SKY, Style.ACCENT)),
+                0xFFFFFFFF, "Diminuir volume",
                 () -> stepVolume(ProjectorCommands.KEY_VOLUME_DOWN, -1)), new LinearLayout.LayoutParams(-2, -2));
         LinearLayout mute = pill(R.drawable.ic_volume_off, "Sem som",
-                Style.ripple(Style.rounded(Style.SURFACE2, dp(26))), this::toggleMute);
+                Style.ripple(Style.tinted(Style.RED, dp(28), dp(1))), this::toggleMute);
         muteIcon = (ImageView) mute.getChildAt(0);
+        muteIcon.setImageTintList(ColorStateList.valueOf(0xFFFDA4AF));
         muteText = (TextView) mute.getChildAt(1);
-        muteText.setTextSize(14);
-        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, dp(52), 1f);
+        muteText.setTextSize(15);
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, dp(56), 1f);
         mp.setMargins(dp(10), 0, dp(10), 0);
         volButtons.addView(mute, mp);
-        volButtons.addView(roundButton(R.drawable.ic_volume_up, 52, Style.ripple(Style.oval(Style.SURFACE2)),
-                Style.TEXT, "Aumentar volume",
+        volButtons.addView(roundButton(R.drawable.ic_volume_up, 56, Style.ripple(Style.ovalGradient(Style.ACCENT, Style.VIOLET)),
+                0xFFFFFFFF, "Aumentar volume",
                 () -> stepVolume(ProjectorCommands.KEY_VOLUME_UP, 1)), new LinearLayout.LayoutParams(-2, -2));
         vol.addView(volButtons);
+
+        shortcutsCard = card(page, "Atalhos", R.drawable.ic_apps, Style.ORANGE);
+        shortcutsRow = new LinearLayout(this);
+        shortcutsCard.addView(shortcutsRow, matchWrap(-dp(2), 0, -dp(2), 0));
+        shortcutsCard.setVisibility(View.GONE);
         return page;
     }
 
@@ -948,8 +1000,16 @@ public class MainActivity extends Activity {
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setPadding(dp(14), dp(8), dp(14), dp(14));
+
+        LinearLayout tips = new LinearLayout(this);
+        tips.addView(chip(R.drawable.ic_mouse, "1 dedo move", Style.ACCENT), weighted(dp(3)));
+        tips.addView(chip(R.drawable.ic_click, "Toque clica", Style.TEAL), weighted(dp(3)));
+        tips.addView(chip(R.drawable.ic_dpad, "2 dedos rolam", Style.ORANGE), weighted(dp(3)));
+        page.addView(tips, matchWrap(-dp(3), 0, -dp(3), dp(8)));
+
         touchpad = new TouchpadView(this);
         touchpad.setSensitivity(sensitivityFromPrefs());
+        touchpad.setElevation(dp(4));
         touchpad.setListener(new TouchpadView.Listener() {
             @Override
             public void onMove(int dx, int dy) {
@@ -973,11 +1033,11 @@ public class MainActivity extends Activity {
         });
         page.addView(touchpad, new LinearLayout.LayoutParams(-1, 0, 1f));
         LinearLayout row = new LinearLayout(this);
-        row.addView(pill(R.drawable.ic_click, "Clique", Style.ripple(Style.rounded(Style.SURFACE2, dp(18))),
+        row.addView(pill(R.drawable.ic_click, "Clique", Style.ripple(Style.gradient(Style.ACCENT, Style.VIOLET, dp(18))),
                 this::click), weighted(dp(4)));
-        row.addView(pill(R.drawable.ic_back, "Voltar", Style.ripple(Style.rounded(Style.SURFACE2, dp(18))),
+        row.addView(pill(R.drawable.ic_back, "Voltar", Style.ripple(Style.gradient(Style.TEAL, Style.TEAL2, dp(18))),
                 () -> sendKey(ProjectorCommands.KEY_BACK)), weighted(dp(4)));
-        row.addView(pill(R.drawable.ic_home, "Início", Style.ripple(Style.gradient(Style.ACCENT, Style.ACCENT2, dp(18))),
+        row.addView(pill(R.drawable.ic_home, "Início", Style.ripple(Style.gradient(Style.VIOLET, Style.PINK, dp(18))),
                 () -> sendKey(ProjectorCommands.KEY_HOME)), weighted(dp(4)));
         page.addView(row, matchWrap(-dp(4), dp(10), -dp(4), 0));
         return page;
@@ -985,10 +1045,17 @@ public class MainActivity extends Activity {
 
     private View buildAppsPage() {
         LinearLayout page = page();
-        LinearLayout card = card(page, "Apps do projetor");
+        LinearLayout card = card(page, "Apps do projetor", R.drawable.ic_apps, Style.ORANGE);
         LinearLayout header = (LinearLayout) card.getChildAt(0);
-        header.addView(roundButton(R.drawable.ic_refresh, 38, Style.ripple(Style.oval(Style.SURFACE2)), Style.MUTED,
-                "Atualizar lista", () -> worker.execute(this::loadApps)));
+        appsCount = text("", 12.5f, 0xFFFFD7B5, true);
+        appsCount.setBackground(Style.tinted(Style.ORANGE, dp(12), dp(1)));
+        appsCount.setPadding(dp(10), dp(3), dp(10), dp(3));
+        appsCount.setVisibility(View.GONE);
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-2, -2);
+        ap.rightMargin = dp(8);
+        header.addView(appsCount, ap);
+        header.addView(roundButton(R.drawable.ic_refresh, 40, Style.ripple(Style.tinted(Style.ORANGE, dp(20), dp(1))),
+                0xFFFFB27A, "Atualizar lista", () -> worker.execute(this::loadApps)));
         appsGrid = new LinearLayout(this);
         appsGrid.setOrientation(LinearLayout.VERTICAL);
         appsGrid.addView(text("Conecte ao projetor para ver os apps.", 14, Style.MUTED, false));
@@ -998,38 +1065,47 @@ public class MainActivity extends Activity {
 
     private void showApps(List<ProjectorCommands.App> apps) {
         appsGrid.removeAllViews();
+        shortcutsRow.removeAllViews();
         if (apps.isEmpty()) {
             appsGrid.addView(text("Nenhum app encontrado. Toque em atualizar.", 14, Style.MUTED, false));
+            appsCount.setVisibility(View.GONE);
+            shortcutsCard.setVisibility(View.GONE);
             return;
         }
+        appsCount.setText(apps.size() == 1 ? "1 app" : apps.size() + " apps");
+        appsCount.setVisibility(View.VISIBLE);
         LinearLayout row = null;
         for (int i = 0; i < apps.size(); i++) {
             if (i % 3 == 0) {
                 row = new LinearLayout(this);
                 appsGrid.addView(row);
             }
-            ProjectorCommands.App app = apps.get(i);
-            row.addView(appTile(app), weighted(dp(2)));
+            row.addView(appTile(apps.get(i), 60), cell(dp(4)));
         }
-        for (int i = apps.size() % 3; i != 0 && i < 3; i++) row.addView(new View(this), weighted(dp(2)));
+        for (int i = apps.size() % 3; i != 0 && i < 3; i++) row.addView(new Space(this), cell(dp(4)));
+
+        int shortcuts = Math.min(4, apps.size());
+        for (int i = 0; i < shortcuts; i++) shortcutsRow.addView(appTile(apps.get(i), 48), cell(dp(3)));
+        for (int i = shortcuts; i < 4; i++) shortcutsRow.addView(new Space(this), cell(dp(3)));
+        shortcutsCard.setVisibility(View.VISIBLE);
     }
 
-    private View appTile(ProjectorCommands.App app) {
+    private View appTile(ProjectorCommands.App app, int badgeDp) {
         Object[] brand = BRANDS.get(app.packageName);
-        int color = brand != null ? (Integer) brand[0] : 0xFF000000 | (app.packageName.hashCode() & 0x7F7F7F);
+        int color = brand != null ? (Integer) brand[0] : 0xFF000000 | (app.packageName.hashCode() & 0x7F7F7F) | 0x303030;
         String mark = brand != null ? (String) brand[1] : app.label.substring(0, 1).toUpperCase();
 
         LinearLayout tile = new LinearLayout(this);
         tile.setOrientation(LinearLayout.VERTICAL);
         tile.setGravity(Gravity.CENTER_HORIZONTAL);
         tile.setPadding(dp(4), dp(10), dp(4), dp(10));
-        tile.setBackground(Style.ripple(Style.rounded(0x00000000, dp(16))));
-        TextView badge = text(mark, 19, 0xFFFFFFFF, true);
+        tile.setBackground(Style.ripple(Style.tinted(color, dp(18), dp(1))));
+        TextView badge = text(mark, badgeDp * 0.32f, 0xFFFFFFFF, true);
         badge.setGravity(Gravity.CENTER);
-        badge.setBackground(Style.gradient(color, darker(color), dp(18)));
-        badge.setElevation(dp(2));
-        tile.addView(badge, new LinearLayout.LayoutParams(dp(58), dp(58)));
-        TextView label = text(app.label, 12.5f, Style.TEXT, false);
+        badge.setBackground(Style.badge(color, dp(badgeDp * 0.3f)));
+        badge.setElevation(dp(3));
+        tile.addView(badge, new LinearLayout.LayoutParams(dp(badgeDp), dp(badgeDp)));
+        TextView label = text(app.label, badgeDp < 56 ? 11.5f : 12.5f, Style.TEXT, false);
         label.setGravity(Gravity.CENTER);
         label.setMaxLines(2);
         label.setEllipsize(TextUtils.TruncateAt.END);
@@ -1047,7 +1123,7 @@ public class MainActivity extends Activity {
     private View buildMorePage() {
         LinearLayout page = page();
 
-        LinearLayout typing = card(page, "Digitar no projetor");
+        LinearLayout typing = card(page, "Digitar no projetor", R.drawable.ic_send, Style.ACCENT);
         LinearLayout inputRow = new LinearLayout(this);
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
         textField = field("Ex.: nome de um filme", InputType.TYPE_CLASS_TEXT);
@@ -1056,17 +1132,17 @@ public class MainActivity extends Activity {
             sendTypedText();
             return true;
         });
-        inputRow.addView(textField, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        inputRow.addView(textField, new LinearLayout.LayoutParams(0, dp(54), 1f));
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-2, -2);
         sp.leftMargin = dp(8);
-        inputRow.addView(roundButton(R.drawable.ic_send, 52,
-                Style.ripple(Style.gradient(Style.ACCENT, Style.ACCENT2, dp(26))), 0xFFFFFFFF, "Enviar texto",
+        inputRow.addView(roundButton(R.drawable.ic_send, 54,
+                Style.ripple(Style.ovalGradient(Style.ACCENT, Style.VIOLET)), 0xFFFFFFFF, "Enviar texto",
                 this::sendTypedText), sp);
         typing.addView(inputRow);
         LinearLayout keys = new LinearLayout(this);
-        keys.addView(pill(R.drawable.ic_backspace, "Apagar", Style.ripple(Style.rounded(Style.SURFACE2, dp(16))),
+        keys.addView(pill(R.drawable.ic_backspace, "Apagar", Style.ripple(Style.tinted(Style.RED, dp(16), dp(1))),
                 () -> sendKey(ProjectorCommands.KEY_DEL)), weighted(dp(4)));
-        keys.addView(pill(R.drawable.ic_enter, "Enter", Style.ripple(Style.rounded(Style.SURFACE2, dp(16))),
+        keys.addView(pill(R.drawable.ic_enter, "Enter", Style.ripple(Style.tinted(Style.GREEN, dp(16), dp(1))),
                 () -> sendKey(ProjectorCommands.KEY_ENTER)), weighted(dp(4)));
         typing.addView(keys, matchWrap(-dp(4), dp(8), -dp(4), 0));
         TextView typingHint = text("Selecione antes um campo de busca no projetor. Acentos são enviados sem acento.",
@@ -1074,13 +1150,13 @@ public class MainActivity extends Activity {
         typingHint.setPadding(dp(2), dp(8), dp(2), 0);
         typing.addView(typingHint);
 
-        LinearLayout proj = card(page, "Projetor");
+        LinearLayout proj = card(page, "Projetor", R.drawable.ic_tune, Style.VIOLET);
         Object[][] items = {
                 {R.drawable.ic_tune, "Ajustes do projetor", Style.ACCENT, (Runnable) () -> send(ProjectorCommands.OPEN_PROJECTOR_SETTINGS)},
-                {R.drawable.ic_settings, "Configurações", Style.ACCENT, (Runnable) () -> send(ProjectorCommands.OPEN_SETTINGS)},
-                {R.drawable.ic_wifi, "Wi-Fi", Style.ACCENT, (Runnable) () -> send(ProjectorCommands.OPEN_WIFI)},
-                {R.drawable.ic_bluetooth, "Bluetooth", Style.ACCENT, (Runnable) () -> send(ProjectorCommands.OPEN_BLUETOOTH)},
-                {R.drawable.ic_moon, "Dormir", Style.ACCENT2, (Runnable) () -> sendKey(ProjectorCommands.KEY_SLEEP)},
+                {R.drawable.ic_settings, "Configurações", Style.VIOLET, (Runnable) () -> send(ProjectorCommands.OPEN_SETTINGS)},
+                {R.drawable.ic_wifi, "Wi-Fi", Style.TEAL, (Runnable) () -> send(ProjectorCommands.OPEN_WIFI)},
+                {R.drawable.ic_bluetooth, "Bluetooth", Style.SKY, (Runnable) () -> send(ProjectorCommands.OPEN_BLUETOOTH)},
+                {R.drawable.ic_moon, "Dormir", Style.INDIGO, (Runnable) () -> sendKey(ProjectorCommands.KEY_SLEEP)},
                 {R.drawable.ic_sun, "Acordar", Style.AMBER, (Runnable) () -> sendKey(ProjectorCommands.KEY_WAKEUP)},
                 {R.drawable.ic_restart, "Reiniciar", Style.RED, (Runnable) this::confirmReboot},
         };
@@ -1091,18 +1167,18 @@ public class MainActivity extends Activity {
                 proj.addView(row);
             }
             row.addView(tile((Integer) items[i][0], (String) items[i][1], (Integer) items[i][2],
-                    (Runnable) items[i][3]), weighted(dp(4)));
+                    (Runnable) items[i][3]), cell(dp(4)));
         }
-        for (int i = items.length % 3; i != 0 && i < 3; i++) row.addView(new View(this), weighted(dp(4)));
+        for (int i = items.length % 3; i != 0 && i < 3; i++) row.addView(new Space(this), cell(dp(4)));
 
-        LinearLayout pad = card(page, "Touchpad");
-        pad.addView(text("Velocidade do cursor", 14, Style.TEXT, false));
+        LinearLayout pad = card(page, "Touchpad", R.drawable.ic_mouse, Style.TEAL);
+        pad.addView(text("Velocidade do cursor", 14, Style.SOFT, false));
         SeekBar speed = new SeekBar(this);
         speed.setMax(8);
         speed.setProgress(prefs.getInt("speed", 3));
-        speed.setProgressTintList(ColorStateList.valueOf(Style.ACCENT));
-        speed.setThumbTintList(ColorStateList.valueOf(0xFFFFFFFF));
-        speed.setProgressBackgroundTintList(ColorStateList.valueOf(0xFF3A4252));
+        speed.setProgressDrawable(Style.track(dp(8)));
+        speed.setThumb(Style.thumb(dp(22), dp(4)));
+        speed.setSplitTrack(false);
         speed.setPadding(dp(18), dp(14), dp(18), dp(6));
         speed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -1121,7 +1197,7 @@ public class MainActivity extends Activity {
         });
         pad.addView(speed);
 
-        LinearLayout conn = card(page, "Conexão");
+        LinearLayout conn = card(page, "Conexão", R.drawable.ic_wifi, Style.TEAL);
         LinearLayout connRow = new LinearLayout(this);
         connRow.setGravity(Gravity.CENTER_VERTICAL);
         hostField = field("IP do projetor", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
@@ -1131,26 +1207,27 @@ public class MainActivity extends Activity {
             reconnect();
             return true;
         });
-        connRow.addView(hostField, new LinearLayout.LayoutParams(0, dp(52), 1f));
-        LinearLayout connect = pill(0, "Conectar", Style.ripple(Style.gradient(Style.ACCENT, Style.ACCENT2, dp(16))),
+        connRow.addView(hostField, new LinearLayout.LayoutParams(0, dp(54), 1f));
+        LinearLayout connect = pill(R.drawable.ic_enter, "Conectar", Style.ripple(Style.gradient(Style.ACCENT, Style.VIOLET, dp(16))),
                 this::reconnect);
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, dp(52));
+        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, dp(54));
         cp.leftMargin = dp(8);
-        connect.setPadding(dp(18), 0, dp(18), 0);
+        connect.setPadding(dp(14), 0, dp(16), 0);
         connRow.addView(connect, cp);
         conn.addView(connRow);
         LinearLayout search = pill(R.drawable.ic_wifi, "Procurar o projetor no Wi-Fi",
-                Style.ripple(Style.rounded(Style.SURFACE2, dp(16))), this::searchNetwork);
+                Style.ripple(Style.gradient(Style.TEAL, Style.ACCENT, dp(16))), this::searchNetwork);
         conn.addView(search, matchWrap(0, dp(10), 0, 0));
         boolean hasIr = infrared() != null;
-        TextView info = text("O app encontra o projetor sozinho quando o celular está no mesmo Wi-Fi. A depuração "
-                + "por rede (ADB) precisa ficar ligada no projetor. Na primeira conexão, aceite o pedido que "
-                + "aparece na tela dele.\n\nLigar e Desligar usam o infravermelho do celular: aponte o celular "
-                + "para o projetor. Infravermelho deste celular: "
-                + (hasIr ? "disponível." : "não encontrado. Use o controle original para ligar e desligar."),
-                12.5f, Style.MUTED, false);
-        info.setPadding(dp(2), dp(10), dp(2), 0);
-        conn.addView(info);
+        conn.addView(infoRow(R.drawable.ic_wifi, Style.TEAL, "Wi-Fi",
+                "O app encontra o projetor sozinho quando o celular está no mesmo Wi-Fi. A depuração por rede (ADB) "
+                        + "precisa ficar ligada no projetor. Na primeira conexão, aceite o pedido que aparece na tela dele."),
+                matchWrap(0, dp(14), 0, 0));
+        conn.addView(infoRow(R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED,
+                hasIr ? "Infravermelho disponível" : "Sem infravermelho",
+                hasIr ? "Ligar e Desligar usam o infravermelho do celular: aponte o celular para o projetor."
+                        : "Este celular não tem emissor infravermelho. Use o controle original para ligar e desligar."),
+                matchWrap(0, dp(12), 0, 0));
         return page;
     }
 
@@ -1170,8 +1247,21 @@ public class MainActivity extends Activity {
     private LinearLayout page() {
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(14), dp(8), dp(14), dp(24));
+        page.setPadding(dp(14), dp(8), dp(14), dp(28));
         return page;
+    }
+
+    private LinearLayout vertical() {
+        LinearLayout l = new LinearLayout(this);
+        l.setOrientation(LinearLayout.VERTICAL);
+        return l;
+    }
+
+    private ImageView icon(int res, int tint) {
+        ImageView i = new ImageView(this);
+        i.setImageResource(res);
+        i.setImageTintList(ColorStateList.valueOf(tint));
+        return i;
     }
 
     private ScrollView scrolling(View content) {
@@ -1182,18 +1272,24 @@ public class MainActivity extends Activity {
         return s;
     }
 
-    /** Rounded card with a title row (index 0) that callers may add views to. */
-    private LinearLayout card(LinearLayout parent, String title) {
+    /** Card with a coloured icon and a title in its first row (index 0), which callers may add views to. */
+    private LinearLayout card(LinearLayout parent, String title, int iconRes, int color) {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
-        c.setBackground(Style.outlined(Style.SURFACE, dp(22), dp(1)));
-        c.setPadding(dp(14), dp(12), dp(14), dp(14));
+        c.setBackground(Style.card(dp(24), dp(1)));
+        c.setElevation(dp(4));
+        c.setPadding(dp(14), dp(12), dp(14), dp(16));
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView t = text(title.toUpperCase(), 12, Style.MUTED, true);
-        t.setLetterSpacing(0.1f);
-        header.addView(t, new LinearLayout.LayoutParams(0, -2, 1f));
-        c.addView(header, matchWrap(dp(2), 0, dp(2), dp(8)));
+        FrameLayout bubble = new FrameLayout(this);
+        bubble.setBackground(Style.ovalGradient(color, Style.darker(color)));
+        bubble.addView(icon(iconRes, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.CENTER));
+        header.addView(bubble, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        TextView t = text(title, 16, Style.TEXT, true);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, -2, 1f);
+        tp.leftMargin = dp(10);
+        header.addView(t, tp);
+        c.addView(header, matchWrap(0, 0, 0, dp(12)));
         parent.addView(c, matchWrap(0, dp(16), 0, 0));
         return c;
     }
@@ -1202,29 +1298,24 @@ public class MainActivity extends Activity {
         FrameLayout b = new FrameLayout(this);
         b.setBackground(background);
         b.setContentDescription(description);
-        b.setElevation(dp(3));
-        ImageView i = new ImageView(this);
-        i.setImageResource(icon);
-        i.setImageTintList(ColorStateList.valueOf(tint));
+        b.setElevation(dp(4));
         int iconSize = Math.round(sizeDp * 0.42f);
-        b.addView(i, new FrameLayout.LayoutParams(dp(iconSize), dp(iconSize), Gravity.CENTER));
-        b.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            action.run();
-        });
+        b.addView(icon(icon, tint), new FrameLayout.LayoutParams(dp(iconSize), dp(iconSize), Gravity.CENTER));
+        onTap(b, action);
         FrameLayout wrap = new FrameLayout(this);
         wrap.addView(b, new FrameLayout.LayoutParams(dp(sizeDp), dp(sizeDp), Gravity.CENTER));
         return wrap;
     }
 
-    private View labeled(View button, String label) {
+    /** Button over its name; the button sits in a box {@code boxDp} tall so names in a row line up. */
+    private View labeled(View button, String label, int boxDp) {
         LinearLayout l = new LinearLayout(this);
         l.setOrientation(LinearLayout.VERTICAL);
         l.setGravity(Gravity.CENTER_HORIZONTAL);
-        l.addView(button);
-        TextView t = text(label, 12, Style.MUTED, false);
+        l.addView(button, new LinearLayout.LayoutParams(-2, dp(boxDp)));
+        TextView t = text(label, 12.5f, Style.SOFT, true);
         t.setGravity(Gravity.CENTER);
-        t.setPadding(0, dp(6), 0, 0);
+        t.setPadding(0, dp(4), 0, 0);
         l.addView(t);
         return l;
     }
@@ -1236,44 +1327,74 @@ public class MainActivity extends Activity {
         p.setMinimumHeight(dp(56));
         p.setPadding(dp(12), dp(14), dp(12), dp(14));
         if (icon != 0) {
-            ImageView i = new ImageView(this);
-            i.setImageResource(icon);
-            i.setImageTintList(ColorStateList.valueOf(0xFFFFFFFF));
             LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(22), dp(22));
             ip.rightMargin = dp(8);
-            p.addView(i, ip);
+            p.addView(icon(icon, 0xFFFFFFFF), ip);
         }
-        p.addView(text(label, 16, 0xFFFFFFFF, true));
-        p.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            action.run();
-        });
+        p.addView(text(label, 15.5f, 0xFFFFFFFF, true));
+        onTap(p, action);
         return p;
     }
 
+    /** Coloured shortcut tile: tinted body, solid icon bubble and a label. */
     private View tile(int icon, String label, int color, Runnable action) {
         LinearLayout t = new LinearLayout(this);
         t.setOrientation(LinearLayout.VERTICAL);
         t.setGravity(Gravity.CENTER);
         t.setPadding(dp(6), dp(14), dp(6), dp(12));
-        t.setBackground(Style.ripple(Style.rounded(Style.SURFACE2, dp(18))));
+        t.setBackground(Style.ripple(Style.tinted(color, dp(18), dp(1))));
         FrameLayout bubble = new FrameLayout(this);
-        bubble.setBackground(Style.oval((color & 0x00FFFFFF) | 0x33000000));
-        ImageView i = new ImageView(this);
-        i.setImageResource(icon);
-        i.setImageTintList(ColorStateList.valueOf(color));
-        bubble.addView(i, new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER));
-        t.addView(bubble, new LinearLayout.LayoutParams(dp(42), dp(42)));
-        TextView l = text(label, 12, Style.TEXT, false);
+        bubble.setBackground(Style.ovalGradient(Style.lighter(color), Style.darker(color)));
+        bubble.setElevation(dp(2));
+        bubble.addView(icon(icon, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER));
+        t.addView(bubble, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        TextView l = text(label, 12.5f, Style.TEXT, true);
         l.setGravity(Gravity.CENTER);
         l.setMaxLines(2);
-        l.setPadding(0, dp(7), 0, 0);
+        l.setPadding(0, dp(8), 0, 0);
         t.addView(l);
-        t.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        onTap(t, action);
+        return t;
+    }
+
+    /** Small coloured label with an icon, used for the touchpad tips. */
+    private View chip(int icon, String label, int color) {
+        LinearLayout c = new LinearLayout(this);
+        c.setGravity(Gravity.CENTER);
+        c.setBackground(Style.tinted(color, dp(14), dp(1)));
+        c.setPadding(dp(6), dp(8), dp(6), dp(8));
+        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(16), dp(16));
+        ip.rightMargin = dp(5);
+        c.addView(icon(icon, Style.lighter(color)), ip);
+        TextView t = text(label, 12, Style.TEXT, true);
+        t.setMaxLines(1);
+        c.addView(t);
+        return c;
+    }
+
+    /** Icon bubble, bold title and explanation, for the information in the Conexão card. */
+    private View infoRow(int icon, int color, String title, String body) {
+        LinearLayout r = new LinearLayout(this);
+        FrameLayout bubble = new FrameLayout(this);
+        bubble.setBackground(Style.tinted(color, dp(18), dp(1)));
+        bubble.addView(icon(icon, Style.lighter(color)), new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.CENTER));
+        r.addView(bubble, new LinearLayout.LayoutParams(dp(36), dp(36)));
+        LinearLayout t = vertical();
+        t.addView(text(title, 14, Style.TEXT, true));
+        TextView b = text(body, 12.5f, Style.MUTED, false);
+        b.setLineSpacing(dp(1.5f), 1f);
+        t.addView(b);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
+        lp.leftMargin = dp(10);
+        r.addView(t, lp);
+        return r;
+    }
+
+    private void onTap(View v, Runnable action) {
+        v.setOnClickListener(view -> {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             action.run();
         });
-        return t;
     }
 
     private EditText field(String hint, int inputType) {
@@ -1284,7 +1405,9 @@ public class MainActivity extends Activity {
         e.setTextColor(Style.TEXT);
         e.setHintTextColor(Style.MUTED);
         e.setTextSize(16);
-        e.setBackground(Style.outlined(Style.SURFACE2, dp(16), dp(1)));
+        GradientDrawable bg = Style.rounded(0xFF0E1322, dp(16));
+        bg.setStroke(dp(1.5f), 0x553D8BFF);
+        e.setBackground(bg);
         e.setPadding(dp(16), 0, dp(16), 0);
         return e;
     }
@@ -1304,17 +1427,20 @@ public class MainActivity extends Activity {
         return lp;
     }
 
+    /**
+     * Grid cell: shares the row's width and takes the height of the tallest cell. Rows are completed
+     * with {@link Space}, which measures to nothing, so a short last row keeps its height.
+     */
+    private LinearLayout.LayoutParams cell(int margin) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        lp.setMargins(margin, margin, margin, margin);
+        return lp;
+    }
+
     private LinearLayout.LayoutParams matchWrap(int left, int top, int right, int bottom) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.setMargins(left, top, right, bottom);
         return lp;
-    }
-
-    private static int darker(int color) {
-        int r = (int) (((color >> 16) & 0xff) * 0.7f);
-        int g = (int) (((color >> 8) & 0xff) * 0.7f);
-        int b = (int) ((color & 0xff) * 0.7f);
-        return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
     private int dp(float v) {

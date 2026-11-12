@@ -10,8 +10,8 @@ $jbr = "C:\Program Files\Android\Android Studio\jbr"
 $env:JAVA_HOME = $jbr
 $env:PATH = "$jbr\bin;$env:PATH"
 
-$versionCode = 4
-$versionName = "4.0"
+$versionCode = 5
+$versionName = "4.1"
 $out = if ($DebugBuild) { "$root\build-debug" } else { "$root\build" }
 $debugFlag = @()
 if ($DebugBuild) { $debugFlag = @("--debug-mode") }
