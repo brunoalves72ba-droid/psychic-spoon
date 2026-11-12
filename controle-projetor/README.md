@@ -1,55 +1,46 @@
-# Controle IR: controle do projetor HY300 pelo infravermelho do celular
+# Controle Projetor: controle do projetor HY300 pelo celular
 
-App Android que funciona como o controle remoto original do projetor HY300. Cada botão manda pelo emissor infravermelho do celular o mesmo sinal do controle de verdade. Não usa Wi-Fi nem a depuração USB/ADB do projetor.
+App Android que controla o projetor HY300 pelo Wi-Fi, usando a depuração por rede (ADB) do projetor, e que liga e desliga o projetor pelo infravermelho do celular.
 
-A versão 2.0, que controlava o projetor pelo ADB via Wi-Fi, fica no histórico do Git (commit "Controle Projetor 2.0 (ADB)").
+- **Controle:** setas, OK, Voltar, Início, Menu, play/pausa, voltar e avançar, volume com barra e Sem som.
+- **Touchpad:** move o cursor, clica e rola a tela do projetor.
+- **Apps:** lista os apps instalados no projetor e abre cada um com um toque.
+- **Mais:** digitar texto no projetor, telas de ajustes, Wi-Fi e Bluetooth, Dormir, Acordar e Reiniciar. Também tem o IP do projetor e o botão **Procurar o projetor no Wi-Fi**.
+- **Ligar e Desligar:** pelo infravermelho do celular, com o mesmo sinal do botão de energia do controle original.
+
+## Como o app acha o projetor
+
+O app não depende de IP fixo:
+
+1. Ao abrir o app, ou quando o celular entra num Wi-Fi, ele tenta o último IP em que achou o projetor.
+2. Se o projetor não responder nesse IP, o app procura na rede do celular. Ele testa os endereços da faixa (até 254) na porta 5555 e fica com o primeiro que responde como ADB. A busca leva cerca de 2 a 3 segundos e não abre pedido nenhum na tela do projetor.
+3. Ele se conecta, guarda o novo IP e carrega o volume e a lista de apps.
+
+O botão **Procurar o projetor no Wi-Fi**, na aba Mais, faz essa busca na hora. O campo de IP continua lá para digitar o endereço à mão.
+
+Para funcionar, o projetor precisa estar com a **depuração por rede (ADB)** ligada e no mesmo Wi-Fi que o celular. Na primeira conexão, o projetor pergunta se permite a depuração. Marque "Sempre permitir" e confirme com o controle.
+
+## Ligar e Desligar pelo infravermelho
+
+Os dois botões enviam o botão de energia do controle original: protocolo NEC, portadora de 38 kHz, endereço `0x00`, comando `0x14`. O projetor lista esse código como o primeiro dos que o acordam (device tree, `cir_param`). Também tem a tabela `customer_ir_ff00.kl`, em que o código 20 (`0x14`) é POWER. A captura do controle está em [irplus-codes, issue 666](https://github.com/irplus-remote/irplus-codes.github.io/issues/666).
+
+- **Ligar:** se o app já está conectado, avisa que o projetor está ligado. Se não, envia o sinal e espera o projetor voltar ao Wi-Fi para reconectar sozinho.
+- **Desligar:** o projetor mostra o próprio menu de energia. Escolha a opção de desligar com as setas e OK; o app abre a aba Controle para isso. Se o app não estiver conectado, ele pergunta antes de enviar, porque o mesmo sinal ligaria um projetor desligado.
+
+Aponte a ponta de cima do celular, onde fica o emissor, para a frente do projetor.
 
 ## Instalar
 
-1. Copie `build/ControleIR.apk` para o celular e abra o arquivo. Se o Android pedir, permita instalar apps dessa origem.
-2. O app aparece como **Controle IR**. Ele é um app separado do antigo "Controle Projetor", que pode ser desinstalado.
-3. Aponte a ponta de cima do celular, onde fica o emissor, para a frente do projetor.
+Abra `build/ControleProjetor.apk` no celular.
 
-O celular precisa ter emissor infravermelho, como muitos Xiaomi, Redmi e Poco. Se não tiver, o app avisa.
-
-## Botões
-
-| Aba | Botões |
-|---|---|
-| Topo | Ligar / Desligar. Com o projetor ligado, ele abre o menu de desligar do próprio projetor. |
-| Controle | Voltar, Início, Opções, direcional com OK (as setas repetem se você segurar), volume − e + (também repetem), Sem som |
-| Mouse | Liga ou desliga a seta na tela do projetor. Com a seta ligada, o direcional a move e o botão do meio clica. |
-| Mais | Espelhar (Android, Miracast) e AirPlay (iPhone) |
-
-## Códigos
-
-Protocolo NEC, portadora de 38 kHz, endereço `0x00`. Os códigos foram capturados do controle original do HY300 por outra pessoa e publicados em [irplus-codes, issue 666](https://github.com/irplus-remote/irplus-codes.github.io/issues/666). O próprio projetor lista o endereço `0x00` com o comando `0x14` como primeiro código de ligar (device tree, `cir_param`). Ele também tem a tabela `customer_ir_ff00.kl`, em que o código 20 (`0x14`) é POWER.
-
-| Botão | Comando |
-|---|---|
-| Ligar/Desligar | `0x14` |
-| Sem som | `0x01` |
-| Mouse | `0x82` |
-| Cima / Baixo / Esquerda / Direita | `0x03` / `0x02` / `0x0E` / `0x1A` |
-| OK | `0x07` |
-| Voltar | `0x5C` |
-| Opções | `0x13` |
-| Início | `0x48` |
-| Volume − / + | `0x58` / `0x0B` |
-| Espelhar / AirPlay | `0x98` / `0x93` |
-
-Na captura, os códigos `0x98` e `0x93` vieram sem nome. Eles aparecem na mesma posição dos botões Miracast e AirPlay no arquivo do controle publicado junto, por isso recebem esses nomes aqui.
+- Ele tem o mesmo pacote (`dev.projetor.controle.ir`) e a mesma assinatura da versão 3.0 ("Controle IR"), então instala por cima dela.
+- A versão 2.0, feita no PC, tem outra assinatura. Desinstale-a para não ficar com dois "Controle Projetor".
 
 ## Compilar
 
-Não usa Gradle. No Ubuntu ou Debian:
+- **Windows com Android Studio:** `build.ps1`, como na versão 2.0.
+- **Linux sem o SDK do Google:** `./build.sh`. Os pacotes necessários estão listados no início do script. Na primeira vez, ele baixa do Maven Central o android.jar completo (Robolectric android-all) e o Retrolambda, que converte as lambdas para o `dalvik-exchange`.
 
-```bash
-sudo apt-get install aapt zipalign apksigner dalvik-exchange android-sdk-platform-23 openjdk-17-jdk-headless
-./build.sh test   # confere os sinais gerados com os capturados do controle original
-./build.sh        # gera build/ControleIR.apk
-```
+`./build.sh test` testa o código infravermelho contra os 15 botões capturados do controle e a busca na rede com projetores falsos.
 
-A chave de assinatura (`signing/controle-ir.jks`) é criada na primeira compilação e não vai para o Git. Um APK compilado em outro computador sai com outra chave. Nesse caso, desinstale o Controle IR antes de instalar a versão nova.
-
-O código não usa lambdas, porque o `dalvik-exchange` (dx) não converte lambdas do Java 8.
+A chave de assinatura (`signing/controle-ir.jks`) não vai para o Git. Um APK assinado com outra chave não instala por cima. Nesse caso, desinstale a versão anterior antes.
