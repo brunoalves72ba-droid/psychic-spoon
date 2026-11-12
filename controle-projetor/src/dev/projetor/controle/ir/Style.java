@@ -1,4 +1,4 @@
-package dev.projetor.controle;
+package dev.projetor.controle.ir;
 
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;

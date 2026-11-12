@@ -1,4 +1,4 @@
-package dev.projetor.controle;
+package dev.projetor.controle.ir;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -19,7 +19,8 @@ import android.view.View;
 public class DpadView extends View {
 
     public interface Listener {
-        void onKey(int keycode);
+        /** Receives one of the {@link IrRemote} commands. */
+        void onKey(int command);
     }
 
     private static final int NONE = -1;
@@ -28,9 +29,8 @@ public class DpadView extends View {
     private static final int RIGHT = 2;
     private static final int DOWN = 3;
     private static final int LEFT = 4;
-    private static final int[] KEYCODES = {
-            ProjectorCommands.KEY_CENTER, ProjectorCommands.KEY_UP, ProjectorCommands.KEY_RIGHT,
-            ProjectorCommands.KEY_DOWN, ProjectorCommands.KEY_LEFT};
+    private static final int[] COMMANDS = {
+            IrRemote.OK, IrRemote.UP, IrRemote.RIGHT, IrRemote.DOWN, IrRemote.LEFT};
 
     private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ringStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -46,6 +46,7 @@ public class DpadView extends View {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final float density;
     private Listener listener;
+    private String centerLabel = "OK";
     private int pressed = NONE;
     private float cx;
     private float cy;
@@ -88,6 +89,16 @@ public class DpadView extends View {
         this.listener = listener;
     }
 
+    public void setCenterLabel(String text) {
+        centerLabel = text;
+        updateLabelSize();
+        invalidate();
+    }
+
+    private void updateLabelSize() {
+        label.setTextSize(innerRadius * (centerLabel.length() > 2 ? 0.32f : 0.48f));
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int width = MeasureSpec.getSize(widthMeasureSpec);
@@ -107,7 +118,7 @@ public class DpadView extends View {
                 0xFF2B3342, 0xFF141820, Shader.TileMode.CLAMP));
         center.setShader(new LinearGradient(cx - innerRadius, cy - innerRadius, cx + innerRadius,
                 cy + innerRadius, Style.ACCENT, Style.ACCENT2, Shader.TileMode.CLAMP));
-        label.setTextSize(innerRadius * 0.48f);
+        updateLabelSize();
     }
 
     @Override
@@ -149,7 +160,7 @@ public class DpadView extends View {
 
         canvas.drawCircle(cx, cy, innerRadius, center);
         if (pressed == CENTER) canvas.drawCircle(cx, cy, innerRadius, centerPressed);
-        canvas.drawText("OK", cx, cy - (label.descent() + label.ascent()) / 2f, label);
+        canvas.drawText(centerLabel, cx, cy - (label.descent() + label.ascent()) / 2f, label);
     }
 
     @Override
@@ -189,6 +200,6 @@ public class DpadView extends View {
     }
 
     private void fire(int zone) {
-        if (listener != null) listener.onKey(KEYCODES[zone]);
+        if (listener != null) listener.onKey(COMMANDS[zone]);
     }
 }
