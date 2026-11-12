@@ -1,4 +1,6 @@
 # Builds build\ControleProjetor.apk with the Android SDK tools only (no Gradle).
+# Does not bundle the receiver app (../receptor-projetor); build.sh does. Without it, the
+# "Instalar o receptor" button fails, the rest works.
 # -DebugBuild marks the APK debuggable (lets `adb shell run-as` reach the app's files for testing).
 param([switch]$DebugBuild)
 $ErrorActionPreference = "Stop"
@@ -10,8 +12,8 @@ $jbr = "C:\Program Files\Android\Android Studio\jbr"
 $env:JAVA_HOME = $jbr
 $env:PATH = "$jbr\bin;$env:PATH"
 
-$versionCode = 5
-$versionName = "4.1"
+$versionCode = 6
+$versionName = "5.0"
 $out = if ($DebugBuild) { "$root\build-debug" } else { "$root\build" }
 $debugFlag = @()
 if ($DebugBuild) { $debugFlag = @("--debug-mode") }

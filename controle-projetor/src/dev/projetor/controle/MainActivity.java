@@ -37,15 +37,19 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.Inet4Address;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
 import java.security.KeyPair;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,8 +103,18 @@ public class MainActivity extends Activity {
     private volatile long lastFailure;
     private volatile long lastInjectorFailure;
     private volatile long lastScan;
+    /** How the app reaches the projector: ADB (debugging on) or the receiver app (debugging off). */
+    private static final int MODE_ADB = 1;
+    private static final int MODE_RECEIVER = 2;
+    private volatile int mode;
+    private final ReceiverClient receiver = new ReceiverClient();
+    /** Address of a receiver that answered but does not know this phone yet. */
+    private volatile String pairingHost;
+    private boolean pairingAsked;
+    private AlertDialog pairDialog;
     private volatile String scanMessage;
     private ConnectivityManager.NetworkCallback wifiCallback;
+    private volatile String menuHint;
     private volatile int volume = -1;
     private volatile int maxVolume = 20;
     private volatile int volumeBeforeMute = 5;
@@ -179,6 +193,7 @@ public class MainActivity extends Activity {
         }
         worker.execute(() -> {
             if (client != null) client.close();
+            receiver.close();
         });
         inputWorker.execute(() -> {
             if (injector != null) injector.close();
@@ -190,8 +205,10 @@ public class MainActivity extends Activity {
     // ---------------------------------------------------------------- connection (worker thread)
 
     private boolean ensureConnected() {
-        if (client != null && client.isConnected()) return true;
+        if (mode == MODE_ADB && client != null && client.isConnected()) return true;
+        if (mode == MODE_RECEIVER && receiver.isConnected()) return true;
         connected = false;
+        mode = 0;
         if (SystemClock.elapsedRealtime() - lastFailure < 3000) return false;
         try {
             if (client == null) {
@@ -210,16 +227,26 @@ public class MainActivity extends Activity {
         if (!TextUtils.isEmpty(saved)) {
             error = tryConnect(saved);
             if (error == null) return true;
+            // ADB refused: debugging is off, but the receiver app may be there. Skip when nothing answered.
+            boolean unreachable = error instanceof SocketTimeoutException || error instanceof NoRouteToHostException;
+            if (!unreachable && tryReceiver(saved)) return true;
         }
         // The last address did not answer (or there is none yet): look for the projector on this Wi-Fi.
-        String found = discover();
-        if (found != null && !found.equals(saved)) {
-            error = tryConnect(found);
-            if (error == null) return true;
+        LanScanner.Result found = discover();
+        if (found != null) {
+            for (String h : found.adb) {
+                if (h.equals(saved)) continue;
+                error = tryConnect(h);
+                if (error == null) return true;
+            }
+            for (String h : found.receivers) {
+                if (tryReceiver(h)) return true;
+            }
         }
         lastFailure = SystemClock.elapsedRealtime();
         if (waking) setStatus("Ligando o projetor… aguarde", Style.AMBER);
-        else if (found == null && scanMessage != null) setStatus(scanMessage, Style.RED);
+        else if (pairingHost != null) setStatus("Receptor encontrado: digite o código que aparece no projetor", Style.AMBER);
+        else if ((found == null || found.isEmpty()) && scanMessage != null) setStatus(scanMessage, Style.RED);
         else if (error != null) setStatus(describe(error), Style.RED);
         return false;
     }
@@ -234,6 +261,7 @@ public class MainActivity extends Activity {
             return e;
         }
         connected = true;
+        mode = MODE_ADB;
         waking = false;
         if (!target.equals(host)) {
             host = target;
@@ -253,10 +281,11 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Scans the phone's Wi-Fi for a device with ADB over the network (port 5555) and returns the
-     * first one, or null. Sets {@link #scanMessage} when nothing is found.
+     * Scans the phone's Wi-Fi for the projector, by ADB over the network (port 5555) or by the
+     * receiver app (port 7790). Returns null when it is too soon to scan again; sets
+     * {@link #scanMessage} when nothing is found.
      */
-    private String discover() {
+    private LanScanner.Result discover() {
         if (SystemClock.elapsedRealtime() - lastScan < SCAN_INTERVAL_MS) return null;
         lastScan = SystemClock.elapsedRealtime();
         int[] net = wifiAddress();
@@ -265,14 +294,199 @@ public class MainActivity extends Activity {
             return null;
         }
         if (!waking) setStatus("Procurando o projetor no Wi-Fi…", Style.MUTED);
-        List<String> found = LanScanner.findAdb(LanScanner.hosts(net[0], net[1]), PORT, 400, 48);
+        LanScanner.Result found = LanScanner.scan(LanScanner.hosts(net[0], net[1]), PORT, ReceiverClient.PORT, 400, 64);
         lastScan = SystemClock.elapsedRealtime();
         if (found.isEmpty()) {
-            scanMessage = "Projetor não encontrado neste Wi-Fi. Ele está ligado e com a depuração por rede ativa?";
-            return null;
+            scanMessage = "Projetor não encontrado neste Wi-Fi. Ele está ligado, com a depuração por rede ou o receptor?";
+            return found;
         }
         scanMessage = null;
-        return found.get(0);
+        return found;
+    }
+
+    /** Connects to the receiver app; true when it knows this phone. Asks for the pairing code otherwise. */
+    private boolean tryReceiver(String target) {
+        try {
+            receiver.connect(target, ReceiverClient.PORT, 2500);
+        } catch (IOException e) {
+            return false;
+        }
+        try {
+            String token = prefs.getString("receptor_" + receiver.id(), null);
+            if (token == null || !receiver.auth(token)) {
+                pairingHost = target;
+                if (!pairingAsked) {
+                    pairingAsked = true;
+                    runOnUiThread(this::askPairing);
+                }
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        receiverReady(target);
+        return true;
+    }
+
+    private void receiverReady(String target) {
+        pairingHost = null;
+        mode = MODE_RECEIVER;
+        connected = true;
+        waking = false;
+        if (!target.equals(host)) {
+            host = target;
+            prefs.edit().putString("host", target).apply();
+            runOnUiThread(() -> {
+                if (hostField != null) hostField.setText(target);
+            });
+        }
+        setStatus("Conectado · " + target + " · receptor", Style.GREEN);
+        if (!loaded) {
+            loaded = true;
+            loadVolume();
+            loadApps();
+        }
+    }
+
+    /** Asks for the 4-digit code the receiver shows on the projector. */
+    private void askPairing() {
+        if (pairDialog != null && pairDialog.isShowing()) return;
+        String target = pairingHost != null ? pairingHost : host;
+        if (TextUtils.isEmpty(target)) {
+            Toast.makeText(this, "Procure o projetor no Wi-Fi primeiro", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        EditText code = field("Código", InputType.TYPE_CLASS_NUMBER);
+        code.setGravity(Gravity.CENTER);
+        code.setTextSize(26);
+        code.setLetterSpacing(0.3f);
+        FrameLayout box = new FrameLayout(this);
+        box.setPadding(dp(22), dp(10), dp(22), 0);
+        box.addView(code, new FrameLayout.LayoutParams(-1, dp(60)));
+        pairDialog = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle("Parear com o projetor")
+                .setMessage("Digite o código de 4 números que apareceu na tela do projetor.")
+                .setView(box)
+                .setNegativeButton("Agora não", null)
+                .setPositiveButton("Parear", (d, w) -> finishPairing(code.getText().toString()))
+                .show();
+        worker.execute(() -> {
+            try {
+                if (!receiver.isConnected() || !target.equals(receiver.host())) {
+                    receiver.connect(target, ReceiverClient.PORT, 2500);
+                }
+                receiver.startPairing();
+            } catch (IOException e) {
+                setStatus("Receptor não encontrado em " + target, Style.RED);
+                runOnUiThread(() -> {
+                    if (pairDialog != null) pairDialog.dismiss();
+                });
+            }
+        });
+    }
+
+    private void finishPairing(String code) {
+        worker.execute(() -> {
+            try {
+                String token = receiver.finishPairing(code);
+                if (token == null) {
+                    setStatus("Código errado. Toque em \"Parear com o receptor\" na aba Mais.", Style.RED);
+                    return;
+                }
+                prefs.edit().putString("receptor_" + receiver.id(), token).apply();
+                if (mode == MODE_ADB) setStatus("Receptor pareado · a depuração já pode ser desligada", Style.GREEN);
+                else receiverReady(receiver.host());
+            } catch (IOException e) {
+                setStatus("Falha ao parear: " + e.getMessage(), Style.RED);
+            }
+        });
+    }
+
+    private void pairManually() {
+        if (pairingHost == null) pairingHost = host;
+        askPairing();
+    }
+
+    /**
+     * Installs the receiver on the projector through ADB, turns it on in the accessibility settings
+     * and pairs with it, reading the code the receiver writes for this purpose. Needs debugging on.
+     */
+    private void installReceiver() {
+        if (mode != MODE_ADB) {
+            new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                    .setTitle("Precisa da depuração ligada")
+                    .setMessage("Para o app instalar o receptor, a depuração por rede precisa estar ligada e o app "
+                            + "conectado ao projetor. Outra forma: copie o arquivo ReceptorControle.apk para um pen "
+                            + "drive, instale no projetor e ative \"Receptor do Controle\" em Configurações > "
+                            + "Acessibilidade.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            return;
+        }
+        setStatus("Instalando o receptor no projetor…", Style.AMBER);
+        worker.execute(() -> {
+            String tmp = "/data/local/tmp/receptor";
+            try {
+                byte[] apk = readAsset("receptor.apk");
+                String b64 = Base64.getEncoder().encodeToString(apk);
+                client.shell("rm -f " + tmp + ".b64 " + tmp + ".apk");
+                for (int i = 0; i < b64.length(); i += 3000) {
+                    client.shell("echo -n " + b64.substring(i, Math.min(b64.length(), i + 3000)) + " >> " + tmp + ".b64");
+                }
+                client.shell("base64 -d " + tmp + ".b64 > " + tmp + ".apk");
+                String size = client.shell("stat -c %s " + tmp + ".apk").trim();
+                if (!size.equals(String.valueOf(apk.length))) throw new IOException("cópia incompleta");
+                String out = client.shell("pm install -r " + tmp + ".apk");
+                client.shell("rm -f " + tmp + ".b64 " + tmp + ".apk");
+                if (!out.contains("Success")) throw new IOException(out.trim());
+
+                String service = "dev.projetor.receptor/dev.projetor.receptor.ReceptorService";
+                String enabled = client.shell("settings get secure enabled_accessibility_services").trim();
+                if (!enabled.contains(service)) {
+                    String list = enabled.isEmpty() || enabled.equals("null") ? service : enabled + ":" + service;
+                    client.shell("settings put secure enabled_accessibility_services " + list);
+                }
+                client.shell("settings put secure accessibility_enabled 1");
+
+                setStatus("Receptor instalado · pareando…", Style.AMBER);
+                ReceiverClient rc = new ReceiverClient();
+                IOException last = null;
+                for (int i = 0; i < 30; i++) {
+                    try {
+                        rc.connect(host, ReceiverClient.PORT, 2000);
+                        last = null;
+                        break;
+                    } catch (IOException e) {
+                        last = e;
+                        SystemClock.sleep(500);
+                    }
+                }
+                if (last != null) throw new IOException("o receptor não respondeu");
+                rc.startPairing();
+                String code = "";
+                for (int i = 0; i < 15 && code.length() != 4; i++) {
+                    SystemClock.sleep(300);
+                    code = client.shell("cat /sdcard/Android/data/dev.projetor.receptor/files/codigo.txt 2>/dev/null").trim();
+                }
+                String token = rc.finishPairing(code);
+                rc.close();
+                if (token == null) throw new IOException("o pareamento não deu certo");
+                prefs.edit().putString("receptor_" + rc.id(), token).apply();
+                setStatus("Receptor pronto · a depuração já pode ser desligada", Style.GREEN);
+            } catch (IOException | RuntimeException e) {
+                setStatus("Falha ao instalar o receptor: " + e.getMessage(), Style.RED);
+            }
+        });
+    }
+
+    private byte[] readAsset(String name) throws IOException {
+        try (InputStream in = getAssets().open(name)) {
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            return out.toByteArray();
+        }
     }
 
     /** {IPv4 address, prefix length} of the phone on Wi-Fi (or Ethernet), or null when it has none. */
@@ -316,7 +530,9 @@ public class MainActivity extends Activity {
                 onWorker(() -> {
                     if (wifiAddress() != null) return;
                     if (client != null) client.close();
+                    receiver.close();
                     connected = false;
+                    mode = 0;
                     setStatus("Sem Wi-Fi · conecte o celular ao Wi-Fi do projetor", Style.RED);
                 });
             }
@@ -342,16 +558,20 @@ public class MainActivity extends Activity {
         setStatus("Procurando o projetor no Wi-Fi…", Style.MUTED);
         worker.execute(() -> {
             lastScan = 0;
-            String found = discover();
-            if (found == null) {
+            LanScanner.Result result = discover();
+            if (result == null || result.isEmpty()) {
                 setStatus(scanMessage != null ? scanMessage : "Projetor não encontrado", Style.RED);
                 return;
             }
-            if (found.equals(host) && client != null && client.isConnected()) {
-                setStatus("Conectado · " + found, Style.GREEN);
+            String found = !result.adb.isEmpty() ? result.adb.get(0) : result.receivers.get(0);
+            if (found.equals(host) && connected) {
+                setStatus("Conectado · " + found + (mode == MODE_RECEIVER ? " · receptor" : ""), Style.GREEN);
                 return;
             }
             if (client != null) client.close();
+            receiver.close();
+            mode = 0;
+            pairingAsked = false;
             connected = false;
             loaded = false;
             host = found;
@@ -377,7 +597,7 @@ public class MainActivity extends Activity {
 
     private String runShell(String command) {
         for (int attempt = 0; attempt < 2; attempt++) {
-            if (!ensureConnected()) return null;
+            if (!ensureConnected() || mode != MODE_ADB) return null;
             try {
                 return client.shell(command);
             } catch (IOException e) {
@@ -398,6 +618,9 @@ public class MainActivity extends Activity {
         prefs.edit().putString("host", typed).apply();
         worker.execute(() -> {
             if (client != null) client.close();
+            receiver.close();
+            mode = 0;
+            pairingAsked = false;
             loaded = false;
             lastFailure = 0;
             ensureConnected();
@@ -433,6 +656,10 @@ public class MainActivity extends Activity {
 
     /** Keys go straight into the remote's input device when possible, else through `input keyevent`. */
     private void sendKey(int keycode) {
+        if (mode == MODE_RECEIVER) {
+            receiverKey(keycode);
+            return;
+        }
         if (!InputInjector.supportsKey(keycode)) {
             send(ProjectorCommands.key(keycode));
             return;
@@ -448,6 +675,84 @@ public class MainActivity extends Activity {
             }
             send(ProjectorCommands.key(keycode));
         });
+    }
+
+    /**
+     * Without debugging, keys go to the receiver. Keys it cannot do (Menu, or arrows when nothing on
+     * screen has focus) and, if chosen in Mais, all arrows go by infrared like the original remote.
+     */
+    private void receiverKey(int keycode) {
+        String name = keyName(keycode);
+        int ir = irCode(keycode);
+        boolean arrow = keycode == ProjectorCommands.KEY_UP || keycode == ProjectorCommands.KEY_DOWN
+                || keycode == ProjectorCommands.KEY_LEFT || keycode == ProjectorCommands.KEY_RIGHT
+                || keycode == ProjectorCommands.KEY_CENTER;
+        inputWorker.execute(() -> {
+            ConsumerIrManager emitter = infrared();
+            if (arrow && emitter != null && prefs.getBoolean("setas_ir", false)) {
+                transmitIr(emitter, ir);
+                return;
+            }
+            String reply = null;
+            if (name != null && receiver.isConnected()) {
+                try {
+                    reply = receiver.request("KEY " + name);
+                } catch (IOException e) {
+                    connected = false;
+                    onWorker(this::ensureConnected);
+                }
+            }
+            if (!"OK".equals(reply) && ir >= 0 && emitter != null) transmitIr(emitter, ir);
+        });
+    }
+
+    private void transmitIr(ConsumerIrManager emitter, int command) {
+        try {
+            emitter.transmit(IrCodes.CARRIER_HZ, IrCodes.necPattern(IrCodes.ADDRESS, command));
+        } catch (RuntimeException e) {
+            setStatus("Falha ao enviar infravermelho: " + e.getMessage(), Style.RED);
+        }
+    }
+
+    private static String keyName(int keycode) {
+        switch (keycode) {
+            case ProjectorCommands.KEY_UP: return "UP";
+            case ProjectorCommands.KEY_DOWN: return "DOWN";
+            case ProjectorCommands.KEY_LEFT: return "LEFT";
+            case ProjectorCommands.KEY_RIGHT: return "RIGHT";
+            case ProjectorCommands.KEY_CENTER: return "CENTER";
+            case ProjectorCommands.KEY_BACK: return "BACK";
+            case ProjectorCommands.KEY_HOME: return "HOME";
+            case ProjectorCommands.KEY_MENU: return "MENU";
+            case ProjectorCommands.KEY_PLAY_PAUSE: return "PLAY_PAUSE";
+            case ProjectorCommands.KEY_REWIND: return "REWIND";
+            case ProjectorCommands.KEY_FAST_FORWARD: return "FAST_FORWARD";
+            case ProjectorCommands.KEY_VOLUME_UP: return "VOLUME_UP";
+            case ProjectorCommands.KEY_VOLUME_DOWN: return "VOLUME_DOWN";
+            case ProjectorCommands.KEY_DEL: return "DEL";
+            case ProjectorCommands.KEY_ENTER: return "ENTER";
+            case ProjectorCommands.KEY_SLEEP: return "SLEEP";
+            case ProjectorCommands.KEY_WAKEUP: return "WAKEUP";
+            default: return null;
+        }
+    }
+
+    /** The original remote's button for a key, or -1. Wake-up is its power button. */
+    private static int irCode(int keycode) {
+        switch (keycode) {
+            case ProjectorCommands.KEY_UP: return IrCodes.UP;
+            case ProjectorCommands.KEY_DOWN: return IrCodes.DOWN;
+            case ProjectorCommands.KEY_LEFT: return IrCodes.LEFT;
+            case ProjectorCommands.KEY_RIGHT: return IrCodes.RIGHT;
+            case ProjectorCommands.KEY_CENTER: return IrCodes.OK;
+            case ProjectorCommands.KEY_BACK: return IrCodes.BACK;
+            case ProjectorCommands.KEY_HOME: return IrCodes.HOME;
+            case ProjectorCommands.KEY_MENU: return IrCodes.OPTIONS;
+            case ProjectorCommands.KEY_VOLUME_UP: return IrCodes.VOLUME_UP;
+            case ProjectorCommands.KEY_VOLUME_DOWN: return IrCodes.VOLUME_DOWN;
+            case ProjectorCommands.KEY_WAKEUP: return IrCodes.POWER;
+            default: return -1;
+        }
     }
 
     private void queueInput(int dx, int dy, int sx, int sy, boolean scrollEnd) {
@@ -483,6 +788,17 @@ public class MainActivity extends Activity {
                     flushScheduled = false;
                     return;
                 }
+            }
+            if (mode == MODE_RECEIVER) {
+                try {
+                    if (dx != 0 || dy != 0) receiver.request("MOVE " + dx + " " + dy);
+                    if (sx != 0 || sy != 0) receiver.request("SCROLL " + sx + " " + sy);
+                    if (end) receiver.request("SCROLL_END");
+                } catch (IOException e) {
+                    connected = false;
+                    onWorker(this::ensureConnected);
+                }
+                continue;
             }
             if (!ensureInjector()) {
                 touching = false;
@@ -549,6 +865,15 @@ public class MainActivity extends Activity {
 
     private void click() {
         inputWorker.execute(() -> {
+            if (mode == MODE_RECEIVER) {
+                try {
+                    receiver.request("CLICK");
+                } catch (IOException e) {
+                    connected = false;
+                    onWorker(this::ensureConnected);
+                }
+                return;
+            }
             if (!ensureInjector()) return;
             try {
                 injector.click();
@@ -565,9 +890,15 @@ public class MainActivity extends Activity {
         worker.execute(() -> {
             boolean on = false;
             AdbClient c = client;
-            if (c != null && c.isConnected()) {
+            if (mode == MODE_ADB && c != null && c.isConnected()) {
                 try {
                     on = c.shell("echo ok").trim().equals("ok");
+                } catch (IOException e) {
+                    connected = false;
+                }
+            } else if (mode == MODE_RECEIVER && receiver.isConnected()) {
+                try {
+                    on = receiver.request("PING").equals("OK");
                 } catch (IOException e) {
                     connected = false;
                 }
@@ -640,7 +971,9 @@ public class MainActivity extends Activity {
                 });
             } else {
                 waking = false;
-                setStatus("No menu do projetor, escolha a opção de desligar com as setas e OK", Style.AMBER);
+                String hint = menuHint != null ? menuHint : "No menu do projetor, escolha a opção de desligar com as setas e OK";
+                menuHint = null;
+                setStatus(hint, Style.AMBER);
                 runOnUiThread(() -> {
                     handler.removeCallbacks(wakePoll);
                     selectTab(0);
@@ -667,6 +1000,12 @@ public class MainActivity extends Activity {
     };
 
     private void confirmReboot() {
+        if (mode == MODE_RECEIVER) {
+            if (!checkInfrared("reiniciar")) return;
+            menuHint = "No menu do projetor, escolha Reiniciar com as setas e OK";
+            sendPower(false);
+            return;
+        }
         new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
                 .setTitle("Reiniciar o projetor?")
                 .setMessage("A conexão cai durante o reinício e volta sozinha em cerca de 1 minuto.")
@@ -704,7 +1043,7 @@ public class MainActivity extends Activity {
     // ---------------------------------------------------------------- volume & apps (worker thread)
 
     private void loadVolume() {
-        int[] v = ProjectorCommands.parseVolume(runShell(ProjectorCommands.VOLUME_QUERY));
+        int[] v = mode == MODE_RECEIVER ? receiverVolume(null) : ProjectorCommands.parseVolume(runShell(ProjectorCommands.VOLUME_QUERY));
         if (v == null) return;
         volume = v[0];
         maxVolume = v[1];
@@ -714,6 +1053,15 @@ public class MainActivity extends Activity {
     private void setVolume(int target) {
         int v = Math.max(0, Math.min(maxVolume, target));
         worker.execute(() -> {
+            if (mode == MODE_RECEIVER) {
+                int[] r = receiverVolume(v);
+                if (r != null) {
+                    volume = r[0];
+                    maxVolume = r[1];
+                    runOnUiThread(this::showVolume);
+                }
+                return;
+            }
             if (runShell(ProjectorCommands.setVolume(v)) != null) {
                 volume = v;
                 runOnUiThread(this::showVolume);
@@ -749,8 +1097,69 @@ public class MainActivity extends Activity {
     }
 
     private void loadApps() {
-        List<ProjectorCommands.App> apps = ProjectorCommands.parseApps(runShell(ProjectorCommands.APPS_QUERY));
+        List<ProjectorCommands.App> apps = mode == MODE_RECEIVER ? receiverApps()
+                : ProjectorCommands.parseApps(runShell(ProjectorCommands.APPS_QUERY));
         runOnUiThread(() -> showApps(apps));
+    }
+
+    /** Sends a command to the receiver (worker thread), reconnecting once if needed; null on failure. */
+    private String receiverRequest(String line) {
+        for (int attempt = 0; attempt < 2; attempt++) {
+            if (!ensureConnected() || mode != MODE_RECEIVER) return null;
+            try {
+                return receiver.request(line);
+            } catch (IOException e) {
+                connected = false;
+                setStatus("Conexão perdida, reconectando…", Style.MUTED);
+            }
+        }
+        return null;
+    }
+
+    /** Reads the volume, or sets it when {@code target} is given; {current, max} or null. */
+    private int[] receiverVolume(Integer target) {
+        String r = receiverRequest(target == null ? "VOLUME" : "VOLUME " + target);
+        if (r == null || !r.startsWith("OK ")) return null;
+        String[] p = r.split(" ");
+        try {
+            return new int[] {Integer.parseInt(p[1]), Integer.parseInt(p[2])};
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    private List<ProjectorCommands.App> receiverApps() {
+        try {
+            if (!ensureConnected() || mode != MODE_RECEIVER) return new ArrayList<>();
+            StringBuilder components = new StringBuilder();
+            Map<String, String> labels = new HashMap<>();
+            for (String line : receiver.requestLines("APPS")) {
+                int tab = line.indexOf('\t');
+                String component = tab < 0 ? line : line.substring(0, tab);
+                components.append(component).append('\n');
+                int slash = component.indexOf('/');
+                if (tab >= 0 && slash > 0) labels.put(component.substring(0, slash), line.substring(tab + 1));
+            }
+            return ProjectorCommands.parseApps(components.toString(), labels);
+        } catch (IOException | RuntimeException e) {
+            connected = false;
+            return new ArrayList<>();
+        }
+    }
+
+    private void launchApp(ProjectorCommands.App app) {
+        worker.execute(() -> {
+            if (mode == MODE_RECEIVER) receiverRequest("LAUNCH " + app.component);
+            else runShell(ProjectorCommands.launch(app));
+        });
+    }
+
+    /** Opens a settings screen on the projector: by name through the receiver, else by the ADB command. */
+    private void openScreen(String name, String adbCommand) {
+        worker.execute(() -> {
+            if (mode == MODE_RECEIVER) receiverRequest("OPEN " + name);
+            else runShell(adbCommand);
+        });
     }
 
     // ---------------------------------------------------------------- UI
@@ -1114,7 +1523,7 @@ public class MainActivity extends Activity {
         tile.addView(label, lp);
         tile.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            send(ProjectorCommands.launch(app));
+            launchApp(app);
             Toast.makeText(this, "Abrindo " + app.label, Toast.LENGTH_SHORT).show();
         });
         return tile;
@@ -1152,10 +1561,10 @@ public class MainActivity extends Activity {
 
         LinearLayout proj = card(page, "Projetor", R.drawable.ic_tune, Style.VIOLET);
         Object[][] items = {
-                {R.drawable.ic_tune, "Ajustes do projetor", Style.ACCENT, (Runnable) () -> send(ProjectorCommands.OPEN_PROJECTOR_SETTINGS)},
-                {R.drawable.ic_settings, "Configurações", Style.VIOLET, (Runnable) () -> send(ProjectorCommands.OPEN_SETTINGS)},
-                {R.drawable.ic_wifi, "Wi-Fi", Style.TEAL, (Runnable) () -> send(ProjectorCommands.OPEN_WIFI)},
-                {R.drawable.ic_bluetooth, "Bluetooth", Style.SKY, (Runnable) () -> send(ProjectorCommands.OPEN_BLUETOOTH)},
+                {R.drawable.ic_tune, "Ajustes do projetor", Style.ACCENT, (Runnable) () -> openScreen("PROJECTOR_SETTINGS", ProjectorCommands.OPEN_PROJECTOR_SETTINGS)},
+                {R.drawable.ic_settings, "Configurações", Style.VIOLET, (Runnable) () -> openScreen("SETTINGS", ProjectorCommands.OPEN_SETTINGS)},
+                {R.drawable.ic_wifi, "Wi-Fi", Style.TEAL, (Runnable) () -> openScreen("WIFI", ProjectorCommands.OPEN_WIFI)},
+                {R.drawable.ic_bluetooth, "Bluetooth", Style.SKY, (Runnable) () -> openScreen("BLUETOOTH", ProjectorCommands.OPEN_BLUETOOTH)},
                 {R.drawable.ic_moon, "Dormir", Style.INDIGO, (Runnable) () -> sendKey(ProjectorCommands.KEY_SLEEP)},
                 {R.drawable.ic_sun, "Acordar", Style.AMBER, (Runnable) () -> sendKey(ProjectorCommands.KEY_WAKEUP)},
                 {R.drawable.ic_restart, "Reiniciar", Style.RED, (Runnable) this::confirmReboot},
@@ -1197,6 +1606,32 @@ public class MainActivity extends Activity {
         });
         pad.addView(speed);
 
+        LinearLayout free = card(page, "Funcionar sem a depuração", R.drawable.ic_projector, Style.GREEN);
+        free.addView(infoRow(R.drawable.ic_projector, Style.GREEN, "Receptor no projetor",
+                "Instale uma vez o Receptor do Controle no projetor. Depois disso o app funciona igual, mesmo com "
+                        + "a depuração desligada: ele acha o projetor no Wi-Fi e usa o receptor."),
+                matchWrap(0, 0, 0, dp(12)));
+        free.addView(pill(R.drawable.ic_download, "Instalar o receptor no projetor",
+                Style.ripple(Style.gradient(Style.GREEN, Style.TEAL, dp(16))), this::installReceiver), matchWrap(0, 0, 0, 0));
+        free.addView(pill(R.drawable.ic_enter, "Parear com o receptor",
+                Style.ripple(Style.tinted(Style.GREEN, dp(16), dp(1))), this::pairManually), matchWrap(0, dp(10), 0, 0));
+        Switch arrowsByIr = new Switch(this);
+        arrowsByIr.setText("Setas e OK pelo infravermelho");
+        arrowsByIr.setTextColor(Style.TEXT);
+        arrowsByIr.setTextSize(14.5f);
+        arrowsByIr.setChecked(prefs.getBoolean("setas_ir", false));
+        int[][] states = {{android.R.attr.state_checked}, {}};
+        arrowsByIr.setThumbTintList(new ColorStateList(states, new int[] {Style.GREEN, 0xFFB4BCCB}));
+        arrowsByIr.setTrackTintList(new ColorStateList(states, new int[] {Style.alpha(Style.GREEN, 0x80), 0x40FFFFFF}));
+        arrowsByIr.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean("setas_ir", on).apply());
+        free.addView(arrowsByIr, matchWrap(dp(2), dp(14), dp(2), 0));
+        TextView freeHint = text("Sem a depuração, as setas andam pelos itens da tela. Se em algum app elas não "
+                + "responderem, ligue a opção acima para mandar as setas pelo infravermelho. Menu e Acordar vão "
+                + "pelo infravermelho, e Reiniciar abre o menu de energia do projetor.", 12, Style.MUTED, false);
+        freeHint.setLineSpacing(dp(1.5f), 1f);
+        freeHint.setPadding(dp(2), dp(6), dp(2), 0);
+        free.addView(freeHint);
+
         LinearLayout conn = card(page, "Conexão", R.drawable.ic_wifi, Style.TEAL);
         LinearLayout connRow = new LinearLayout(this);
         connRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -1236,7 +1671,15 @@ public class MainActivity extends Activity {
     }
 
     private void sendTypedText() {
-        String command = ProjectorCommands.inputText(textField.getText().toString());
+        String typed = textField.getText().toString();
+        if (mode == MODE_RECEIVER) {
+            if (typed.isEmpty()) return;
+            String encoded = Base64.getEncoder().encodeToString(typed.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            worker.execute(() -> receiverRequest("TEXT " + encoded));
+            textField.setText("");
+            return;
+        }
+        String command = ProjectorCommands.inputText(typed);
         if (command == null) return;
         send(command);
         textField.setText("");

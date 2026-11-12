@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Compila build/ControleProjetor.apk em Linux, sem Gradle e sem o Android SDK do Google.
 #   ./build.sh        gera o APK assinado
-#   ./build.sh test   testa o código infravermelho e a busca do projetor na rede
+#   ./build.sh test   testa o código infravermelho, a busca do projetor na rede e o protocolo do receptor
 #
 # Pacotes (Ubuntu/Debian):
 #   sudo apt-get install aapt zipalign apksigner dalvik-exchange android-sdk-platform-23 \
@@ -13,8 +13,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION_CODE=5
-VERSION_NAME=4.1
+VERSION_CODE=6
+VERSION_NAME=5.0
 MAVEN_REPO=${MAVEN_REPO:-https://repo1.maven.org/maven2}
 JAVA8=${JAVA8:-/usr/lib/jvm/java-8-openjdk-amd64/bin/java}
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}
@@ -34,9 +34,11 @@ if [ "${1:-}" = "test" ]; then
     rm -rf "$OUT/test" && mkdir -p "$OUT/test"
     javac --release 11 -nowarn -encoding UTF-8 -d "$OUT/test" \
         src/dev/projetor/controle/IrCodes.java src/dev/projetor/controle/LanScanner.java \
-        test/IrCodesTest.java test/LanScannerTest.java
+        src/dev/projetor/controle/ReceiverClient.java ../receptor-projetor/src/dev/projetor/receptor/ReceiverServer.java \
+        test/IrCodesTest.java test/LanScannerTest.java test/ReceiverProtocolTest.java
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" IrCodesTest
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" LanScannerTest
+    java -Dstdout.encoding=UTF-8 -cp "$OUT/test" ReceiverProtocolTest
     exit 0
 fi
 
@@ -46,14 +48,18 @@ fetch org/robolectric/android-all/14-robolectric-10818077 "$ALL"
 fetch net/orfjackal/retrolambda/retrolambda/2.5.7 "$RETRO"
 [ -f "$ANDROID_JAR" ] || { echo "android.jar não encontrado em $ANDROID_JAR" >&2; exit 1; }
 
-rm -rf "$OUT" && mkdir -p "$OUT/gen" "$OUT/classes" "$OUT/retro"
+rm -rf "$OUT" && mkdir -p "$OUT/gen" "$OUT/classes" "$OUT/retro" "$OUT/assets"
+
+# O receptor (app do projetor) vai dentro deste APK, para o botão "Instalar o receptor" da aba Mais.
+MAVEN_REPO="$MAVEN_REPO" ../receptor-projetor/build.sh >/dev/null
+cp ../receptor-projetor/build/ReceptorControle.apk "$OUT/assets/receptor.apk"
 
 # Recursos: o android.jar 23 basta (ícones vetoriais sem atributos novos).
 aapt package -f -m -J "$OUT/gen" -M AndroidManifest.xml -S res -I "$ANDROID_JAR" \
     --custom-package dev.projetor.controle \
     --min-sdk-version 26 --target-sdk-version 35 \
     --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
-    -F "$OUT/base.apk"
+    -A "$OUT/assets" -F "$OUT/base.apk"
 
 # Código: compila contra o Android 14 completo e converte as lambdas (o dx não as entende).
 javac --release 8 -nowarn -encoding UTF-8 -cp "$TOOLS/$ALL" -d "$OUT/classes" \

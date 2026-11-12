@@ -8,12 +8,40 @@ App Android que controla o projetor HY300 pelo Wi-Fi, usando a depuração por r
 - **Mais:** digitar texto no projetor, telas de ajustes, Wi-Fi e Bluetooth, Dormir, Acordar e Reiniciar. Também tem o IP do projetor e o botão **Procurar o projetor no Wi-Fi**.
 - **Ligar e Desligar:** pelo infravermelho do celular, com o mesmo sinal do botão de energia do controle original.
 
+## Sem a depuração: o receptor
+
+Sem a depuração, o celular não consegue mandar comandos ao projetor pela rede. Para o app funcionar igual com ela desligada, existe o **Receptor do Controle** ([`../receptor-projetor`](../receptor-projetor)). É um app pequeno que fica no projetor, recebe os comandos pelo Wi-Fi (porta 7790) e os executa pela Acessibilidade do Android.
+
+**Instalar (uma vez só):**
+1. Com a depuração ainda ligada e o app conectado, toque em **Mais → Instalar o receptor no projetor**.
+2. O app copia o receptor para o projetor, liga o receptor na Acessibilidade e faz o pareamento sozinho, lendo o código que o receptor gera.
+3. Depois disso a depuração pode ser desligada.
+
+Outra forma: instale o `ReceptorControle.apk` no projetor por um pen drive e ative **Receptor do Controle** em *Configurações → Acessibilidade*. Na primeira conexão, o projetor mostra um código de 4 números, e o app pede esse código.
+
+**O que funciona pelo receptor:**
+- setas, OK, Voltar e Início;
+- play/pausa, voltar e avançar;
+- volume (com a barra) e Sem som;
+- lista de apps e abrir apps;
+- digitar texto (agora com acentos);
+- touchpad: o receptor desenha uma seta na tela e toca ou arrasta onde ela está;
+- telas de ajustes e Dormir.
+
+**O que vai pelo infravermelho:** Menu, Acordar, Ligar e Desligar, e Reiniciar (que abre o menu de energia do projetor).
+
+No Android 11 do projetor, nenhum app consegue apertar teclas de seta. Por isso o receptor move a seleção entre os itens da tela, como o sistema faz com o controle, e o OK clica no item selecionado. Quando não há item selecionado (por exemplo, num vídeo em tela cheia), o celular manda a seta pelo infravermelho. Na aba Mais, a opção **Setas e OK pelo infravermelho** manda as setas sempre pelo infravermelho.
+
+O receptor só aceita celulares pareados: cada um recebe uma chave guardada nos dois aparelhos.
+
+Quando a depuração está ligada, o app usa o ADB, que imita as teclas com exatidão. Quando só o receptor responde, usa o receptor. O status mostra "· receptor" nesse caso.
+
 ## Como o app acha o projetor
 
 O app não depende de IP fixo:
 
 1. Ao abrir o app, ou quando o celular entra num Wi-Fi, ele tenta o último IP em que achou o projetor.
-2. Se o projetor não responder nesse IP, o app procura na rede do celular. Ele testa os endereços da faixa (até 254) na porta 5555 e fica com o primeiro que responde como ADB. A busca leva cerca de 2 a 3 segundos e não abre pedido nenhum na tela do projetor.
+2. Se o projetor não responder nesse IP, o app procura na rede do celular. Ele testa os endereços da faixa (até 254) na porta 5555 (ADB) e na 7790 (receptor), e fica com o primeiro que responde. A busca leva cerca de 3 segundos e não abre pedido nenhum na tela do projetor.
 3. Ele se conecta, guarda o novo IP e carrega o volume e a lista de apps.
 
 O botão **Procurar o projetor no Wi-Fi**, na aba Mais, faz essa busca na hora. O campo de IP continua lá para digitar o endereço à mão.
@@ -41,6 +69,11 @@ Abra `build/ControleProjetor.apk` no celular.
 - **Windows com Android Studio:** `build.ps1`, como na versão 2.0.
 - **Linux sem o SDK do Google:** `./build.sh`. Os pacotes necessários estão listados no início do script. Na primeira vez, ele baixa do Maven Central o android.jar completo (Robolectric android-all) e o Retrolambda, que converte as lambdas para o `dalvik-exchange`.
 
-`./build.sh test` testa o código infravermelho contra os 15 botões capturados do controle e a busca na rede com projetores falsos.
+`./build.sh test` testa:
+- o código infravermelho contra os 15 botões capturados do controle;
+- a busca na rede com projetores falsos;
+- o protocolo entre o celular e o receptor, com pareamento e cada comando.
+
+O `build.sh` também compila o receptor e o põe dentro do APK do celular. O `build.ps1` não faz isso.
 
 A chave de assinatura (`signing/controle-ir.jks`) não vai para o Git. Um APK assinado com outra chave não instala por cima. Nesse caso, desinstale a versão anterior antes.

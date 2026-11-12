@@ -11,6 +11,18 @@ public final class IrCodes {
     public static final int CARRIER_HZ = 38000;
     public static final int ADDRESS = 0x00;
     public static final int POWER = 0x14;
+    // Other buttons of the same remote, used when the receiver cannot do a key (see MainActivity).
+    public static final int UP = 0x03;
+    public static final int DOWN = 0x02;
+    public static final int LEFT = 0x0E;
+    public static final int RIGHT = 0x1A;
+    public static final int OK = 0x07;
+    public static final int BACK = 0x5C;
+    public static final int HOME = 0x48;
+    public static final int OPTIONS = 0x13;
+    public static final int VOLUME_UP = 0x0B;
+    public static final int VOLUME_DOWN = 0x58;
+    public static final int MUTE = 0x01;
 
     private IrCodes() {
     }

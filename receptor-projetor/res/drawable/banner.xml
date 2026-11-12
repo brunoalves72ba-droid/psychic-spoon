@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Faixa de 320x180 que a tela inicial de TV mostra no lugar do ícone. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient android:angle="315" android:startColor="#2563EB" android:centerColor="#6D28D9" android:endColor="#BE185D" />
+            <size android:width="320dp" android:height="180dp" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/ic_projector" android:gravity="center" android:width="96dp" android:height="96dp" />
+</layer-list>

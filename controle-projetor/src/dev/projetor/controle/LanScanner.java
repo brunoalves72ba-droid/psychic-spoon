@@ -1,8 +1,10 @@
 package dev.projetor.controle;
 
+import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -16,8 +18,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-/** Finds devices with ADB over the network (the projector) on the phone's Wi-Fi. Plain Java. */
+/**
+ * Finds the projector on the phone's Wi-Fi: ADB over the network (port 5555) and/or the receiver
+ * app (port 7790), which works with debugging off. Plain Java.
+ */
 public final class LanScanner {
+
+    /** Hosts answering each way, in address order. */
+    public static final class Result {
+        public final List<String> adb = new ArrayList<>();
+        public final List<String> receivers = new ArrayList<>();
+
+        public boolean isEmpty() {
+            return adb.isEmpty() && receivers.isEmpty();
+        }
+    }
 
     private static final int CNXN = 0x4e584e43;
     private static final int AUTH = 0x48545541;
@@ -70,6 +85,48 @@ public final class LanScanner {
             Thread.currentThread().interrupt();
         }
         return found;
+    }
+
+    /** Probes every host for ADB and for the receiver at the same time. */
+    public static Result scan(List<String> hosts, final int adbPort, final int receiverPort,
+                              final int connectTimeoutMs, int threads) {
+        ExecutorService pool = Executors.newFixedThreadPool(Math.max(1, Math.min(threads, hosts.size() * 2)));
+        List<Future<Boolean>> adb = new ArrayList<>();
+        List<Future<Boolean>> rec = new ArrayList<>();
+        for (final String host : hosts) {
+            adb.add(pool.submit(() -> isAdb(host, adbPort, connectTimeoutMs)));
+            rec.add(pool.submit(() -> isReceiver(host, receiverPort, connectTimeoutMs)));
+        }
+        Result r = new Result();
+        for (int i = 0; i < hosts.size(); i++) {
+            if (done(adb.get(i))) r.adb.add(hosts.get(i));
+            if (done(rec.get(i))) r.receivers.add(hosts.get(i));
+        }
+        pool.shutdownNow();
+        return r;
+    }
+
+    private static boolean done(Future<Boolean> f) {
+        try {
+            return f.get();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** True when the receiver app answers HELLO on {@code port}. */
+    public static boolean isReceiver(String host, int port, int connectTimeoutMs) {
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress(host, port), connectTimeoutMs);
+            s.setSoTimeout(2000);
+            OutputStream out = s.getOutputStream();
+            out.write("HELLO\n".getBytes(StandardCharsets.UTF_8));
+            out.flush();
+            String line = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8)).readLine();
+            return line != null && line.startsWith("OK " + ReceiverClient.MAGIC + " ");
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /**

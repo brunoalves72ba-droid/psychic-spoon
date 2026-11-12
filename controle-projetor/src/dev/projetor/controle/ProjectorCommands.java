@@ -64,7 +64,8 @@ public final class ProjectorCommands {
             "com.google.android.youtube.tv",
             "com.google.android.play.games",
             "com.amazon.avod.thirdpartyclient",
-            "dev.projetor.controle"));
+            "dev.projetor.controle",
+            "dev.projetor.receptor"));
 
     static {
         LABELS.put("org.smarttube.stable", "YouTube (SmartTube)");
@@ -121,6 +122,11 @@ public final class ProjectorCommands {
     }
 
     public static List<App> parseApps(String out) {
+        return parseApps(out, null);
+    }
+
+    /** Same as {@link #parseApps(String)}, naming unknown apps with {@code realLabels} (package to label). */
+    public static List<App> parseApps(String out, Map<String, String> realLabels) {
         Map<String, App> byPackage = new LinkedHashMap<>();
         Set<String> labels = new HashSet<>();
         if (out != null) {
@@ -130,6 +136,7 @@ public final class ProjectorCommands {
                 String pkg = component.substring(0, component.indexOf('/'));
                 if (HIDDEN.contains(pkg) || byPackage.containsKey(pkg)) continue;
                 String label = label(pkg);
+                if (!LABELS.containsKey(pkg) && realLabels != null && realLabels.containsKey(pkg)) label = realLabels.get(pkg);
                 if (!labels.add(label)) continue;
                 byPackage.put(pkg, new App(pkg, component, label));
             }
