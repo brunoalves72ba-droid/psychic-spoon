@@ -29,6 +29,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return; // o app não faz requisições externas
+  if (url.pathname.includes('/formacao-ia/')) return; // outro app no mesmo site, com service worker próprio
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const hit = await c.match(req, { ignoreSearch: true }) || (req.mode === 'navigate' ? await c.match('index.html') || await c.match('./') : null);

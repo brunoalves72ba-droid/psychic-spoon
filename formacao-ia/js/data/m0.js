@@ -1,0 +1,171 @@
+// Formação IA Generativa — © Bruno Moura, único e exclusivo proprietário.
+// Módulo 0 — Pré-requisitos (fora da ementa; obrigatório para iniciante absoluto).
+// Convenção de todas as lições: em quiz e casos, a PRIMEIRA opção é a correta (o app embaralha na tela).
+
+export const M0 = [
+  {
+    id: '0.1', t: 'Arquivos, pastas e extensões', min: 6,
+    gancho: '“Cadê aquele arquivo que eu baixei ontem?” Se você já disse isso, esta lição é o remédio.',
+    analogia: 'O disco do computador é um **armário**. As pastas são as **gavetas**. A extensão, o final do nome depois do ponto, é a **etiqueta** que diz o que tem dentro.',
+    ideia: [
+      'Tudo o que você guarda no computador é um **arquivo**: um texto, uma foto, um programa. Arquivos moram em **pastas**, e uma pasta pode morar dentro de outra.',
+      'O endereço completo de um arquivo se chama **caminho**. Exemplo: `Documentos/formacao-ia/modulo-1/anotacoes.txt`. Leia assim: dentro de Documentos, dentro de formacao-ia, dentro de modulo-1, está o arquivo anotacoes.txt.',
+      'O final do nome é a **extensão**. Ela avisa o tipo do conteúdo:',
+      { ul: ['`.txt`: texto puro', '`.md`: texto com marcações simples (Markdown)', '`.csv`: tabela escrita em texto', '`.json`: dados organizados em campos', '`.pdf`: documento pronto para ler', '`.py`: programa em Python'] },
+      { nota: 'Neste curso, use nomes sem espaço e sem acento: `modulo-1`, e não `Módulo 1`. Programas lidam melhor com isso.', tipo: 'dica' },
+    ],
+    exemplo: [
+      'Vamos ler o caminho `formacao-ia/modulo-3/notas.csv`:',
+      { passos: ['A pasta principal é `formacao-ia`.', 'Dentro dela existe a pasta `modulo-3`.', 'O arquivo se chama `notas.csv`.', 'A etiqueta `.csv` avisa: é uma tabela em texto. Abre no Excel, no Google Sheets e até no Bloco de Notas.'] },
+    ],
+    ex: { tipo: 'classificar', enun: 'Que tipo de conteúdo cada etiqueta indica?', baldes: ['Texto', 'Tabela', 'Programa', 'Dados em campos'],
+      itens: [
+        { t: '`receita.txt`', b: 0 }, { t: '`vendas.csv`', b: 1, w: 'CSV é tabela: cada linha do arquivo é uma linha da tabela.' },
+        { t: '`calcula.py`', b: 2, w: '.py é a etiqueta dos programas em Python.' }, { t: '`config.json`', b: 3, w: 'JSON guarda dados em campos, como um formulário.' },
+        { t: '`diario.md`', b: 0, w: 'Markdown é texto com marcações simples.' }, { t: '`alunos.csv`', b: 1 },
+      ] },
+    mao: { t: 'Monte a casa do curso', onde: 'pc',
+      passos: ['Abra o Explorador de Arquivos (Windows) ou o Finder (Mac).', 'Em Documentos, crie a pasta `formacao-ia`. Dentro dela, crie `modulo-1`.', 'Abra o Bloco de Notas, escreva uma frase e salve como `primeira-nota.txt` dentro de `modulo-1`.', 'No Windows, ligue Exibir › Mostrar › Extensões de nomes de arquivos, para enxergar as etiquetas.'],
+      criterio: 'Você encontra `primeira-nota.txt` seguindo o caminho Documentos › formacao-ia › modulo-1.' },
+    quiz: [
+      { q: 'Um arquivo `.csv` guarda que tipo de conteúdo?', o: ['Uma tabela escrita em texto', 'Uma imagem', 'Um programa em Python'], w: 'CSV quer dizer valores separados por vírgula. Cada linha do arquivo é uma linha da tabela.' },
+      { q: 'No caminho `formacao-ia/modulo-2/prompts.md`, qual pasta contém o arquivo?', o: ['`modulo-2`', '`formacao-ia`', '`prompts.md`'], w: 'O caminho se lê da esquerda para a direita: formacao-ia contém modulo-2, que contém prompts.md.' },
+      { q: 'Para que serve a extensão no nome de um arquivo?', o: ['Indicar o tipo de conteúdo e qual programa abre', 'Deixar o arquivo mais leve', 'Proteger o arquivo com senha'], w: 'A extensão é só uma etiqueta: ela diz ao computador (e a você) o que esperar lá dentro.' },
+    ],
+    erro: { t: 'Salvar tudo em Downloads', d: 'Downloads vira um depósito onde nada se acha. Regra simples: baixou algo do curso? Mova na hora para a pasta do módulo. Dez segundos agora poupam dez minutos de busca depois.' },
+  },
+  {
+    id: '0.2', t: 'O que é a internet', min: 6,
+    gancho: 'O Wi-Fi caiu e você disse “a internet caiu”. Será que é a mesma coisa?',
+    analogia: 'A internet é um **correio mundial**. Cada máquina ligada a ela tem um endereço, o **IP**, como o CEP e o número de uma casa.',
+    ideia: [
+      'A internet é uma rede de milhões de computadores ligados por cabos (inclusive no fundo do mar), antenas e satélites. Quando você abre um site, seu aparelho manda um **pedido** que viaja por essa rede até outro computador, e esse computador devolve uma **resposta**.',
+      'Para o pedido chegar, cada máquina precisa de um endereço: o **IP**, uma sequência de números como `177.45.20.8`. Como ninguém decora números, existem os nomes (`wikipedia.org`). Um serviço chamado **DNS** funciona como a agenda de contatos: você digita o nome e ele descobre o número.',
+      'Três coisas que muita gente mistura:',
+      { ul: ['**Wi-Fi**: a ligação sem fio entre o seu aparelho e o roteador. É só o primeiro trecho do caminho.', '**Navegador** (Chrome, Edge, Safari): o programa que faz os pedidos e mostra as respostas.', '**Internet**: a rede inteira por onde os pedidos viajam.'] },
+      'Por que isso importa aqui: ChatGPT, Claude e Gemini não moram no seu aparelho. Cada pergunta sua é um pedido que atravessa a internet.',
+    ],
+    exemplo: [
+      'A viagem de um pedido, do seu dedo até a tela:',
+      { passos: ['Você digita `wikipedia.org` no navegador.', 'O DNS traduz esse nome para o endereço IP do computador da Wikipédia.', 'O pedido sai do aparelho pelo Wi-Fi, passa pelo roteador e segue pela rede do provedor.', 'O computador da Wikipédia recebe o pedido e devolve a página.', 'O navegador desenha a página na tela. Tudo isso em menos de um segundo.'] },
+    ],
+    ex: { tipo: 'ordenar', enun: 'Ponha a viagem do pedido na ordem certa.',
+      itens: ['Você digita o endereço no navegador', 'O DNS traduz o nome para um número IP', 'O pedido sai pelo Wi-Fi e viaja pela rede', 'O computador do site recebe o pedido e responde', 'O navegador mostra a página'] },
+    mao: { t: 'Descubra o seu IP público', onde: 'qualquer',
+      passos: ['No navegador, pesquise “qual é o meu IP”.', 'Anote o número que aparecer.', 'No celular, desligue o Wi-Fi, use os dados móveis e pesquise de novo: o número muda, porque você entrou na internet por outra porta.'],
+      criterio: 'Você viu um endereço IP e percebeu que ele identifica a conexão, não a pessoa.' },
+    quiz: [
+      { q: 'Wi-Fi e internet são a mesma coisa?', o: ['Não: o Wi-Fi é só a ligação sem fio até o roteador', 'Sim: são dois nomes para a mesma rede', 'Não: o Wi-Fi é a internet mais rápida'], w: 'Dá para ter Wi-Fi sem internet (roteador ligado, provedor fora do ar) e internet sem Wi-Fi (cabo ou dados móveis).' },
+      { q: 'O que é um endereço IP?', o: ['O número que identifica uma máquina na rede', 'A senha do Wi-Fi', 'O nome de um site, como wikipedia.org'], w: 'O nome do site é para pessoas; o IP é o endereço que as máquinas usam. O DNS liga um ao outro.' },
+      { q: 'Quando você pergunta algo ao ChatGPT, onde a resposta é calculada?', o: ['Em computadores da empresa, alcançados pela internet', 'No seu próprio aparelho', 'No roteador da sua casa'], w: 'Seu aparelho só envia a pergunta e mostra a resposta. O cálculo pesado acontece longe dali.' },
+    ],
+    erro: { t: 'Confundir navegador com internet', d: 'O navegador é só o programa de acesso. Se uma página não abre, o problema pode estar no site, na conexão ou no navegador. Testar outro site e outro navegador já mostra qual dos três é o culpado.' },
+  },
+  {
+    id: '0.3', t: 'Cliente e servidor', min: 6,
+    gancho: 'Você pede, alguém prepara, você recebe. Parece restaurante, e é assim que quase tudo na internet funciona.',
+    analogia: 'No **restaurante**, você (cliente) faz o pedido e a cozinha (servidor) prepara e entrega. Você não cozinha nem precisa saber a receita.',
+    ideia: [
+      '**Cliente** é quem **pede**: o navegador, o app do celular, um programa seu. **Servidor** é quem **responde**: um computador que fica ligado o tempo todo esperando pedidos.',
+      'O app da Netflix no celular é cliente: ele pede o filme. Os computadores da Netflix são servidores: guardam os filmes e enviam.',
+      'Com IA é igual. O site do ChatGPT aberto no navegador é o **cliente**. O modelo de IA roda em **servidores** com peças caríssimas. O seu aparelho só envia a pergunta e mostra a resposta.',
+      'Duas consequências práticas:',
+      { ul: ['Sem internet não há resposta: o pedido não chega à cozinha.', 'Tudo o que você digita **sai do seu aparelho** e vai para o servidor de outra empresa. Guarde isso para a lição sobre o que não colar num chat.'] },
+    ],
+    exemplo: [
+      'Quem é quem quando você pede a previsão do tempo:',
+      { passos: ['Você abre o app de clima. O app é o **cliente**.', 'O app envia o pedido: “previsão para a minha cidade, por favor”.', 'O **servidor** da empresa de meteorologia consulta os dados e responde: “29 °C, sol”.', 'O app mostra o resultado na tela. A conta toda foi feita no servidor.'] },
+    ],
+    ex: { tipo: 'classificar', enun: 'Cliente ou servidor?', baldes: ['Cliente (pede)', 'Servidor (responde)'],
+      itens: [
+        { t: 'App da Netflix no seu celular', b: 0 }, { t: 'Computadores da Netflix que guardam os filmes', b: 1 },
+        { t: 'ChatGPT aberto no navegador', b: 0, w: 'A página é o cliente. O modelo roda nos servidores da empresa.' }, { t: 'Máquina do Google que roda o Gemini', b: 1 },
+        { t: 'App do banco no celular', b: 0 }, { t: 'Computador do banco que confere o seu saldo', b: 1 },
+      ] },
+    quiz: [
+      { q: 'Na conversa entre cliente e servidor, quem responde aos pedidos?', o: ['O servidor', 'O cliente', 'O roteador'], w: 'O cliente pede, o servidor responde. O roteador só encaminha.' },
+      { q: 'Onde roda o modelo de IA quando você usa o ChatGPT pelo navegador?', o: ['Nos servidores da empresa', 'No seu computador', 'Dentro do navegador'], w: 'O navegador é só a janela. O modelo precisa de máquinas muito maiores que um PC comum.' },
+      { q: 'O que acontece com o texto que você digita num chat de IA?', o: ['É enviado pela internet ao servidor da empresa', 'Fica só no seu aparelho', 'É apagado antes de sair do navegador'], w: 'Para responder, o servidor precisa receber o texto. Por isso não se cola dado sensível num chat.' },
+    ],
+    erro: { t: 'Achar que o ChatGPT roda no seu PC', d: 'É por isso que ele não funciona sem internet, e é por isso que o que você digita não é privado por padrão. Existem modelos que rodam no próprio computador, mas os chats famosos são serviços na nuvem.' },
+  },
+  {
+    id: '0.4', t: 'Algoritmo', min: 6,
+    gancho: 'Já seguiu uma receita de bolo? Então você já executou um algoritmo. Hoje você aprende a escrever um.',
+    analogia: 'Algoritmo é uma **receita**: passos em ordem, claros o bastante para outra pessoa (ou uma máquina) seguir sem adivinhar nada.',
+    ideia: [
+      'Um **algoritmo** é uma sequência de passos para chegar a um resultado. Três regras:',
+      { ul: ['**Ordem**: trocar passos de lugar muda o resultado.', '**Clareza**: cada passo diz exatamente o que fazer.', '**Fim**: uma hora ele termina.'] },
+      'O computador é o cozinheiro mais obediente e menos esperto do mundo: faz exatamente o que está escrito. Se a receita pular “ligue o forno”, o bolo sai cru e ele não avisa.',
+      'Programar é escrever receitas sem buracos. Pedir algo a uma IA também: quanto mais claro o passo a passo, melhor o resultado. Você vai usar isso nos prompts, no n8n e no Python.',
+    ],
+    exemplo: [
+      'Algoritmo para atravessar a rua:',
+      { passos: ['Pare na calçada.', 'Olhe para a esquerda.', 'Olhe para a direita.', 'Se vier carro, espere e volte ao passo 2.', 'Atravesse.'] },
+      'Repare: existe **ordem**, existe uma **decisão** (se vier carro) e existe **fim**.',
+    ],
+    ex: { tipo: 'ordenar', enun: 'Monte o algoritmo do café coado.',
+      itens: ['Encha a chaleira e ligue o fogo', 'Enquanto a água esquenta, ponha o filtro e o pó no coador', 'Quando a água ferver, desligue o fogo', 'Despeje a água sobre o pó, aos poucos', 'Espere todo o café passar', 'Sirva na xícara'] },
+    mao: { t: 'Escreva a receita de outra tarefa', onde: 'qualquer',
+      passos: ['Escolha uma tarefa do dia a dia, como enviar um áudio no WhatsApp.', 'Escreva de 5 a 7 passos.', 'Peça para alguém seguir **só o que está escrito**, ou releia fingindo que você é um robô.'],
+      criterio: 'A pessoa chegou ao fim sem te perguntar nada.' },
+    quiz: [
+      { q: 'Num algoritmo, a ordem dos passos importa?', o: ['Sim: trocar a ordem pode mudar ou estragar o resultado', 'Não: basta que todos os passos existam', 'Só importa em programas grandes'], w: 'Despejar a água antes de pôr o pó não faz café. Ordem é parte da receita.' },
+      { q: 'O que o computador faz quando falta um passo “óbvio” na receita?', o: ['Executa só o que está escrito, sem adivinhar', 'Completa o passo sozinho', 'Para e pergunta o que fazer'], w: 'O que é óbvio para você não existe para a máquina. Uma IA até tenta adivinhar, e às vezes adivinha errado.' },
+    ],
+    erro: { t: 'Pular passos “óbvios”', d: 'Releia cada passo como se nunca tivesse feito a tarefa. Se precisar adivinhar alguma coisa, está faltando um passo.' },
+  },
+  {
+    id: '0.5', t: 'Decisões e repetições', min: 7,
+    gancho: '“Se chover, levo guarda-chuva.” “Mexa até engrossar.” Com essas duas frases você já conhece as duas ideias que controlam todo programa.',
+    analogia: 'Decisão é uma **bifurcação** na estrada: a condição escolhe o caminho. Repetição é uma **rotatória**: você dá voltas até aparecer a saída.',
+    ideia: [
+      '**Decisão** (se… então… senão): o programa testa uma **condição** e escolhe um de dois caminhos. “**Se** a nota for maior ou igual a 7, aprovado; **senão**, revisão.”',
+      '**Repetição** (laço): o programa repete um bloco de passos. Pode ser um número certo de vezes (“repita 3 vezes”) ou **enquanto** uma condição valer (“enquanto houver louça na pia, lave a próxima”).',
+      'Todo laço precisa de uma **condição de parada**. “Mexa até engrossar” termina quando engrossa. “Mexa”, sem o “até”, não termina nunca: é o laço infinito.',
+      'Essas duas ideias voltam o curso inteiro: o nó **IF** do n8n é uma decisão, o `for` do Python é uma repetição, e um agente de IA é um laço (pensar, agir, observar) que precisa de limite.',
+    ],
+    exemplo: [
+      'Corrigir uma pilha de provas, escrito quase como um programa:',
+      { c: 'Para cada prova da pilha:\n    some os pontos\n    se a nota for maior ou igual a 7:\n        escreva "Aprovado"\n    senão:\n        escreva "Revisão"', l: 'texto', t: 'Passo a passo' },
+      { passos: ['“Para cada prova” é a **repetição**. Ela para quando a pilha acaba.', '“Se… senão” é a **decisão**.', 'O recuo à esquerda mostra o que está dentro de quê. O Python usa exatamente essa ideia.'] },
+    ],
+    ex: { tipo: 'lacunas', modo: 'texto', enun: 'Complete o fluxo de aprovação.',
+      molde: 'Para cada aluno da turma:\n    ⟦1:se⟧ a nota for ⟦1:maior ou igual a⟧ 7:\n        escreva "Aprovado"\n    ⟦1:senão⟧:\n        escreva "Revisão"\nO laço para ⟦1:quando a lista de alunos acaba⟧.',
+      opcoes: ['se', 'senão', 'enquanto', 'maior ou igual a', 'menor que', 'quando a lista de alunos acaba', 'nunca'] },
+    quiz: [
+      { q: 'Para que serve um laço (repetição)?', o: ['Repetir um bloco de passos sem reescrevê-lo', 'Escolher entre dois caminhos', 'Guardar um valor para usar depois'], w: 'Escolher caminho é decisão. Guardar valor é variável. Laço é para repetir.' },
+      { q: 'O que todo laço precisa ter para não rodar para sempre?', o: ['Uma condição de parada', 'Pelo menos dez passos', 'Uma decisão dentro dele'], w: 'Sem condição de parada, o programa trava repetindo. Sempre pergunte: o que faz isso parar?' },
+      { q: 'Em “se chover, levo guarda-chuva; senão, vou de óculos escuros”, o que é “chover”?', o: ['A condição que decide o caminho', 'O laço', 'O resultado'], w: 'A condição é o teste. O resultado do teste escolhe qual caminho seguir.' },
+    ],
+    erro: { t: 'Laço sem condição de parada', d: 'É o famoso “travou”. Antes de escrever qualquer repetição, responda: **o que faz isso parar?** Se você não souber, o laço ainda não está pronto.' },
+  },
+  {
+    id: '0.6', t: 'Variáveis e tipos', min: 7,
+    gancho: 'Um formulário pergunta nome, idade e “aceita os termos?”. Três campos, três tipos de resposta. Programas guardam informação do mesmo jeito.',
+    analogia: 'Variável é uma **caixa com etiqueta**. A etiqueta é o nome (`idade`) e dentro fica o valor (`25`). Dá para trocar o que está dentro; a etiqueta continua a mesma.',
+    ideia: [
+      'Uma **variável** guarda um valor para usar depois. `nome = "Ana"` quer dizer: pegue a caixa chamada nome e guarde Ana dentro.',
+      'Cada valor tem um **tipo**, e o tipo define o que dá para fazer com ele:',
+      { ul: ['**Texto**: fica entre aspas. `"Ana"`, `"Rua 7"`.', '**Número**: sem aspas. `25`, `7.5` (em programação, ponto no lugar da vírgula).', '**Lógico**: só dois valores, verdadeiro ou falso. `true`, `false`.'] },
+      'A pegadinha clássica: `"25"` com aspas é **texto**, não número. `25 + 1` dá `26`. Já `"25" + "1"` cola os textos e dá `"251"`.',
+      'Esse detalhe volta no JSON, no n8n (comparar “10” com 7 dá errado) e no Python.',
+    ],
+    exemplo: [
+      'O cadastro de uma aluna, em três caixas:',
+      { c: 'nome = "Ana"          texto (com aspas)\nidade = 25            número (sem aspas)\nmatriculada = true    lógico (sim ou não)', l: 'texto', t: 'Três variáveis' },
+      'Se a Ana fizer aniversário, a caixa `idade` passa a guardar `26`. A etiqueta não muda; o conteúdo, sim.',
+    ],
+    ex: { tipo: 'classificar', enun: 'Qual é o tipo de cada valor?', baldes: ['Texto', 'Número', 'Lógico'],
+      itens: [
+        { t: '`"Ana"`', b: 0 }, { t: '`25`', b: 1 }, { t: '`"25"`', b: 0, w: 'Tem aspas, então é texto. Não dá para fazer conta com ele.' },
+        { t: '`true`', b: 2 }, { t: '`7.5`', b: 1 }, { t: '`"sim"`', b: 0, w: 'Parece um sim ou não, mas as aspas fazem dele um texto.' }, { t: '`false`', b: 2 },
+      ] },
+    quiz: [
+      { q: 'O valor `"25"`, com aspas, é um número?', o: ['Não: com aspas é texto', 'Sim: as aspas não mudam nada', 'Depende do programa'], w: 'Aspas transformam qualquer coisa em texto. Para fazer contas, o valor tem de estar sem aspas.' },
+      { q: 'Em `idade = 25`, o que é `idade`?', o: ['O nome da variável, a etiqueta da caixa', 'O valor guardado', 'O tipo do dado'], w: 'idade é a etiqueta. 25 é o valor. O tipo é número.' },
+      { q: 'Quanto vale `"25" + "1"` quando os dois são textos?', o: ['`"251"`: os textos são colados', '`26`', '`"26"`'], w: 'Somar textos é colar um no outro. Só números são somados de verdade.' },
+    ],
+    erro: { t: 'Confundir o nome da caixa com o conteúdo', d: '`nome`, sem aspas, é a caixa. `"nome"`, com aspas, é o texto n-o-m-e. Se o programa mostrar a palavra “nome” em vez de “Ana”, sobraram aspas onde não devia.' },
+  },
+];

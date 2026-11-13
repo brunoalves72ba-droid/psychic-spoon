@@ -1,0 +1,16 @@
+{
+  "name": "formacao-ia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Formação IA Generativa — app de estudo pessoal (PWA) para a trilha de 96h, pensado para iniciante absoluto com TDAH. Proprietário único e exclusivo: Bruno Moura.",
+  "author": "Bruno Moura",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node tools/gen-precache.mjs --check && node --test tests/*.test.mjs",
+    "precache": "node tools/gen-precache.mjs",
+    "e2e": "node tests/e2e/run.mjs",
+    "e2e:offline": "node tests/e2e/offline.mjs"
+  }
+}
