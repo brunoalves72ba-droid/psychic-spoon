@@ -1,0 +1,48 @@
+<!doctype html>
+<!--
+  Formação IA Generativa — app de estudo pessoal para a trilha de IA generativa.
+  © Bruno Moura. Todos os direitos reservados.
+  App pessoal e não oficial: não é afiliado à instituição que oferece o curso nem às empresas citadas nas lições.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Formação IA Generativa</title>
+<meta name="app-id" content="formacao-ia">
+<meta name="description" content="Trilha de IA generativa em micro-lições de 5 a 10 minutos, com revisão espaçada e um projeto de portfólio.">
+<meta name="author" content="Bruno Moura">
+<meta name="theme-color" content="#f6f2e9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141b" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Formação IA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+// tema escolhido nos Ajustes, aplicado antes da primeira pintura
+try { var t = localStorage.getItem('fia-tema'); if (t === 'claro' || t === 'escuro') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip" href="#view">Pular para o conteúdo</a>
+<main id="view" tabindex="-1" aria-live="off"></main>
+<nav class="tabs" aria-label="Seções do app">
+  <a href="#/hoje" data-tab="hoje"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" stroke-linecap="round"/></svg><span>Hoje</span></a>
+  <a href="#/trilha" data-tab="trilha"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18.5" r="2.2"/><circle cx="18" cy="5.5" r="2.2"/><path d="M8 18.5h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.8" stroke-linecap="round"/></svg><span>Trilha</span></a>
+  <a href="#/revisar" data-tab="revisar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="13" height="10" rx="2"/><path d="M7.5 20h11a2 2 0 0 0 2-2V10" stroke-linecap="round"/></svg><span>Revisar</span></a>
+  <a href="#/projeto" data-tab="projeto"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4.5M9.5 13v1.5M14.5 13v1.5M2.5 12.5v3M21.5 12.5v3" stroke-linecap="round"/><circle cx="12" cy="3.6" r="1.1"/></svg><span>Projeto</span></a>
+  <a href="#/progresso" data-tab="progresso"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16V11M12 16V6M17.5 16v-3.5" stroke-linecap="round"/></svg><span>Progresso</span></a>
+</nav>
+<div id="toasts" role="status" aria-live="polite"></div>
+<noscript><p style="padding:24px">O app precisa de JavaScript para funcionar.</p></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
