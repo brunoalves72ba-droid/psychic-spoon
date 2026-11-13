@@ -1,2 +1,125 @@
-// (em construção)
-export const M5C = [];
+// Formação IA Generativa — © Bruno Moura, único e exclusivo proprietário.
+// Módulo 5, Aula 3 — Python com LLMs (5.17 a 5.20).
+// Nomes de modelos mudam: os exemplos usam uma variável MODELO, e a Ficha viva guarda a referência do momento.
+
+export const M5C = [
+  {
+    id: '5.17', t: 'SDK oficial', min: 8,
+    gancho: 'Com `requests`, você monta o envelope inteiro à mão. Com o SDK oficial, você diz o que quer e ele cuida do envelope, do carimbo e de tentar de novo.',
+    analogia: 'O SDK é o **aplicativo oficial** do serviço para programadores: faz o mesmo que você faria com `requests`, com menos digitação, menos erro e as novidades da API já embutidas.',
+    ideia: [
+      '**SDK** (*Software Development Kit*) é a biblioteca oficial de um serviço. As que importam aqui: `groq`, `openai`, `google-genai` (Gemini) e `anthropic` (Claude).',
+      'Por que usar: menos código, leitura automática da chave na variável de ambiente, erros com nomes claros e novas tentativas em falhas passageiras.',
+      'O formato das mensagens é o que você já conhece da lição 3.5: uma lista de dicionários com `role` e `content`.',
+      'O texto da resposta fica em `resposta.choices[0].message.content`. É o mesmo caminho do JSON, agora com pontos.',
+      'O **nome do modelo** muda com o tempo. Deixe numa variável no topo do arquivo e copie o nome exato da lista de modelos do console. A [Ficha viva](#/mais/ficha) tem a referência.',
+      'Os SDKs do Groq e da OpenAI são quase idênticos de propósito: o Groq segue o formato “compatível com OpenAI”.',
+    ],
+    exemplo: [
+      { c: 'import os\nfrom dotenv import load_dotenv\nfrom groq import Groq\n\nload_dotenv()\nMODELO = "openai/gpt-oss-120b"  # confira o nome na lista de modelos do console\n\ncliente = Groq(api_key=os.getenv("GROQ_API_KEY"))\nresposta = cliente.chat.completions.create(\n    model=MODELO,\n    messages=[\n        {"role": "system", "content": "Você é um tutor. Responda em até 2 frases."},\n        {"role": "user", "content": "O que é uma janela de contexto?"},\n    ],\n    temperature=0.2,\n)\nprint(resposta.choices[0].message.content)\nprint(resposta.usage.total_tokens, "tokens")', l: 'python' },
+      { passos: ['`load_dotenv()` carrega a chave do `.env`.', '`Groq(...)` cria o cliente, já autenticado.', '`create` envia o modelo, as mensagens e a temperatura.', 'As duas últimas linhas mostram o texto e o total de tokens.'] },
+    ],
+    ex: { tipo: 'lacunas', enun: 'Complete a chamada de chat com o SDK.',
+      molde: 'resposta = cliente.chat.completions.⟦1:create⟧(\n    model=MODELO,\n    messages=[\n        {"role": ⟦1:"system"⟧, "content": "Responda em uma frase."},\n        {"role": ⟦1:"user"⟧, "content": "O que é um token?"},\n    ],\n)\nprint(resposta.choices[0].message.⟦1:content⟧)',
+      opcoes: ['create', '"system"', '"user"', 'content', '"robot"', 'send'],
+      w: '`create` faz a chamada, `system` leva as instruções, `user` leva a pergunta e `content` é o texto que voltou.' },
+    mao: { t: 'Primeira chamada em Python', onde: 'pc',
+      passos: ['No venv, rode `pip install groq python-dotenv`.', 'Copie o código do exemplo, ajuste o nome do modelo e rode.', 'Troque a pergunta e a system message e rode de novo.'],
+      criterio: 'O terminal mostrou a resposta do modelo e o total de tokens.' },
+    quiz: [
+      { q: 'Por que usar o SDK oficial em vez de montar tudo com requests?', o: ['Menos código, erros mais claros e novas tentativas automáticas', 'Porque requests é proibido', 'Porque o SDK é gratuito e requests é pago'], w: 'Os dois funcionam. O SDK só poupa trabalho e erro.' },
+      { q: 'Por que guardar o nome do modelo numa variável no topo do arquivo?', o: ['Porque os nomes mudam, e assim se troca num lugar só', 'Porque o Python exige', 'Para a resposta sair mais curta'], w: 'Quando o modelo for aposentado, você muda uma linha, e não vinte.' },
+      { q: 'Como o SDK do Groq encontra a chave quando ela não é passada no código?', o: ['Lê a variável de ambiente `GROQ_API_KEY`', 'Pede a chave por e-mail', 'Usa uma chave pública padrão'], w: 'Por isso basta carregar o `.env` antes de criar o cliente.' },
+    ],
+    erro: { t: 'Tutorial desatualizado', d: 'Bibliotecas de IA mudam rápido: um vídeo de 2023 pode usar comandos que já não existem, como `openai.ChatCompletion.create`. Deu erro estranho seguindo um tutorial? Confira a data e compare com a documentação oficial.' },
+  },
+  {
+    id: '5.18', t: 'Saída estruturada em código', min: 8,
+    gancho: 'Você pediu JSON. O modelo respondeu “Claro! Aqui está:” e depois o JSON. O programa quebrou. Hoje ele aprende a se defender.',
+    analogia: 'Validar a saída é a **conferência de mercadoria** na doca: antes de guardar no estoque, você abre a caixa e confere se veio o que pediu. Não veio? Devolve e pede de novo.',
+    ideia: [
+      'Na lição 2.8 você pediu JSON no prompt. Em código, o caminho completo é **pedir, converter, validar e, se preciso, tentar de novo**.',
+      '**Converter**: `json.loads(texto)` transforma o texto JSON em dicionário ou lista. Se o texto não for JSON válido, ele levanta um erro do tipo `ValueError`.',
+      '**`try` e `except`** são o jeito do Python de lidar com um erro esperado: tenta; se der aquele erro, executa o plano B, em vez de quebrar.',
+      '**Validar o conteúdo**: JSON válido não quer dizer JSON **certo**. Confira se os campos esperados existem e têm o tipo certo. Para estruturas maiores, a biblioteca **Pydantic** faz isso em poucas linhas.',
+      '**Modo estruturado da API**: muitos serviços aceitam um parâmetro como `response_format={"type": "json_object"}` e passam a devolver só JSON. Use quando existir, e valide mesmo assim.',
+      '**Tentar de novo**: falhou? Repita a chamada, no máximo 2 ou 3 vezes. Nunca num laço sem limite.',
+    ],
+    exemplo: [
+      { c: 'import json\n\ndef ler_cartao(texto):\n    try:\n        cartao = json.loads(texto)\n    except ValueError:\n        return None\n    if "frente" not in cartao or "verso" not in cartao:\n        return None\n    return cartao\n\nrespostas = [\n    \'{"frente": "O que é token?", "verso": "Um pedaço de texto."}\',\n    \'Claro! Aqui está: {"frente": "..."}\',\n    \'{"pergunta": "sem os campos certos"}\',\n]\nfor texto in respostas:\n    cartao = ler_cartao(texto)\n    if cartao:\n        print("OK:", cartao["frente"])\n    else:\n        print("Inválido: pedir de novo")', l: 'python', run: true },
+      { passos: ['A primeira resposta é JSON válido e tem os dois campos: passa.', 'A segunda tem texto antes do JSON: `json.loads` falha, e o `except` devolve `None`.', 'A terceira é JSON válido, mas sem `frente` e `verso`: a validação barra.', 'O programa não quebrou em nenhum dos casos.'] },
+    ],
+    ex: { tipo: 'lacunas', modo: 'python', enun: 'Complete: o programa lê uma resposta, mostra a frente do cartão e avisa quando o JSON é inválido.',
+      molde: 'import json\n\nresposta = input()\ntry:\n    cartao = json.⟦1:loads⟧(resposta)\n    print(cartao[⟦2:"frente"⟧])\n⟦2:except⟧ ValueError:\n    print("JSON inválido")',
+      testes: [{ entradas: ['{"frente": "Oi", "verso": "Olá"}'], saida: 'Oi' }, { entradas: ['Claro! Aqui está: {"frente"'], saida: 'JSON inválido' }],
+      dicas: ['A função que converte texto JSON se chama `loads` (de “load string”).', 'O par do `try` é o `except`. E a chave pedida é `"frente"`.'] },
+    mao: { t: 'JSON à prova de conversa fiada', onde: 'pc',
+      passos: ['No programa da lição 5.17, peça “1 flashcard em JSON com os campos frente e verso”.', 'Passe a resposta por `json.loads`, dentro de `try` e `except`.', 'Se der erro, repita a chamada, no máximo 3 vezes.'],
+      criterio: 'O programa mostra a frente do cartão e não quebra quando o JSON vem inválido.' },
+    quiz: [
+      { q: 'O JSON que o modelo devolveu veio inválido. O que o programa deve fazer?', o: ['Tentar de novo um número limitado de vezes, ou usar o modo estruturado da API', 'Usar assim mesmo', 'Tentar para sempre, até dar certo'], w: 'Nova tentativa com limite. Laço sem limite é conta alta e programa travado.' },
+      { q: 'O que `json.loads(texto)` faz?', o: ['Converte um texto JSON em dicionário ou lista do Python', 'Envia o JSON para a API', 'Salva o JSON num arquivo'], w: 'É a ponte entre o texto que o modelo escreveu e os dados que o programa usa.' },
+      { q: 'Para que servem o `try` e o `except` em Python?', o: ['Tratar um erro esperado sem o programa quebrar', 'Repetir um bloco várias vezes', 'Definir uma função'], w: 'Repetir é com `for` e `while`. Definir função é com `def`.' },
+    ],
+    erro: { t: 'Não validar', d: 'O JSON convertido sem erro pode vir sem o campo `verso`, ou com `ano` como texto. Converter é metade do trabalho: confira os campos antes de usar.' },
+  },
+  {
+    id: '5.19', t: 'LangChain 1.x', min: 8,
+    gancho: 'Hoje o seu código fala com o Groq. E se amanhã o melhor modelo (ou o mais barato) estiver em outro lugar? Você reescreve tudo, ou troca uma linha.',
+    analogia: 'A LangChain é um **adaptador universal de tomada**: cada provedor de IA tem o seu plugue, e o adaptador deixa você ligar qualquer um na mesma parede, sem trocar a fiação da casa.',
+    ideia: [
+      '**LangChain** é uma biblioteca que **padroniza** o uso de modelos, mensagens e ferramentas de vários provedores. O mesmo código funciona com Groq, Gemini, OpenAI, Anthropic e outros.',
+      'A porta de entrada na versão 1.x é o **`init_chat_model`**: você informa o modelo e o provedor e recebe um objeto com os mesmos comandos, seja qual for o fornecedor. O principal é o `.invoke()`.',
+      'Instalação: `pip install langchain langchain-groq`. Cada provedor tem o seu pacote de integração, como `langchain-google-genai` e `langchain-openai`.',
+      'Para trocar de provedor, mudam o nome do modelo e o `model_provider`. O resto do programa fica igual.',
+      'Precisa da LangChain para uma chamada simples? Não: o SDK resolve. Ela passa a valer a pena quando entram **ferramentas e agentes** (Módulo 6) ou quando você quer **comparar provedores**.',
+      { nota: 'A LangChain 1.0 saiu em outubro de 2025 e mudou bastante: exige Python 3.10 ou mais novo, e o código antigo foi para o pacote `langchain-classic`. Tutoriais com `LLMChain`, `AgentExecutor` ou `initialize_agent` são da geração anterior.', tipo: 'aviso' },
+    ],
+    exemplo: [
+      { c: 'from dotenv import load_dotenv\nfrom langchain.chat_models import init_chat_model\n\nload_dotenv()\n\nmodelo = init_chat_model("openai/gpt-oss-120b", model_provider="groq", temperature=0.2)\nresposta = modelo.invoke("Explique RAG em uma frase.")\nprint(resposta.content)\n\n# Trocar de provedor é trocar esta linha (e instalar langchain-google-genai):\n# modelo = init_chat_model("NOME_DO_MODELO", model_provider="google_genai")', l: 'python' },
+      { passos: ['`init_chat_model` cria o modelo, dizendo o nome e o provedor.', '`invoke` envia a pergunta e devolve uma mensagem.', '`resposta.content` é o texto.', 'A linha comentada mostra a troca de provedor: uma linha.'] },
+    ],
+    ex: { tipo: 'lacunas', enun: 'Complete o programa com a LangChain 1.x.',
+      molde: 'from langchain.chat_models import ⟦1:init_chat_model⟧\n\nmodelo = init_chat_model(MODELO, model_provider=⟦1:"groq"⟧, temperature=0.2)\nresposta = modelo.⟦1:invoke⟧("Explique RAG em uma frase.")\nprint(resposta.⟦1:content⟧)',
+      opcoes: ['init_chat_model', '"groq"', 'invoke', 'content', 'LLMChain', 'run'],
+      w: '`init_chat_model` cria, `invoke` chama e `content` traz o texto. `LLMChain` e `run` são da geração antiga.' },
+    mao: { t: 'Uma linha, dois provedores', onde: 'pc',
+      passos: ['No venv, rode `pip install langchain langchain-groq`.', 'Rode o exemplo com o Groq.', 'Opcional: com uma chave do Gemini, instale `langchain-google-genai`, troque a linha e rode de novo.'],
+      criterio: 'A pergunta foi respondida pela LangChain, e você aponta a linha que mudaria para outro provedor.' },
+    quiz: [
+      { q: 'Para que serve a LangChain?', o: ['Padronizar o uso de modelos e ferramentas de vários provedores', 'Treinar modelos do zero', 'Substituir o Python'], w: 'É uma camada comum por cima dos SDKs de cada empresa.' },
+      { q: 'O que o `init_chat_model` da LangChain devolve?', o: ['Um modelo de chat com os mesmos comandos para qualquer provedor', 'Uma chave de API nova', 'Um arquivo `.env`'], w: 'Por isso trocar de provedor vira trocar uma linha.' },
+      { q: 'Um tutorial de LangChain usa `LLMChain` e `AgentExecutor`. O que isso indica?', o: ['Que é da geração anterior à LangChain 1.0', 'Que é a versão mais nova', 'Que não usa Python'], w: 'Na 1.x, esses nomes só existem no pacote `langchain-classic`.' },
+    ],
+    erro: { t: 'Copiar `LLMChain` e `AgentExecutor` antigos', d: 'Esse código vem de tutoriais anteriores à versão 1.0 e, na 1.x, só funciona pelo pacote `langchain-classic`. Em projeto novo, siga a documentação da v1: `init_chat_model` agora e `create_agent` no Módulo 6.' },
+  },
+  {
+    id: '5.20', t: 'Automação final', min: 8,
+    gancho: 'Um PDF entra. Dez flashcards saem, prontos para importar aqui no app. É tudo o que você aprendeu neste módulo, num programa só.',
+    analogia: 'É uma **linha de produção** com cinco estações: ler, cortar, gerar, conferir e embalar. Cada estação é uma **função** que você já sabe escrever.',
+    ideia: [
+      'O programa do projeto do Módulo 5, a **Fábrica de flashcards**, encadeia:',
+      { ol: ['**Ler**: o `pypdf` extrai o texto do PDF (lição 5.14).', '**Cortar**: o texto é dividido em pedaços que cabem no modelo.', '**Gerar**: para cada pedaço, o LLM recebe um prompt pedindo flashcards em JSON (5.17).', '**Conferir**: `json.loads`, validação dos campos e nova tentativa (5.18).', '**Embalar**: os cartões vão para um CSV com as colunas `frente;verso` (5.12).'] },
+      'Por que cortar: um PDF de 80 páginas pode não caber na janela ou estourar o limite de tokens por minuto do plano gratuito. Pedaços de 3 a 4 mil caracteres, um por chamada, com uma **pausa** entre elas (`time.sleep(2)`), respeitam os limites.',
+      'Por que uma função por estação: você testa cada uma separadamente. Se os cartões saem ruins, o problema está no prompt da estação 3, e não na leitura.',
+      'O CSV final é importado aqui no app, em [Revisar › Importar cartões](#/revisar/importar), e também serve no Anki. É o seu assistente gerando o seu material de revisão.',
+      'O código completo está em [Projeto › Kits](#/projeto/kits). O desafio é entender cada estação e ajustar o prompt.',
+    ],
+    exemplo: [
+      'O esqueleto da fábrica:',
+      { c: 'import time\n\ndef ler_pdf(caminho): ...\ndef cortar(texto, tamanho=3500): ...\ndef gerar_cartoes(pedaco): ...      # chama o LLM e valida o JSON\ndef salvar_csv(cartoes, caminho): ...\n\ntexto = ler_pdf("apostila.pdf")\ncartoes = []\nfor pedaco in cortar(texto)[:3]:     # comece com 3 pedaços\n    cartoes += gerar_cartoes(pedaco)\n    time.sleep(2)                    # respeita o limite por minuto\nsalvar_csv(cartoes[:10], "flashcards.csv")', l: 'python' },
+      { passos: ['Quatro funções, uma por estação. Os `...` marcam onde vai o código de cada uma.', 'O laço passa pelos 3 primeiros pedaços: teste pequeno primeiro.', '`time.sleep(2)` espera 2 segundos entre as chamadas.', 'No fim, os 10 primeiros cartões vão para o CSV.'] },
+    ],
+    ex: { tipo: 'ordenar', enun: 'Ponha as estações da fábrica em ordem.',
+      itens: ['Ler o PDF e extrair o texto', 'Cortar o texto em pedaços que caibam no modelo', 'Pedir ao LLM os flashcards em JSON, pedaço por pedaço', 'Validar o JSON e tentar de novo se vier inválido', 'Salvar os cartões num CSV', 'Importar o CSV no app de revisão'] },
+    mao: { t: 'Rode a fábrica', onde: 'pc',
+      passos: ['Baixe o kit `fabrica_flashcards.py` em Projeto › Kits.', 'Ponha na pasta um PDF com texto e a chave no `.env`.', 'Rode e abra o `flashcards.csv`.', 'Importe em Revisar › Importar cartões.'],
+      criterio: 'Pelo menos 5 cartões gerados do seu PDF aparecem na sua revisão.' },
+    quiz: [
+      { q: 'Por que cortar o texto do PDF em pedaços antes de enviar ao modelo?', o: ['Para caber na janela de contexto e nos limites do plano', 'Para o PDF ficar mais leve', 'Porque o modelo só lê uma palavra por vez'], w: 'Texto demais num pedido só estoura a janela ou o limite de tokens por minuto.' },
+      { q: 'Qual é a vantagem de fazer uma função para cada etapa de uma automação?', o: ['Dá para testar e consertar cada etapa separadamente', 'O programa fica mais longo', 'O Python exige'], w: 'Quando algo sai errado, você sabe em qual estação procurar.' },
+      { q: 'Por que colocar uma pausa entre as chamadas ao modelo dentro de um laço?', o: ['Para não estourar o limite de pedidos por minuto', 'Para o modelo descansar', 'Para gastar menos disco'], w: 'Sem pausa, o laço dispara tudo de uma vez e vem o 429.' },
+    ],
+    erro: { t: 'PDF enorme de uma vez', d: 'Mandar 80 páginas num pedido só estoura a janela ou o limite de tokens, e a resposta vem cortada ou com erro 429. Corte em pedaços, teste com 2 ou 3 e só depois rode tudo.' },
+  },
+];
