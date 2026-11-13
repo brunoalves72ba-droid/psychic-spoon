@@ -52,7 +52,7 @@ export default async function (el, [id]) {
   }
   const rotulo = (txt) => h('div.eyebrow', `Passo ${p + 1} de 7 · ${txt}`);
   const voltar = () => (p > 0 && p < 6 ? h('button.btn.quiet.small', { type: 'button', style: { alignSelf: 'flex-start' }, onclick: () => { p -= 1; qi = 0; desenhar(); } }, '‹ Passo anterior') : null);
-  const rodarPython = async (codigo) => (await import('../labs/python.js')).rodar(codigo);
+  const rodarPython = async (codigo, ent) => (await import('../labs/python.js')).rodar(codigo, ent);
 
   function desenhar() {
     pintarSegs();

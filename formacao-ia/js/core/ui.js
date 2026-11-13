@@ -110,7 +110,7 @@ export function blocks(arr, opts = {}) {
   for (const b of [].concat(arr || [])) {
     if (b == null || b === false) continue;
     if (typeof b === 'string') box.append(h('p', rich(b)));
-    else if (b.c != null) box.append(codeBlock(b.c, b.l, { run: b.run && opts.run, wrap: b.wrap, titulo: b.t }));
+    else if (b.c != null) box.append(codeBlock(b.c, b.l, { run: b.run && opts.run ? (c) => opts.run(c, b.ent || []) : null, wrap: b.wrap, titulo: b.t }));
     else if (b.ul) box.append(h('ul', b.ul.map((x) => h('li', rich(x)))));
     else if (b.ol) box.append(h('ol', b.ol.map((x) => h('li', rich(x)))));
     else if (b.passos) box.append(h('ol.steps', b.passos.map((x, i) => h('li', h('span', String(i + 1)), h('div', rich(x))))));
