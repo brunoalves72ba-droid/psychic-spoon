@@ -1,2 +1,175 @@
-// (em construção)
-export const M4A = [];
+// Formação IA Generativa — © Bruno Moura, único e exclusivo proprietário.
+// Módulo 4, Aula 1 — n8n: fundamentos e fluxos (4.1 a 4.6).
+// A interface do n8n é em inglês e muda com frequência: os nomes dos botões podem variar um pouco.
+
+export const M4A = [
+  {
+    id: '4.1', t: 'Automação low-code', min: 6,
+    gancho: 'Todo dia você copia dados de um lugar e cola em outro? Uma máquina faria isso enquanto você dorme, e dá para montar essa máquina arrastando blocos.',
+    analogia: 'Automatizar com low-code é montar uma **linha de montagem de Lego**: cada peça faz uma coisa pequena, e você encaixa as peças na ordem. Quase sem escrever código.',
+    ideia: [
+      '**Automação** é fazer um processo rodar sozinho: algo acontece (chegou um e-mail) e uma sequência de passos é executada (ler, resumir, registrar, avisar).',
+      '**Low-code** quer dizer “pouco código”: em vez de programar tudo, você liga blocos prontos numa tela. O **n8n** é uma dessas ferramentas, com centenas de integrações e blocos de IA.',
+      { ul: ['**Boa candidata à automação**: tarefa repetitiva, com regras claras, que acontece com frequência e em que um erro é chato, mas não é grave.', '**Má candidata**: decisão delicada sobre pessoas, tarefa que acontece uma vez por ano, processo que ninguém sabe explicar direito.'] },
+      'Low-code não dispensa **lógica**. Você ainda precisa pensar em ordem, decisão, repetição e no que acontece se der erro. É tudo do Módulo 0. A ferramenta poupa a digitação, não o raciocínio.',
+    ],
+    exemplo: [
+      'Do manual ao automático:',
+      { passos: ['**Manual**: toda manhã você abre o formulário de dúvidas, copia cada pergunta nova para uma planilha e avisa o grupo.', '**Em passos**: chegou resposta nova; acrescentar uma linha na planilha; enviar a mensagem.', '**No n8n**: três blocos ligados por setas: gatilho do formulário → Google Sheets → mensagem.', 'Tempo seu por dia: zero.'] },
+    ],
+    ex: { tipo: 'classificar', enun: 'Vale automatizar?', baldes: ['Boa candidata', 'Melhor não automatizar'],
+      itens: [
+        { t: 'Copiar respostas de um formulário para a planilha, todo dia', b: 0 }, { t: 'Decidir quem será demitido', b: 1 }, { t: 'Enviar o lembrete da aula toda segunda', b: 0 },
+        { t: 'Um processo que cada pessoa da equipe faz de um jeito', b: 1, w: 'Primeiro combine o processo. Automatizar bagunça só produz bagunça mais rápido.' }, { t: 'Salvar os anexos dos e-mails numa pasta', b: 0 }, { t: 'Uma tarefa que só acontece uma vez por ano', b: 1 },
+      ] },
+    mao: { t: 'Suas 3 tarefas repetitivas', onde: 'qualquer',
+      passos: ['Liste 3 tarefas que você repete toda semana.', 'Para cada uma, escreva: o que dispara, quais são os passos e o que pode dar errado.', 'Marque a mais simples: é a candidata ao seu primeiro fluxo.'],
+      criterio: 'Três tarefas descritas e uma escolhida.' },
+    quiz: [
+      { q: 'Usar uma ferramenta low-code dispensa a lógica?', o: ['Não: você ainda define a ordem, as decisões e o que fazer se der erro', 'Sim: a ferramenta pensa por você', 'Sim, desde que use IA'], w: 'Os blocos poupam digitação. O desenho do processo continua sendo seu.' },
+      { q: 'Que tipo de tarefa é boa candidata à automação?', o: ['Repetitiva, frequente e com regras claras', 'Rara e cheia de exceções', 'Uma decisão delicada sobre pessoas'], w: 'Quanto mais repetida e mais clara a regra, mais vale automatizar.' },
+      { q: 'O que acontece ao automatizar um processo confuso?', o: ['A confusão passa a acontecer mais rápido e em maior escala', 'O processo se organiza sozinho', 'A ferramenta recusa o fluxo'], w: 'Automação amplia o que existe, de bom ou de ruim.' },
+    ],
+    erro: { t: 'Automatizar um processo confuso', d: 'Se nem as pessoas sabem dizer qual é o passo a passo, o fluxo não vai saber. Escreva o processo em 5 ou 6 passos claros. Depois, automatize.' },
+  },
+  {
+    id: '4.2', t: 'Interface: canvas, nós e execuções', min: 7,
+    gancho: 'A tela do n8n parece um quadro branco cheio de caixinhas. Aprenda o nome de quatro coisas e você já se localiza.',
+    analogia: 'O editor do n8n é uma **mesa de montagem**: o **canvas** é a mesa, os **nós** são as peças, as **conexões** são os encaixes e as **execuções** são o caderno onde fica anotado tudo o que rodou.',
+    ideia: [
+      { ul: ['**Workflow**: o fluxo inteiro, do gatilho ao último passo. É o “arquivo” do n8n.', '**Canvas**: a área onde você monta. Arrasta, dá zoom, organiza.', '**Nó** (*node*): cada bloco. Um nó faz uma coisa só: receber um webhook, chamar uma API, escrever numa planilha.', '**Conexão**: a linha que leva os dados da saída de um nó para a entrada do próximo.', '**Execução**: cada vez que o fluxo roda. A aba **Executions** guarda o histórico: quando rodou, se deu certo ou errado e os dados que passaram em cada nó.'] },
+      'Ao abrir um nó (dois cliques), a tela mostra três partes: à esquerda o que **entrou** (Input), no meio a **configuração** e à direita o que **saiu** (Output). Esse painel é o seu melhor amigo para entender e consertar.',
+      { nota: 'A interface do n8n é em inglês e muda com frequência. Os nomes dos botões podem variar um pouco em relação a vídeos antigos.', tipo: 'aviso' },
+    ],
+    exemplo: [
+      'O seu primeiro workflow:',
+      { passos: ['Crie um workflow novo.', 'No canvas, clique no **+** e escolha o gatilho **Trigger manually**.', 'Clique no **+** depois dele e adicione o nó **Edit Fields (Set)**.', 'Clique em **Execute workflow**: os nós ficam verdes.', 'Abra o segundo nó e olhe o Input e o Output.', 'Dê um nome ao workflow e salve.'] },
+    ],
+    ex: { tipo: 'classificar', enun: 'Dê nome às peças.', baldes: ['Canvas', 'Nó', 'Conexão', 'Execução'],
+      itens: [
+        { t: 'A área onde você monta o fluxo', b: 0 }, { t: 'Um bloco que faz uma tarefa só', b: 1 }, { t: 'A linha que leva dados de um bloco ao próximo', b: 2 },
+        { t: 'O registro de uma vez em que o fluxo rodou', b: 3 }, { t: 'O bloco “Google Sheets”', b: 1 }, { t: 'Onde você descobre o que deu erro ontem às 3 da manhã', b: 3 },
+      ] },
+    mao: { t: 'Crie e salve um workflow', onde: 'pc',
+      passos: ['Entre no seu n8n (teste do Cloud ou local).', 'Crie um workflow com **Trigger manually** e **Edit Fields (Set)**.', 'Execute, veja os nós ficarem verdes e salve com o nome “Primeiro fluxo”.'],
+      criterio: 'O workflow aparece na lista com o nome que você deu.' },
+    quiz: [
+      { q: 'No n8n, onde ver o que rodou e o que deu erro?', o: ['Na aba Executions', 'No canvas, pelas cores dos nós', 'No e-mail do administrador'], w: 'Executions guarda cada rodada, com os dados que passaram por cada nó.' },
+      { q: 'O que é um nó no n8n?', o: ['Um bloco que faz uma tarefa específica do fluxo', 'O fluxo inteiro', 'O histórico das execuções'], w: 'O fluxo inteiro é o workflow. O histórico são as execuções.' },
+      { q: 'Ao abrir um nó do n8n, o que mostram os painéis Input e Output?', o: ['Os dados que entraram no nó e os que saíram dele', 'A senha e a chave de API', 'O preço da execução'], w: 'Comparar o que entrou com o que saiu é o jeito mais rápido de achar um erro.' },
+    ],
+    erro: { t: 'Não salvar', d: 'Você monta, testa, fecha a aba e perde tudo. Salve cedo e salve sempre (Ctrl+S), com um nome que diga o que o fluxo faz.' },
+  },
+  {
+    id: '4.3', t: 'Triggers', min: 6,
+    gancho: 'Um fluxo perfeito que nunca começa não serve para nada. Quem dá a partida?',
+    analogia: 'O trigger é o **despertador** do fluxo: ele define **quando** tudo começa. Pode tocar numa hora marcada, quando chega alguma coisa ou quando você aperta o botão.',
+    ideia: [
+      'Todo workflow começa com um **trigger** (gatilho): é o primeiro nó. Sem trigger, o fluxo não roda sozinho.',
+      { ul: ['**Manual** (*Trigger manually*): roda quando você clica. É para testar.', '**Schedule Trigger**: roda em horário marcado. “Todo dia às 8h”, “a cada 15 minutos”.', '**Webhook**: roda quando outro sistema chama a URL (lição 3.7).', '**Chat Trigger**: roda quando chega mensagem no chat de teste do n8n. Ótimo para agentes.', '**Triggers de aplicativos**: “quando chegar e-mail”, “quando entrar linha nova na planilha”, “quando chegar mensagem no Telegram”.'] },
+      'Para rodar **sozinho**, não basta ter trigger: é preciso **ativar** o workflow. Nas versões novas, o botão se chama **Publish**; nas antigas, é a chave **Active**. Enquanto não está ativo, ele só roda quando você clica em executar.',
+    ],
+    exemplo: [
+      'Um despertador para cada caso:',
+      { passos: ['“Enviar o resumo das dúvidas toda sexta às 18h”: **Schedule Trigger**.', '“Responder quando alguém preencher o formulário”: **Webhook**.', '“Conversar com o assistente”: **Chat Trigger**.', '“Só quero testar o que montei”: **Manual**.'] },
+    ],
+    ex: { tipo: 'classificar', enun: 'Qual trigger para cada situação?', baldes: ['Manual', 'Schedule', 'Webhook', 'Chat'],
+      itens: [
+        { t: 'Testar o fluxo enquanto monta', b: 0 }, { t: 'Todo dia às 8h', b: 1 }, { t: 'Quando o site da loja avisar que entrou um pedido', b: 2 },
+        { t: 'Quando alguém mandar mensagem para o assistente', b: 3 }, { t: 'A cada 15 minutos', b: 1 }, { t: 'Quando o formulário enviar as respostas para a sua URL', b: 2 },
+      ] },
+    mao: { t: 'Um fluxo com hora marcada', onde: 'pc',
+      passos: ['Crie um workflow com **Schedule Trigger** a cada 1 minuto e um nó **Edit Fields (Set)**.', 'Ative o workflow e espere 3 minutos.', 'Abra **Executions** e veja as execuções automáticas.', '**Desative** no fim, para não gastar execuções.'],
+      criterio: 'Pelo menos 2 execuções automáticas no histórico e o workflow desativado no fim.' },
+    quiz: [
+      { q: 'Um workflow do n8n sem trigger roda sozinho?', o: ['Não: é o trigger que dá a partida', 'Sim, a cada hora', 'Sim, quando o computador liga'], w: 'Sem gatilho, o fluxo só roda se você mandar.' },
+      { q: 'Qual trigger do n8n usar para “todo dia às 8h”?', o: ['Schedule Trigger', 'Webhook', 'Manual'], w: 'Hora marcada é Schedule. Webhook espera alguém chamar.' },
+      { q: 'O fluxo tem Schedule Trigger, mas não roda sozinho. Qual é a causa mais comum?', o: ['O workflow não foi ativado', 'O computador está sem som', 'Falta um segundo trigger'], w: 'Executar pelo editor é teste. Só o workflow ativo obedece ao horário.' },
+    ],
+    erro: { t: 'Esquecer de ativar', d: 'Testou, funcionou, fechou, e no dia seguinte nada rodou. Clicar em executar é teste. Para valer, o workflow precisa estar **ativo** (publicado).' },
+  },
+  {
+    id: '4.4', t: 'Itens e JSON entre nós', min: 7,
+    gancho: 'O que exatamente viaja pelas linhas que ligam os nós? Quando você enxerga isso, o n8n deixa de ser mágica.',
+    analogia: 'Entre os nós corre uma **esteira com bandejas**. Cada bandeja é um **item**, e dentro dela vai um JSON. Cada nó pega as bandejas que chegam, faz o seu trabalho em cada uma e devolve à esteira.',
+    ideia: [
+      'No n8n, os dados andam em **itens**. Cada item é um objeto JSON, como `{ "nome": "Ana", "nota": 8 }`.',
+      'Um nó pode receber **vários itens** de uma vez: 10 linhas da planilha são 10 itens. Por padrão, ele executa a sua ação **uma vez para cada item**. Você não monta um laço: a esteira faz isso.',
+      'Cada nó recebe os itens **do nó anterior** e entrega os seus para o próximo.',
+      'O nó **Edit Fields (Set)** cria ou ajusta campos: “acrescente o campo `data`”, “renomeie `name` para `nome`”.',
+      'Para ver os itens, abra o nó e olhe Input e Output. Dá para ver como tabela, como JSON ou como esquema.',
+    ],
+    exemplo: [
+      'Três alunos na esteira:',
+      { c: '{ "nome": "Ana",  "nota": 8 }\n{ "nome": "Bia",  "nota": 6 }\n{ "nome": "Caio", "nota": 9 }', l: 'json', t: '3 itens entram' },
+      { passos: ['O nó Edit Fields acrescenta o campo `curso` com o valor “IA”.', 'Saem 3 itens, cada um com `nome`, `nota` e `curso`.', 'Você configurou o nó uma vez. Ele rodou três.'] },
+    ],
+    ex: { tipo: 'json', enun: 'Escreva o item que o nó Edit Fields deve criar: um objeto com os campos `nome` e `data` (a data como texto, no formato AAAA-MM-DD).',
+      inicial: '{\n  \n}',
+      espera: { tipo: 'objeto', chaves: ['nome', 'data'], tipos: { nome: 'texto', data: 'texto' } },
+      w: 'É exatamente isto que viaja pela esteira: um objeto JSON por item.' },
+    mao: { t: 'Edit Fields na prática', onde: 'pc',
+      passos: ['No workflow “Primeiro fluxo”, abra o **Edit Fields (Set)**.', 'Adicione os campos `nome` (o seu nome) e `data` (a data de hoje).', 'Execute e veja o Output em JSON.'],
+      criterio: 'O Output mostra um item com `nome` e `data`.' },
+    quiz: [
+      { q: 'No n8n, o que cada nó recebe?', o: ['Os itens que saíram do nó anterior', 'Todos os dados de todos os workflows', 'Só o primeiro item da execução'], w: 'A esteira leva a saída de um nó para a entrada do seguinte.' },
+      { q: 'Um nó do n8n recebeu 10 itens. Quantas vezes, por padrão, ele executa a sua ação?', o: ['Dez: uma vez para cada item', 'Uma vez só', 'Depende do horário'], w: 'É o laço embutido da esteira. Uma configuração, dez execuções.' },
+      { q: 'Para que serve o nó Edit Fields (Set)?', o: ['Criar ou ajustar campos dos itens', 'Agendar o workflow', 'Guardar credenciais'], w: 'É a peça para acrescentar, renomear e arrumar campos.' },
+    ],
+    erro: { t: 'Confundir teste com produção', d: 'No editor você vê os dados da **última execução de teste**. Com o workflow ativo, cada execução real traz os dados dela, e o lugar de conferir é a aba **Executions**.' },
+  },
+  {
+    id: '4.5', t: 'Expressões {{ }}', min: 7,
+    gancho: '“Olá, Ana!” para a Ana, “Olá, Bia!” para a Bia. Você não vai escrever uma mensagem por pessoa: vai escrever uma só, com um espaço que se preenche sozinho.',
+    analogia: 'Uma expressão é a **lacuna da mala direta**: “Olá, {{nome}}”. Na hora de rodar, o n8n troca a lacuna pelo valor daquele item.',
+    ideia: [
+      'Um campo do n8n pode estar em dois modos: **Fixed** (o valor que você digitou, igual para todos) ou **Expression** (calculado com os dados de cada item).',
+      'A sintaxe é `{{ }}`. Dentro, `$json` representa **o item atual**:',
+      { ul: ['`{{ $json.nome }}`: o campo `nome` do item;', '`{{ $json.curso.titulo }}`: um campo dentro de outro;', '`Olá, {{ $json.nome }}!`: texto fixo misturado com a lacuna.'] },
+      'Não precisa decorar: **arraste** o campo do painel Input para dentro da caixa e o n8n escreve a expressão.',
+      'Dentro das chaves vale JavaScript simples: `{{ $json.nome.toUpperCase() }}` põe em maiúsculas e `{{ $now }}` dá a data e a hora de agora.',
+      'Para buscar o dado de um nó que ficou para trás: `{{ $(\'Nome do nó\').item.json.campo }}`.',
+      'O n8n mostra o **resultado** embaixo do campo enquanto você digita. Apareceu `undefined`? O caminho está errado.',
+    ],
+    exemplo: [
+      { c: '{ "nome": "Ana", "nota": 8.5, "curso": { "titulo": "IA Generativa" } }', l: 'json', t: 'Item de entrada' },
+      { passos: ['`Olá, {{ $json.nome }}!` vira “Olá, Ana!”.', '`{{ $json.curso.titulo }}` vira “IA Generativa”.', '`Nota: {{ $json.nota }}` vira “Nota: 8.5”.', '`{{ $json.Nome }}` vira `undefined`: a maiúscula está errada. O nome do campo tem de ser idêntico.'] },
+    ],
+    ex: { tipo: 'lab', lab: 'n8n-expr', missao: 'ola', enun: 'Escreva a expressão que produz “Olá, Ana!” a partir do item. Depois, a que mostra o título do curso.' },
+    mao: { t: 'Mala direta no n8n', onde: 'pc',
+      passos: ['No **Edit Fields (Set)**, crie o campo `saudacao`.', 'Mude o campo para **Expression** e escreva `Olá, {{ $json.nome }}!`.', 'Execute e confira o Output.'],
+      criterio: 'O campo `saudacao` mostra o seu nome, vindo do campo `nome`.' },
+    quiz: [
+      { q: 'Qual é a sintaxe de uma expressão no n8n?', o: ['Chaves duplas: `{{ }}`', 'Colchetes: `[ ]`', 'Sinais de porcentagem: `% %`'], w: 'Tudo o que está entre `{{` e `}}` é calculado na hora, para cada item.' },
+      { q: 'Numa expressão do n8n, o que `$json` representa?', o: ['Os dados do item atual', 'A chave de API', 'O nome do workflow'], w: '`$json.campo` lê um campo da bandeja que está passando agora.' },
+      { q: 'A expressão `{{ $json.Nome }}` devolveu `undefined`, e o campo se chama `nome`. Por quê?', o: ['Maiúsculas e minúsculas precisam ser idênticas', 'Faltou a senha', 'Expressões não leem texto'], w: '`Nome` e `nome` são campos diferentes para o n8n.' },
+    ],
+    erro: { t: 'Usar valor fixo', d: 'Escrever “Ana” direto no campo funciona no teste e manda “Olá, Ana!” para todo mundo. Se o valor muda de item para item, o campo tem de ser uma expressão.' },
+  },
+  {
+    id: '4.6', t: 'IF e Switch', min: 7,
+    gancho: 'Nota 7 ou mais: parabéns. Menos que 7: plano de revisão. Um fluxo, dois caminhos. É a decisão do Módulo 0, agora com setas.',
+    analogia: 'O nó IF é uma **bifurcação com um guarda**: ele olha cada item, faz a pergunta e manda para a pista “true” ou para a pista “false”. O Switch é uma **rotatória** com várias saídas.',
+    ideia: [
+      'O nó **IF** testa uma condição em cada item e tem **duas saídas**: `true` e `false`. Cada item segue por uma delas.',
+      'Uma condição tem três partes: o **valor** (em geral uma expressão, como `{{ $json.nota }}`), o **operador** (“é igual a”, “é maior ou igual a”, “contém”) e o valor de **comparação** (`7`).',
+      'Você escolhe o **tipo** da comparação: Number, String (texto), Boolean, Date & Time. Aqui mora a pegadinha: como **texto**, `"10"` vem **antes** de `"7"`, porque texto se compara caractere por caractere e “1” vem antes de “7”. Para comparar notas, o tipo tem de ser **Number**.',
+      'Dá para combinar condições com **AND** (todas) ou **OR** (qualquer uma).',
+      'O nó **Switch** serve quando há **mais de dois caminhos**: assunto *financeiro* vai para a saída 1, *suporte* para a 2, *outros* para a 3.',
+    ],
+    exemplo: [
+      'Aprovado ou revisão:',
+      { passos: ['Chegam 3 itens: Ana (8), Bia (6) e Caio (10).', 'IF: `{{ $json.nota }}`, tipo Number, “is greater than or equal to”, `7`.', 'Saída **true**: Ana e Caio. Saída **false**: Bia.', 'Na pista true, um nó envia “Parabéns”. Na false, um nó envia o plano de revisão.', 'Se o tipo fosse String, o Caio (10) cairia na pista errada: como texto, “10” é “menor” que “7”.'] },
+    ],
+    ex: { tipo: 'lab', lab: 'n8n-if', missao: 'numero', enun: 'Monte a condição “nota maior ou igual a 7”. Um aluno vai parar na pista errada: descubra por quê e conserte.' },
+    mao: { t: 'Bifurcação de verdade', onde: 'pc',
+      passos: ['Crie 3 itens de teste com as notas 8, 6 e 10.', 'Adicione um nó **IF**: nota, Number, maior ou igual a 7.', 'Execute e abra as duas saídas.'],
+      criterio: 'A saída true tem 2 itens e a false tem 1.' },
+    quiz: [
+      { q: 'Para que serve o nó Switch no n8n?', o: ['Para dividir o fluxo em vários caminhos, mais de dois', 'Para ligar e desligar o workflow', 'Para trocar de conta'], w: 'IF tem duas saídas. Switch tem quantas você precisar.' },
+      { q: 'Comparando como texto, por que “10” fica antes de “7”?', o: ['Texto se compara caractere por caractere, e “1” vem antes de “7”', 'Porque 10 é menor que 7', 'Porque o n8n arredonda os números'], w: 'É a ordem do dicionário. Para comparar valores, use o tipo Number.' },
+      { q: 'Quantas saídas tem o nó IF do n8n?', o: ['Duas: true e false', 'Uma', 'Quantas você quiser'], w: 'Cada item sai por true ou por false, conforme a condição.' },
+    ],
+    erro: { t: 'Comparar texto com número', d: 'Dados de formulário e de planilha muitas vezes chegam como **texto**, mesmo parecendo número. Se o IF manda itens para a pista errada, confira o tipo: comparação de nota e de valor é **Number**.' },
+  },
+];
