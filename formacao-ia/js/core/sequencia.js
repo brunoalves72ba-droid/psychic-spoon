@@ -26,7 +26,7 @@ export function fechar(estado, dias, hoje) {
   const atual = weekStart(hoje);
   let w = e.ult ? addDays(e.ult, 7) : primeira;
   // ausência muito longa: não percorre centenas de semanas; depois de 2 congelamentos a sequência já zerou
-  if (diffDays(atual, w) > 7 * 12) w = addDays(atual, -7 * 12);
+  if (e.ult && diffDays(atual, w) > 7 * 12) w = addDays(atual, -7 * 12);
   for (; w < atual; w = addDays(w, 7)) {
     const n = diasAtivos(dias, w);
     let tipo;

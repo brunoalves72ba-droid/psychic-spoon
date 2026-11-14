@@ -11,6 +11,8 @@
     "test": "node tools/gen-precache.mjs --check && node --test tests/*.test.mjs",
     "precache": "node tools/gen-precache.mjs",
     "e2e": "node tests/e2e/run.mjs",
-    "e2e:offline": "node tests/e2e/offline.mjs"
+    "e2e:offline": "node tests/e2e/offline.mjs",
+    "e2e:sync": "node tests/e2e/sync.mjs",
+    "e2e:pc": "node tests/e2e/run.mjs --pc"
   }
 }

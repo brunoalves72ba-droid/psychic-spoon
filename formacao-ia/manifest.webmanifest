@@ -4,7 +4,7 @@
   "description": "Trilha de IA generativa em micro-lições de 5 a 10 minutos, com revisão espaçada e um projeto de portfólio.",
   "lang": "pt-BR",
   "dir": "ltr",
-  "id": "./",
+  "id": "./index.html?app=formacao-ia",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
