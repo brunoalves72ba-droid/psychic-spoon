@@ -6,7 +6,10 @@ App web instalável (PWA) para estudar a trilha de IA generativa (96 h de ementa
 
 - Sem framework, sem etapa de build e sem bibliotecas externas em tempo de execução: HTML, CSS e JavaScript em módulos ES.
 - Funciona offline depois da primeira visita, inclusive o Python embutido (MicroPython em WebAssembly).
-- Os dados ficam só no aparelho (IndexedDB). Sem conta, sem servidor, sem analytics. Backup em arquivo JSON.
+- O progresso é salvo sozinho, a cada passo, no aparelho (IndexedDB). Sem servidor do app e sem analytics.
+- **Sincronização entre celular e PC** (opcional): uma cópia cifrada vai para um Gist secreto do seu GitHub; os dois aparelhos se juntam sem perder progresso. Backup em arquivo JSON continua disponível.
+- **Reconhece PC e celular:** no computador, menu lateral, duas colunas, atalhos de teclado e as práticas de computador em destaque; no celular, abas embaixo e botões grandes.
+- **Fotos reais** do Wikimedia Commons, com licença livre e crédito em cada uma.
 
 ## O que tem
 
@@ -32,8 +35,10 @@ npm start            # serve em http://localhost:8090
 ## Testes
 
 ```bash
-npm test             # 141 testes: motores, conteúdo (98 lições), Python das lições, laboratórios
+npm test             # 153 testes: motores, conteúdo (98 lições), Python, laboratórios, mesclagem e cifra da sincronização
 npm run e2e          # 60 cenários no Chromium a 390×844 (use --dark para o tema escuro)
+npm run e2e:pc       # os mesmos cenários em tamanho de computador (1366×900)
+npm run e2e:sync     # dois aparelhos simulados (celular e PC) sincronizando por um GitHub falso
 npm run e2e:offline  # instala os service workers, corta a rede e confere tudo, convivendo com o Sexteto
 ```
 

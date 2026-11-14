@@ -413,3 +413,12 @@ body.pc .faixa{min-height:200px}
 body:not(.pc) .grade-pc{display:flex;flex-direction:column;gap:16px}
 body:not(.pc) .grade-pc>.col{gap:16px}
 @media (max-width:1100px){body.pc{--lado:200px}body.pc #view{padding-left:calc(var(--lado) + 24px);padding-right:24px}}
+.ilha .orb.foto-orb{background-size:cover;background-position:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.ilha.cheia .orb.foto-orb{background-color:var(--c)}
+body.pc .ilhas-grade .ilha::before{display:none}
+body.pc .ilhas-grade .ilha{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.proximo .faixa{margin:-16px -16px 0;border-radius:var(--r) var(--r) 0 0}
+.ptop:has(.segs.passos){flex-wrap:wrap;row-gap:0}
+.ptop .segs.passos{order:3;flex:1 0 100%}
+.ptop:has(.segs.passos)::after{content:"";order:2;flex:1}
+.segs.passos .pp i{flex:none}

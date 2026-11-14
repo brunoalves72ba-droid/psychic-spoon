@@ -10,6 +10,9 @@ export const API = 'https://api.github.com';
 export const ARQUIVO = 'formacao-ia-sync.json';
 export const LINK_TOKEN = 'https://github.com/settings/tokens/new?scopes=gist&description=Forma%C3%A7%C3%A3o%20IA%20(sincroniza%C3%A7%C3%A3o)';
 
+/** JSON com as chaves em ordem: dois objetos iguais dão o mesmo texto, seja qual for a ordem dos campos. */
+export const estavel = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((c) => [c, x[c]])) : x));
+const semDerivados = ({ semana, ...resto }) => resto; // a sequência semanal é recalculada em cada aparelho
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const deB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
@@ -89,7 +92,7 @@ export function sincronizar() {
       }
       const kv = remoto ? mesclarKv(local.kv, remoto.kv) : local.kv;
       const log = remoto ? mesclarLog(local.log, remoto.log) : local.log;
-      recebeu = !!remoto && (JSON.stringify(kv) !== JSON.stringify(mesclarKv(local.kv, local.kv)) || log.length !== local.log.length);
+      recebeu = !!remoto && (estavel(semDerivados(kv)) !== estavel(semDerivados(mesclarKv(local.kv, local.kv))) || log.length !== local.log.length);
       if (recebeu) { await aplicar(kv, log); }
       const pacote = await cifrar({ kv, log, dispositivo: L.dispositivo, quando: new Date().toISOString() }, token);
       const files = { [ARQUIVO]: { content: pacote } };

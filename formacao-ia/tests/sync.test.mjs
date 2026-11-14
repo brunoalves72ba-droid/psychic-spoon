@@ -126,3 +126,9 @@ test('plataforma: PC com mouse e tela larga; celular com toque', () => {
   assert.equal(detectar({ ponteiroFino: false, hover: false, largura: 1024, toque: true }), 'celular', 'tablet com toque');
   assert.equal(detectar({ ponteiroFino: true, hover: true, largura: 700, toque: false }), 'celular', 'janela estreita');
 });
+
+test('comparação estável: a ordem dos campos não conta como mudança', async () => {
+  const { estavel } = await import('../js/core/nuvem.js');
+  assert.equal(estavel({ a: 1, b: { y: 2, x: [1, { q: 1, p: 2 }] } }), estavel({ b: { x: [1, { p: 2, q: 1 }], y: 2 }, a: 1 }));
+  assert.notEqual(estavel({ a: 1 }), estavel({ a: 2 }));
+});

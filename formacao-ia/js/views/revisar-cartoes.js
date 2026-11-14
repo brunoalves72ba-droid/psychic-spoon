@@ -16,7 +16,7 @@ export default async function (el, [modo]) {
   const barraTopo = h('div.segs', { role: 'progressbar', 'aria-label': 'Cartões da sessão' });
   const corpo = h('div');
   const acoes = h('div');
-  el.append(h('div.ptop', h('a.x', { href: '#/revisar', 'aria-label': 'Sair da revisão' }, icon('fecha')), barraTopo, cont), corpo, h('div.acao-bar', acoes));
+  el.append(h('div.ptop', h('a.x', { href: '#/revisar', 'aria-label': 'Sair da revisão' }, icon('fecha')), barraTopo, cont), corpo, h('p.small.muted.so-pc', 'Atalhos: Espaço mostra a resposta; 1 errei, 2 difícil, 3 lembrei.'), h('div.acao-bar', acoes));
 
   if (!total) {
     clear(acoes);
@@ -83,5 +83,13 @@ export default async function (el, [modo]) {
     for (const c of verificarConquistas()) toast(`Conquista: ${c.t}`);
   }
 
+  // teclado (PC): Espaço ou Enter mostra a resposta; 1, 2 e 3 dão a nota
+  const teclas = (e) => {
+    if (document.querySelector('.sheet-bg') || e.target.matches('textarea, input')) return;
+    if (e.key === ' ' || e.key === 'Enter') { const b = acoes.querySelector('.btn.primary.big'); if (b) { e.preventDefault(); b.click(); } }
+    else if (/^[1-3]$/.test(e.key)) { const b = acoes.querySelectorAll('.notas3 .btn')[+e.key - 1]; if (b) { e.preventDefault(); b.click(); } }
+  };
+  document.addEventListener('keydown', teclas);
   proximo();
+  return () => document.removeEventListener('keydown', teclas);
 }

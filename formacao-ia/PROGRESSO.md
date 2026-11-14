@@ -29,6 +29,15 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - [x] Kits de código: mini-RAG (M3), fábrica de flashcards (M5), agente com Streamlit (M6).
 - [x] Testes: 141 unitários; 60 cenários ponta a ponta em tema claro e escuro; teste offline e de convivência com o Sexteto.
 
+## Sincronização, PC e navegação (novembro de 2026)
+
+- `js/core/mesclar.js`: junta dois estados sem perder progresso (lição concluída e cartão revisto só avançam; perfil, ficha e prompts ficam com a versão mais recente; exclusões viajam como “lápides” em `apagados`). XP é contado por aparelho (`xpPor`) e somado. A sequência semanal é recalculada a partir dos dias.
+- `js/core/nuvem.js`: lê, mescla e grava um Gist secreto (`formacao-ia-sync.json`), cifrado com AES-GCM derivado do token (PBKDF2). Sincroniza ao abrir, alguns segundos depois de cada gravação, ao sair e a cada 5 min. O token fica em `local` (só no aparelho; fora do backup).
+- `js/core/plataforma.js`: PC = ponteiro fino com hover e tela ≥ 900 px; dá para forçar nos Ajustes. Classe `pc`/`celular` no `body`.
+- Lição: passos tocáveis, passos guardados em memória (voltar não apaga respostas), “Rever a ideia e o exemplo” no exercício, quiz e erro comum, botão Voltar e teclado (Enter/→, ←, 1–3, N).
+- Fotos: `assets/fotos/` (22 fotos, 33 lições e 7 módulos); registro em `js/data/fotos.js`, créditos em `CREDITOS.md`.
+- **Não testado contra o GitHub de verdade** (este ambiente não alcança a API): o teste `tests/e2e/sync.mjs` usa uma API de Gist falsa com o mesmo formato.
+
 ## Pendências e limites conhecidos
 
 - **Testar em aparelho real** (iPhone e Android): instalação, Python de bolso, download do .ics.

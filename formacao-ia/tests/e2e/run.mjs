@@ -17,12 +17,13 @@ mkdirSync(shots, { recursive: true });
 const arg = (k, d) => { const a = process.argv.find((x) => x.startsWith(`--${k}=`)); return a ? +a.split('=')[1] : d; };
 const W = arg('w', 390), H = arg('h', 844), PORT = arg('port', 8124);
 const dark = process.argv.includes('--dark');
-const sufixo = dark ? '-escuro' : '';
+const modoPC = process.argv.includes('--pc');
+const sufixo = (dark ? '-escuro' : '') + (modoPC ? '-pc' : '');
 
 const server = spawn(process.execPath, [root + 'tools/serve.mjs', String(PORT)], { stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 500));
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, hasTouch: true, isMobile: true, locale: 'pt-BR', colorScheme: dark ? 'dark' : 'light', acceptDownloads: true });
+const ctx = await browser.newContext({ viewport: modoPC ? { width: 1366, height: 900 } : { width: W, height: H }, deviceScaleFactor: 1, hasTouch: !modoPC, isMobile: !modoPC, locale: 'pt-BR', colorScheme: dark ? 'dark' : 'light', acceptDownloads: true });
 const page = await ctx.newPage();
 const errors = []; let atual = '';
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`[${atual}] console.${m.type()}: ${m.text()}`); });
@@ -135,7 +136,7 @@ await cenario('progresso', () => ir('#/progresso'));
 await cenario('progresso-semana', async () => { await ir('#/progresso/semana'); await page.locator('input.inp').nth(0).fill('Fiz 10 lições'); await page.locator('input.inp').nth(4).fill('Terça, lição 3.4'); });
 await cenario('progresso-cronograma', async () => { await ir('#/progresso/cronograma'); await page.locator('button.item').first().click(); await page.waitForTimeout(150); });
 await cenario('progresso-conquistas', () => ir('#/progresso/conquistas'));
-for (const p of ['ficha', 'porque', 'ajustes', 'backup', 'pensamentos', 'lembretes']) await cenario(`mais-${p}`, () => ir(`#/mais/${p}`));
+for (const p of ['ficha', 'porque', 'ajustes', 'backup', 'pensamentos', 'lembretes', 'sync']) await cenario(`mais-${p}`, () => ir(`#/mais/${p}`));
 await cenario('foco', async () => { await ir('#/foco/m0-pastas'); await page.getByRole('button', { name: 'Começar' }).click(); await page.waitForTimeout(300); });
 await cenario('foco-fim', async () => { await page.getByRole('button', { name: 'Terminei' }).click(); await page.waitForTimeout(200); });
 await cenario('labs', () => ir('#/labs'));
@@ -149,5 +150,5 @@ await cenario('dados-persistem', async () => {
 
 await browser.close(); server.kill();
 if (errors.length) { console.log('\nErros:'); for (const e of [...new Set(errors)].slice(0, 30)) console.log('  ' + e); }
-console.log(`\n${n} cenários, ${falhas} falhas, ${errors.length} erros (${W}×${H}${dark ? ', tema escuro' : ''}).`);
+console.log(`\n${n} cenários, ${falhas} falhas, ${errors.length} erros (${modoPC ? '1366×900, PC' : `${W}×${H}`}${dark ? ', tema escuro' : ''}).`);
 process.exit(falhas || errors.length ? 1 : 0);

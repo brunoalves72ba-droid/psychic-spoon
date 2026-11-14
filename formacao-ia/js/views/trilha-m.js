@@ -5,6 +5,7 @@ import { S } from '../core/estado.js';
 import { MODULOS, licao, progressoModulo, proxima } from '../data/curso.js';
 import { PROJETO, progressoProjeto } from '../data/projeto.js';
 import { RECURSOS } from '../data/recursos.js';
+import { faixa, fotoDoModulo } from '../core/fotos.js';
 
 export default async function (el, [n]) {
   const m = MODULOS[+n];
@@ -16,7 +17,8 @@ export default async function (el, [n]) {
   el.style.setProperty('--c', m.cor);
   el.append(
     top(`Módulo ${m.n}`, '#/trilha'),
-    h('div', h('h2', m.t), h('p.dim', m.sub), h('div.row.wrap', { style: { margin: '8px 0' } }, h('span.tag.c', `${p.feitas} de ${p.total} lições`), h('span.tag', `cerca de ${m.horas} h com prática`), h('span.tag', m.ementa)), progressBar(p.frac, m.cor)),
+    faixa(fotoDoModulo(m.n), h('div.eyebrow', `Módulo ${m.n} · ${m.ementa}`), h('h2', m.t), h('p', m.sub)),
+    h('div', h('div.row.wrap', { style: { margin: '0 0 8px' } }, h('span.tag.c', `${p.feitas} de ${p.total} lições`), h('span.tag', `cerca de ${m.horas} h com prática`), h('span.tag', m.ementa)), progressBar(p.frac, m.cor)),
   );
   if (!p.total) el.append(h('div.banner', 'As lições deste módulo ainda estão sendo escritas.'));
   for (const a of m.aulas) {
