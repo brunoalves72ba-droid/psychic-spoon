@@ -1,0 +1,25 @@
+{
+  "name": "Finanças",
+  "short_name": "Finanças",
+  "description": "Anote entradas e gastos em segundos e veja para onde vai o seu dinheiro. Tudo fica só no seu aparelho.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "id": "./index.html?app=financas",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f5f1",
+  "theme_color": "#1c5cab",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Lançar gasto", "url": "./index.html#/lancar", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Lançar entrada", "url": "./index.html#/lancar?tipo=receita", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

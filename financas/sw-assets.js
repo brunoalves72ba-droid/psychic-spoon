@@ -1,0 +1,3 @@
+// Gerado por tools/gen-precache.mjs — não edite à mão.
+self.FIN_VERSION = '929310c597be';
+self.FIN_ASSETS = ["./","index.html","manifest.webmanifest","css/app.css","js/app.js","js/core/calc.js","js/core/datas.js","js/core/dinheiro.js","js/core/store.js","js/core/ui.js","js/views/ajustes.js","js/views/extrato.js","js/views/lancar.js","js/views/orcamento.js","js/views/resumo.js","assets/icons/apple-touch-icon.png","assets/icons/favicon-32.png","assets/icons/icon-192.png","assets/icons/icon-512.png","assets/icons/icon.svg","assets/icons/maskable-192.png","assets/icons/maskable-512.png"];

@@ -1,0 +1,15 @@
+{
+  "name": "financas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Finanças — controle de gastos pessoal (PWA). Proprietário único e exclusivo: Bruno Moura.",
+  "author": "Bruno Moura",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node tools/gen-precache.mjs --check && node --test tests/*.test.mjs",
+    "precache": "node tools/gen-precache.mjs",
+    "e2e": "node tests/e2e/run.mjs"
+  }
+}

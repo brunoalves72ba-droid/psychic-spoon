@@ -18,9 +18,12 @@ App web instalável (PWA) para aprender **harmonia vocal**, **técnica vocal** e
 | **Estúdio** | Curso de 23 lições com fotos reais e 27 simuladores, mesa virtual de seis canais com missões, gravador multipista e o projeto “Do zero ao master”. |
 | **Evolução** | Histórico com gráficos, calendário de prática, marcos, comparação de retratos e backup. |
 
-## Outro app neste repositório
+## Outros apps neste repositório
 
-A pasta [`formacao-ia/`](formacao-ia/README.md) tem um segundo app, independente: **Formação IA Generativa**, a trilha de estudo de IA generativa em micro-lições. Ele tem service worker e dados próprios; o service worker do Sexteto ignora essa pasta.
+- A pasta [`formacao-ia/`](formacao-ia/README.md) tem **Formação IA Generativa**, a trilha de estudo de IA generativa em micro-lições.
+- A pasta [`financas/`](financas/README.md) tem **Finanças**, o controle de gastos pessoal: entradas, saídas, categorias, metas e contas fixas.
+
+Cada um tem service worker e dados próprios; o service worker do Sexteto ignora essas pastas.
 
 ## Rodar localmente
 
