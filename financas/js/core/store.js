@@ -1,5 +1,7 @@
 // Armazenamento local: tudo fica no aparelho (localStorage). Sem conta, sem servidor.
 import { estadoVazio, normalizar, gerarRecorrentes, novoId } from './calc.js';
+import { CONTAS, chaveDescricao } from './plano.js';
+import { mesAtual } from './datas.js';
 
 const CHAVE = 'fin-dados';
 let estado = null;
@@ -127,6 +129,52 @@ export function apagarLancamentos(ids) {
   const fora = new Set(ids);
   const e = dados();
   e.lancamentos = e.lancamentos.filter((l) => !fora.has(l.id));
+  salvar();
+}
+
+// ---------- plano de contas ----------
+export function moverLancamentos(ids, categoria) {
+  const alvo = new Set(ids);
+  for (const l of dados().lancamentos) if (alvo.has(l.id)) l.categoria = categoria;
+  salvar();
+}
+
+/** Cria uma conta do plano sugerido (ex.: "Academia") e move os lançamentos indicados para ela. */
+export function criarContaDoPlano(contaId, ids = []) {
+  const e = dados();
+  const modelo = CONTAS.find((c) => c.id === contaId);
+  if (!modelo) return null;
+  if (!e.categorias.some((c) => c.id === contaId)) e.categorias.push({ id: modelo.id, nome: modelo.nome, tipo: modelo.tipo, grupo: modelo.grupo });
+  moverLancamentos(ids, contaId);
+  return contaId;
+}
+
+/** Classifica todos os lançamentos de uma descrição e ensina o app para as próximas vezes. */
+export function ensinar(tipo, descricao, categoria, ids = []) {
+  const e = dados();
+  const chave = chaveDescricao(descricao);
+  if (chave) e.regras[tipo + ':' + chave] = categoria;
+  moverLancamentos(ids, categoria);
+}
+
+/** Transforma um gasto que se repete todo mês em conta fixa. */
+export function virarContaFixa(f) {
+  const e = dados();
+  const mes = mesAtual();
+  const r = { id: novoId(), tipo: 'despesa', valor: f.valor, dia: f.dia, categoria: f.categoria, descricao: f.descricao, pagamento: f.pagamento || '', inicio: mes, fim: null, gerados: f.temNesteMes ? [mes] : [] };
+  e.recorrentes.push(r);
+  // o lançamento deste mês, se já existe, passa a ser a conta fixa do mês
+  const k = chaveDescricao(f.descricao);
+  const l = e.lancamentos.find((x) => x.tipo === 'despesa' && !x.recorrente && x.data.startsWith(mes) && chaveDescricao(x.descricao) === k);
+  if (l) l.recorrente = r.id;
+  gerarRecorrentes(e);
+  salvar();
+  return r;
+}
+
+export function dispensarSugestao(chave) {
+  const e = dados();
+  if (!e.dispensadas.includes(chave)) e.dispensadas.push(chave);
   salvar();
 }
 

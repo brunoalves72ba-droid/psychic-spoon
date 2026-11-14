@@ -1,4 +1,5 @@
 // Cálculos puros sobre o estado do app (sem tela, sem armazenamento) — testados em tests/calc.test.mjs.
+import { GRUPO_PADRAO, grupoDaCategoria } from './plano.js';
 import { mesDe, mesesEntre, somarMeses, dataNoMes, diasNoMes, hoje as hojeStr } from './datas.js';
 
 export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Dinheiro', 'Boleto', 'Transferência'];
@@ -22,11 +23,12 @@ export const CATEGORIAS_PADRAO = [
 
 export const estadoVazio = () => ({
   versao: 1,
-  categorias: CATEGORIAS_PADRAO.map((c) => ({ ...c })),
+  categorias: CATEGORIAS_PADRAO.map((c) => ({ ...c, grupo: GRUPO_PADRAO[c.id] })),
   lancamentos: [],
   recorrentes: [],
   orcamentos: {},
   regras: {}, // descrição do banco → categoria escolhida por você
+  dispensadas: [], // sugestões do plano de contas que você recusou
 });
 
 export const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -36,8 +38,10 @@ export function normalizar(bruto) {
   if (!bruto || typeof bruto !== 'object' || !Array.isArray(bruto.lancamentos)) throw new Error('Arquivo não é um backup do Finanças.');
   const e = estadoVazio();
   if (Array.isArray(bruto.categorias) && bruto.categorias.length) e.categorias = bruto.categorias.filter((c) => c && c.id && c.nome && (c.tipo === 'despesa' || c.tipo === 'receita'));
+  e.categorias = e.categorias.map((c) => ({ ...c, grupo: grupoDaCategoria(c) }));
   e.lancamentos = bruto.lancamentos.filter((l) => l && l.id && Number.isInteger(l.valor) && l.valor > 0 && /^\d{4}-\d{2}-\d{2}$/.test(l.data) && (l.tipo === 'despesa' || l.tipo === 'receita'));
   e.recorrentes = (bruto.recorrentes || []).filter((r) => r && r.id && Number.isInteger(r.valor) && /^\d{4}-\d{2}$/.test(r.inicio)).map((r) => ({ gerados: [], fim: null, ...r }));
+  e.dispensadas = Array.isArray(bruto.dispensadas) ? bruto.dispensadas.filter((x) => typeof x === 'string') : [];
   e.regras = bruto.regras && typeof bruto.regras === 'object' ? { ...bruto.regras } : {};
   e.orcamentos = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? { ...bruto.orcamentos } : {};
   return e;

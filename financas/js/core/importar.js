@@ -1,6 +1,7 @@
 // Leitura de extratos de banco e faturas de cartão (OFX e CSV) — tudo no aparelho, nada sai dele.
 // Saída comum: [{ data: 'AAAA-MM-DD', valor: centavos com sinal (negativo = saiu), descricao, idBanco? }]
 import { lerValor } from './dinheiro.js';
+import { reconhecer, chaveDescricao } from './plano.js';
 
 /** Lê os bytes do arquivo respeitando a codificação (muitos bancos ainda usam Windows-1252). */
 export function decodificar(bytes) {
@@ -124,48 +125,14 @@ export function lerData(txt) {
 
 const limparTexto = (s) => String(s || '').replace(/\s+/g, ' ').trim().slice(0, 80);
 
-// ---------- categorias automáticas ----------
-const REGRAS = [
-  [/ifood|rappi|restaurante|lanchonete|padaria|pizza|burger|mcdonald|\bbk\b|subway|cafe|\bbar\b|churrasc|delivery|ze delivery/, 'restaurante'],
-  [/uber|\b99 ?(app|pop|taxi)\b|\b99\b|cabify|posto|combust|shell|ipiranga|petrobras|br mania|estacion|pedagio|sem parar|conectcar|veloe|metro|onibus|bilhete unico|recarga.*transporte/, 'transporte'],
-  [/supermerc|mercado|atacad|assai|carrefour|pao de acucar|\bextra\b|\bbig\b|hortifruti|sacolao|acougue|mambo|zaffari|condor|savegnago/, 'mercado'],
-  [/farmac|drogaria|droga ?raia|drogasil|pague menos|panvel|hospital|clinica|laborat|odonto|unimed|amil|hapvida|sulamerica|bradesco saude|medic/, 'saude'],
-  [/netflix|spotify|amazon prime|prime video|disney|hbo|hbo ?max|globoplay|youtube|apple\.com|icloud|google (one|storage)|deezer|paramount|crunchyroll|chatgpt|openai|claude/, 'assinaturas'],
-  [/enel|\blight\b|cemig|copel|celesc|coelba|neoenergia|energisa|equatorial|cpfl|sabesp|cedae|copasa|sanepar|embasa|compesa|caesb|comgas|naturgy|claro|vivo|\btim\b|\boi\b|\bnet\b|\bsky\b|internet|telefon|conta de (luz|agua|gas)/, 'contas'],
-  [/aluguel|condominio|iptu|imobiliaria|quintoandar|quinto andar/, 'casa'],
-  [/escola|faculdade|universidade|curso|udemy|alura|livraria|mensalidade/, 'educacao'],
-  [/cinema|ingresso|\bshow\b|teatro|steam|playstation|xbox|nintendo|viagem|hotel|airbnb|booking|decolar|latam|\bgol\b|\bazul\b/, 'lazer'],
-  [/amazon|mercado ?livre|mercadolivre|magalu|magazine|shopee|shein|aliexpress|americanas|casas bahia|renner|riachuelo|c&a|zara|centauro|netshoes|kabum/, 'compras'],
-];
-const REGRAS_RECEITA = [
-  [/salario|folha|pagamento de salario|proventos|vencimentos/, 'salario'],
-];
+// ---------- categorias automáticas (motor em plano.js) ----------
 /** Movimentos que normalmente NÃO são gasto nem renda (vêm desmarcados). */
 export const PARECE_TRANSFERENCIA = /pagamento (de )?fatura|pgto fatura|fatura do cartao|pagamento recebido|aplicacao|resgate|rdb|cdb|poupanca|transferencia entre contas|mesma titularidade|estorno/;
 
-export const chaveDescricao = (s) => norm(s).replace(/\d+/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+export { chaveDescricao };
 
-/**
- * Sugere a categoria: primeiro o que você já usou para uma descrição igual,
- * depois palavras conhecidas (iFood → Restaurante, Uber → Transporte…).
- */
-export function sugerirCategoria(item, estado) {
-  const tipo = item.valor < 0 ? 'despesa' : 'receita';
-  const existe = (id) => estado.categorias.some((c) => c.id === id && c.tipo === tipo);
-  const chave = chaveDescricao(item.descricao);
-  if (chave) {
-    const aprendida = estado.regras?.[tipo + ':' + chave];
-    if (aprendida && existe(aprendida)) return aprendida;
-    for (let i = estado.lancamentos.length - 1; i >= 0; i--) {
-      const l = estado.lancamentos[i];
-      if (l.tipo === tipo && l.descricao && chaveDescricao(l.descricao) === chave && existe(l.categoria)) return l.categoria;
-    }
-  }
-  const d = ' ' + norm(item.descricao) + ' ';
-  for (const [re, cat] of tipo === 'despesa' ? REGRAS : REGRAS_RECEITA) if (re.test(d) && existe(cat)) return cat;
-  const padrao = tipo === 'despesa' ? 'outros' : 'outras-receitas';
-  return existe(padrao) ? padrao : estado.categorias.find((c) => c.tipo === tipo)?.id || '';
-}
+/** Sugere a categoria de um item do extrato (veja reconhecer() em plano.js). */
+export const sugerirCategoria = (item, estado) => reconhecer(item.descricao, item.valor < 0 ? 'despesa' : 'receita', estado).categoria;
 
 /** Identificador estável de uma linha do extrato, para não importar a mesma coisa duas vezes. */
 export function idImportacao(item) {
@@ -198,7 +165,7 @@ export function prepararImportacao(itens, estado) {
     const transferencia = PARECE_TRANSFERENCIA.test(' ' + norm(it.descricao) + ' ');
     return {
       ...it, tipo, valor, importId, jaImportado, manual: manual || null, transferencia,
-      categoria: sugerirCategoria(it, estado),
+      ...(() => { const r = reconhecer(it.descricao, tipo, estado); return { categoria: r.categoria, reconhecido: r }; })(),
       marcado: !jaImportado && !manual && !transferencia,
     };
   });

@@ -1,11 +1,15 @@
 // Resumo do mês: quanto entrou, quanto saiu, para onde foi e como está o ritmo.
-import { dados, nomeCategoria } from '../core/store.js';
+import { dados, nomeCategoria, categoria as catPorId } from '../core/store.js';
+import { GRUPOS, grupoDaCategoria, sugestoesPlano } from '../core/plano.js';
 import { doMes, resumo, porCategoria, historico, previsao, orcamentos } from '../core/calc.js';
 import { reais, reaisCurto } from '../core/dinheiro.js';
 import { mesAtual, somarMeses, nomeMes, nomeMesCurto } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
 
 export const titulo = 'Resumo';
+
+let visao = 'grupos';
+try { visao = localStorage.getItem('fin-visao') || 'grupos'; } catch {}
 
 export function render(main, { m }) {
   const mes = /^\d{4}-\d{2}$/.test(m || '') && m <= mesAtual() ? m : mesAtual();
@@ -45,7 +49,16 @@ export function render(main, { m }) {
       : `<b>${esc(nomeCategoria(o.categoria))}</b> já usou ${Math.round(o.pct * 100)}% da meta. Restam ${reais(o.resta)}.`]);
   }
 
-  const maior = cats[0]?.total || 1;
+  const sug = sugestoesPlano(e);
+  // linhas do gráfico de barras: por grupo (com as contas de cada um) ou por conta
+  const grupoDe = (id) => grupoDaCategoria(catPorId(id) || { id });
+  const linhas = visao === 'grupos'
+    ? GRUPOS.map((g) => {
+        const dentro = cats.filter((c) => grupoDe(c.categoria) === g.id);
+        return { id: 'g:' + g.id, nome: g.nome, total: dentro.reduce((a, c) => a + c.total, 0), detalhe: dentro.length > 1 ? dentro.slice(0, 3).map((c) => nomeCategoria(c.categoria)).join(', ') + (dentro.length > 3 ? '…' : '') : '' };
+      }).filter((g) => g.total).sort((a, b) => b.total - a.total)
+    : cats.map((c) => ({ id: c.categoria, nome: nomeCategoria(c.categoria), total: c.total, detalhe: '' }));
+  const maiorLinha = linhas[0]?.total || 1;
   const hist = historico(e, mes, 6);
 
   main.innerHTML = `${navMes('#/resumo', mes)}
@@ -60,11 +73,16 @@ export function render(main, { m }) {
 
     ${dicas.length ? `<section class="cartao dicas" aria-label="Como está o mês">${dicas.map(([ic, t]) => `<div class="dica">${icone(ic)}<div>${t}</div></div>`).join('')}</section>` : ''}
 
+    ${sug.total ? `<a class="cartao aviso-plano" href="#/plano"><b>${sug.total} sugest${sug.total > 1 ? 'ões' : 'ão'} para o seu plano de contas</b><span class="sub">Contas novas, gastos para classificar e contas fixas que o app encontrou.</span></a>` : ''}
+
     <section class="cartao">
-      <h2><span>Para onde foi o dinheiro</span><span class="sub">${cats.length ? `${cats.length} categoria${cats.length > 1 ? 's' : ''}` : ''}</span></h2>
-      ${cats.length ? `<ul class="barras">${cats.map((c) => `<li><button type="button" data-cat="${esc(c.categoria)}" aria-label="${esc(nomeCategoria(c.categoria))}: ${reais(c.total)}, ${Math.round(c.total / r.despesas * 100)}% dos gastos. Ver no extrato.">
-          <div class="topo"><span class="nome">${esc(nomeCategoria(c.categoria))}</span><b>${reais(c.total)}<span class="pct">${Math.round(c.total / r.despesas * 100)}%</span></b></div>
-          <div class="trilho"><i style="width:${(c.total / maior * 100).toFixed(1)}%"></i></div></button></li>`).join('')}</ul>`
+      <h2><span>Para onde foi o dinheiro</span></h2>
+      ${cats.length ? `<div class="chips" role="group" aria-label="Agrupar por" style="margin-bottom:10px">
+        <button type="button" class="chip" data-visao="grupos" aria-pressed="${visao === 'grupos'}">Por grupo</button>
+        <button type="button" class="chip" data-visao="contas" aria-pressed="${visao === 'contas'}">Por conta</button></div>
+        <ul class="barras">${linhas.map((c) => `<li><button type="button" data-cat="${esc(c.id)}" aria-label="${esc(c.nome)}: ${reais(c.total)}, ${Math.round(c.total / r.despesas * 100)}% dos gastos. Ver no extrato.">
+          <div class="topo"><span class="nome">${esc(c.nome)}${c.detalhe ? `<small>${esc(c.detalhe)}</small>` : ''}</span><b>${reais(c.total)}<span class="pct">${Math.round(c.total / r.despesas * 100)}%</span></b></div>
+          <div class="trilho"><i style="width:${(c.total / maiorLinha * 100).toFixed(1)}%"></i></div></button></li>`).join('')}</ul>`
         : '<p class="sub">Nenhum gasto neste mês.</p>'}
     </section>
 
@@ -78,6 +96,11 @@ export function render(main, { m }) {
       </details>
     </section>`;
 
+  main.querySelectorAll('[data-visao]').forEach((b) => (b.onclick = () => {
+    visao = b.dataset.visao;
+    try { localStorage.setItem('fin-visao', visao); } catch {}
+    render((main.innerHTML = '', main), { m: mes });
+  }));
   main.querySelectorAll('[data-cat]').forEach((b) => (b.onclick = () => { location.hash = `#/extrato?m=${mes}&cat=${encodeURIComponent(b.dataset.cat)}`; }));
   ligarDica(main.querySelector('.grafico'), hist);
 }

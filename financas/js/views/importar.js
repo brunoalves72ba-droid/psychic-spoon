@@ -3,6 +3,7 @@ import { dados, importarItens, apagarLancamentos } from '../core/store.js';
 import { decodificar, lerExtrato, prepararImportacao, chaveDescricao } from '../core/importar.js';
 import { reais } from '../core/dinheiro.js';
 import { esc, aviso, navegar } from '../core/ui.js';
+import { opcoesAgrupadas } from './plano.js';
 
 export const titulo = 'Importar extrato';
 
@@ -88,7 +89,13 @@ function previa(main, { formato, itens: brutos, cartao }, nome) {
     tr && `<p><b>${tr}</b> parece${tr > 1 ? 'm' : ''} pagamento de fatura, estorno, aplicação ou transferência entre suas contas (confira antes de marcar); ficaram desmarcados.</p>`,
   ].filter(Boolean).join('');
 
-  const opcoes = (tipo, sel) => e.categorias.filter((c) => c.tipo === tipo).map((c) => `<option value="${esc(c.id)}"${c.id === sel ? ' selected' : ''}>${esc(c.nome)}</option>`).join('');
+  const opcoes = (tipo, sel) => opcoesAgrupadas(e, tipo, sel);
+  const porque = (it) => {
+    if (it.chave) return 'escolhida por você';
+    const r = it.reconhecido;
+    if (!r) return '';
+    return { regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `reconhecida por “${r.palavra}”`, padrao: 'não reconhecida — confira' }[r.fonte] || '';
+  };
   const motivo = (it) => it.jaImportado ? 'Já importado'
     : it.manual ? `Parece “${esc(it.manual.descricao || 'lançamento')}” de ${br(it.manual.data)}`
     : it.transferencia ? 'Fatura, estorno ou transferência' : '';
@@ -100,8 +107,9 @@ function previa(main, { formato, itens: brutos, cartao }, nome) {
       <label class="imp-sel"><input type="checkbox" data-i="${i}" ${it.marcado ? 'checked' : ''} ${it.jaImportado ? 'disabled' : ''} aria-label="Importar ${esc(it.descricao)} de ${reais(it.valor)}"></label>
       <div class="imp-txt">
         <div class="imp-l1"><span class="t1">${esc(it.descricao || '(sem descrição)')}</span><span class="val ${it.tipo}">${it.tipo === 'receita' ? '+ ' : '− '}${reais(it.valor)}</span></div>
-        <div class="imp-l2"><span class="t2">${br(it.data)}${motivo(it) ? ` · <span class="etq">${motivo(it)}</span>` : ''}</span>
-          <select data-cat="${i}" aria-label="Categoria de ${esc(it.descricao)}" ${it.jaImportado ? 'disabled' : ''}>${opcoes(it.tipo, it.categoria)}</select></div>
+        <div class="t2">${br(it.data)}${motivo(it) ? ` · <span class="etq">${motivo(it)}</span>` : ''}</div>
+        <label class="imp-conta"><span>Conta <small class="muted">${esc(porque(it))}</small></span>
+          <select data-cat="${i}" aria-label="Conta de ${esc(it.descricao)}" ${it.jaImportado ? 'disabled' : ''}>${opcoes(it.tipo, it.categoria)}</select></label>
       </div></li>`).join('') : '<li class="vazio">Nada aqui.</li>';
     const marc = itens.filter((it) => it.marcado);
     const s = marc.reduce((a, it) => (it.tipo === 'receita' ? (a.r += it.valor) : (a.d += it.valor), a), { r: 0, d: 0 });
@@ -120,7 +128,8 @@ function previa(main, { formato, itens: brutos, cartao }, nome) {
       // aplica a mesma escolha às outras linhas com a mesma descrição
       let n = 0;
       for (const o of itens) if (o !== it && !o.chave && !o.jaImportado && o.tipo === it.tipo && chaveDescricao(o.descricao) === it.chave) { o.categoria = t.value; n++; }
-      if (n) { aviso(`Mudei também ${n} outro${n > 1 ? 's' : ''} com a mesma descrição.`); pintar(); }
+      if (n) aviso(`Mudei também ${n} outro${n > 1 ? 's' : ''} com a mesma descrição.`);
+      pintar();
     }
   });
   $('#cancelar').onclick = () => render(main);
