@@ -3,6 +3,8 @@
 
 import { h, clear, toast } from './core/ui.js';
 import { S, carregar } from './core/estado.js';
+import * as nuvem from './core/nuvem.js';
+import { aplicarPlataforma } from './core/plataforma.js';
 import { persistir } from './core/store.js';
 
 export const OWNER = 'Bruno Moura';
@@ -16,7 +18,7 @@ const VIEWS = new Set([
   'projeto', 'projeto-m', 'projeto-diario', 'projeto-ficha', 'projeto-prompts', 'projeto-kits', 'projeto-pendencias',
   'progresso', 'progresso-semana', 'progresso-cronograma', 'progresso-conquistas',
   'labs', 'labs-x',
-  'mais-ficha', 'mais-porque', 'mais-ajustes', 'mais-backup', 'mais-pensamentos', 'mais-lembretes',
+  'mais-ficha', 'mais-porque', 'mais-ajustes', 'mais-backup', 'mais-pensamentos', 'mais-lembretes', 'mais-sync',
   'foco',
 ]);
 const ABA = { hoje: 'hoje', foco: 'hoje', trilha: 'trilha', licao: 'trilha', labs: 'trilha', revisar: 'revisar', projeto: 'projeto', progresso: 'progresso', mais: 'progresso' };
@@ -108,10 +110,18 @@ async function boot() {
   try { sessionStorage.removeItem('fia-cura'); } catch {}
   await carregar().catch((e) => console.error(e));
   aplicarTema(S.perfil.tema);
+  aplicarPlataforma();
   if (!location.hash) history.replaceState(null, '', '#/hoje');
   await render();
   registerSW();
   persistir();
+  // dados que chegam do outro aparelho: redesenha, menos no meio de uma lição ou revisão
+  nuvem.quandoReceber(() => {
+    aplicarTema(S.perfil.tema);
+    if (document.body.classList.contains('imersivo')) toast('Progresso do outro aparelho recebido.');
+    else { render(); toast('Progresso do outro aparelho recebido.'); }
+  });
+  nuvem.iniciar();
 }
 
 function registerSW() {

@@ -355,3 +355,61 @@ body.imersivo #toasts{bottom:calc(var(--sab) + 96px)}
 @media (max-width:380px){h1{font-size:1.6rem}.stats{gap:6px}.stat b{font-size:1.3rem}.gancho{font-size:1.4rem}.prob{grid-template-columns:70px 1fr 42px}}
 @media (orientation:landscape) and (max-height:520px){:root{--tab-h:50px}.tabs a span{display:none}}
 @media print{.tabs,.acao-bar,#toasts{display:none}}
+
+/* ---------- passos tocáveis e navegação da lição ---------- */
+.segs.passos{gap:2px;align-self:stretch;align-items:center}
+.segs.passos .pp{flex:1;min-width:0;min-height:44px;border:0;background:none;padding:0 1px;display:flex;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;color:var(--ink3)}
+.segs.passos .pp i{display:block;height:8px;border-radius:4px;background:var(--bg3)}
+.segs.passos .pp.on i{background:var(--c,var(--acao))}
+.segs.passos .pp.now i{background:color-mix(in srgb,var(--c,var(--acao)) 55%,var(--bg3));box-shadow:0 0 0 2px color-mix(in srgb,var(--c,var(--acao)) 35%,transparent)}
+.segs.passos .pp span{display:none;font-size:.66rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.segs.passos .pp.trava{cursor:default;opacity:.55}
+.segs.passos .pp:not(.trava):not(.now):hover i{outline:2px solid color-mix(in srgb,var(--c,var(--acao)) 40%,transparent)}
+.acao-bar .btn.voltar{flex:none;width:60px;min-width:60px;padding:0}
+.consulta{gap:6px}
+.consulta .ic{width:18px;height:18px}
+
+/* ---------- fotos ---------- */
+figure.foto{margin:0;border-radius:var(--r);overflow:hidden;background:var(--bg2);border:1px solid var(--line)}
+figure.foto img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
+figure.foto.capa img{aspect-ratio:21/9}
+figure.foto figcaption{padding:8px 12px;font-size:.86rem;color:var(--ink2);display:flex;flex-direction:column;gap:2px}
+.credito{display:block;font-size:.7rem;color:var(--ink3);line-height:1.35}
+.credito a{color:inherit}
+.faixa{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg3) center/cover no-repeat;min-height:150px;display:flex;align-items:flex-end;color:#fff;isolation:isolate}
+.faixa::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,14,24,.05) 0%,rgba(12,14,24,.35) 45%,rgba(12,14,24,.82) 100%);z-index:-1}
+.faixa.sem-foto{background:linear-gradient(135deg,var(--c,var(--acao)),color-mix(in srgb,var(--c,var(--acao)) 55%,#12141b))}
+.faixa .faixa-txt{padding:16px;display:flex;flex-direction:column;gap:4px;width:100%}
+.faixa .faixa-txt .eyebrow{color:rgba(255,255,255,.82)}
+.faixa h1,.faixa h2,.faixa h3{color:#fff}
+.faixa p{color:rgba(255,255,255,.9);margin:0}
+.faixa .credito.sobre{position:absolute;top:8px;right:10px;color:rgba(255,255,255,.85);text-shadow:0 1px 3px rgba(0,0,0,.6);font-size:.64rem;max-width:60%;text-align:right}
+.ilha .thumb{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--c);position:relative;z-index:1}
+.atalho{margin-top:4px}
+
+/* ---------- modo PC ---------- */
+.so-pc{display:none!important}
+body.pc .so-pc{display:revert!important}
+body.pc .so-celular{display:none!important}
+body.pc{--lado:228px}
+body.pc .tabs{top:0;bottom:0;right:auto;width:var(--lado);height:auto;flex-direction:column;justify-content:flex-start;gap:4px;padding:20px 12px;border-top:0;border-right:1px solid var(--line)}
+body.pc .tabs::before{content:"Formação IA";font-family:var(--display);font-weight:800;font-size:1.2rem;color:var(--ink);padding:4px 12px 18px}
+body.pc .tabs a{flex:none;max-width:none;min-height:48px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 12px;border-radius:12px;font-size:.98rem}
+body.pc .tabs a[aria-current=page]{background:var(--acao-tint)}
+body.pc #view{max-width:1120px;padding:28px 40px 120px calc(var(--lado) + 40px)}
+body.pc.imersivo #view{max-width:860px;padding-left:40px}
+body.pc #toasts{bottom:24px;left:var(--lado)}
+body.pc .acao-bar{padding-bottom:22px}
+body.pc.imersivo .acao-bar>div{max-width:780px}
+body.pc .segs.passos .pp span{display:block}
+body.pc .tools{grid-template-columns:repeat(3,1fr)}
+body.pc .page>h1,body.pc header h1{font-size:2.2rem}
+body.pc .grade-pc{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+body.pc .grade-pc>.col{gap:16px}
+body.pc .ilhas-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+body.pc .prose{font-size:1.1rem}
+body.pc .gancho{font-size:1.8rem}
+body.pc .faixa{min-height:200px}
+body:not(.pc) .grade-pc{display:flex;flex-direction:column;gap:16px}
+body:not(.pc) .grade-pc>.col{gap:16px}
+@media (max-width:1100px){body.pc{--lado:200px}body.pc #view{padding-left:calc(var(--lado) + 24px);padding-right:24px}}

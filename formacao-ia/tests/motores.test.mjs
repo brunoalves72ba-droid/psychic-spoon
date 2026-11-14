@@ -91,7 +91,10 @@ test('sequência: ausência longa não trava nem pune além de zerar', () => {
   const d = dias(['2025-01-06', '2025-01-07', '2025-01-08', '2025-01-09']);
   const r = fechar(novaSequencia(), d, '2026-11-13');
   assert.equal(r.estado.seq, 0);
-  assert.ok(r.eventos.length <= 13);
+  assert.ok(r.eventos.length < 120, 'recalcular do zero percorre as semanas sem travar');
+  // com histórico já fechado, uma ausência longa percorre no máximo 12 semanas
+  const r2 = fechar({ ...r.estado, ult: '2025-01-06' }, d, '2026-11-13');
+  assert.ok(r2.eventos.length <= 13);
 });
 
 test('semana atual: mostra o que falta sem cobrança', () => {

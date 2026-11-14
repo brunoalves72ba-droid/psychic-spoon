@@ -4,9 +4,20 @@ import { h, top, seg, toast, confirmSheet } from '../core/ui.js';
 import { S, salvar, apagarTudo } from '../core/estado.js';
 import { aplicarTema } from '../app.js';
 import { PLANOS } from '../core/plano.js';
+import { L } from '../core/estado.js';
+import { plataforma, escolher } from '../core/plataforma.js';
+import * as nuvem from '../core/nuvem.js';
 
 export default async function (el) {
+  const ns = nuvem.status();
+  const qual = h('span.small.dim');
+  const pintarQual = () => { qual.textContent = `Agora: ${plataforma() === 'pc' ? 'computador (menu lateral, duas colunas, atalhos de teclado)' : 'celular (abas embaixo, uma coluna, botões grandes)'}.`; };
+  pintarQual();
   el.append(top('Ajustes', '#/progresso'),
+    h('section.card.dest.col', h('h3', 'Celular e PC'),
+      h('p.small.dim', ns.ligado ? `Sincronização ligada${ns.erro ? `, com problema: ${ns.erro}` : '.'}` : 'O progresso é salvo sozinho, mas só neste aparelho. Para continuar do mesmo ponto no outro, ligue a sincronização.'),
+      h('a.btn.primary.block', { href: '#/mais/sync' }, ns.ligado ? 'Ver a sincronização' : 'Ligar a sincronização'),
+      h('label.field', h('span', 'Este aparelho é'), seg([{ v: 'auto', label: 'Detectar sozinho' }, { v: 'pc', label: 'Computador' }, { v: 'celular', label: 'Celular' }], L.plataforma || 'auto', async (v) => { await escolher(v); pintarQual(); }, { wrap: true, label: 'Tipo de aparelho' })), qual),
     h('section.card.flat.col', h('h3', 'Aparência'),
       h('label.field', h('span', 'Tema'), seg([{ v: 'auto', label: 'Automático' }, { v: 'claro', label: 'Claro' }, { v: 'escuro', label: 'Escuro' }], S.perfil.tema || 'auto', (v) => { S.perfil.tema = v; salvar('perfil'); aplicarTema(v); }, { label: 'Tema' }))),
     h('section.card.flat.col', h('h3', 'Sessão'),

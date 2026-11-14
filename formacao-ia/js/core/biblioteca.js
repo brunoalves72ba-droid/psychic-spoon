@@ -1,7 +1,7 @@
 // Formação IA Generativa — © Bruno Moura, único e exclusivo proprietário.
 // Biblioteca de prompts do APE-IA (projeto do Módulo 2): prompts com variáveis, versão, exemplo e rubrica.
 import { h, toast } from './ui.js';
-import { S, salvar } from './estado.js';
+import { S, salvar, apagar } from './estado.js';
 import { hoje } from './dia.js';
 
 export const RUBRICA = [
@@ -16,7 +16,7 @@ export const variaveis = (texto) => [...new Set((String(texto).match(/\{([a-zA-Z
 export const nota = (p) => RUBRICA.reduce((n, r) => n + (p.rubrica && p.rubrica[r.id] ? 1 : 0), 0);
 
 export function novoPrompt({ nome, texto, exemplo = '' }) {
-  const p = { id: Date.now() + Math.floor(Math.random() * 1000), nome: String(nome || 'Prompt sem nome').trim().slice(0, 80), texto: String(texto || '').trim(), versao: 1, exemplo, modelos: '', rubrica: {}, notas: '', criado: hoje(), atualizado: hoje(), hist: [] };
+  const p = { id: Date.now() + Math.floor(Math.random() * 1000), nome: String(nome || 'Prompt sem nome').trim().slice(0, 80), texto: String(texto || '').trim(), versao: 1, exemplo, modelos: '', rubrica: {}, notas: '', criado: hoje(), atualizado: hoje(), hist: [], _t: Date.now() };
   S.prompts.unshift(p);
   salvar('prompts');
   return p;
@@ -32,11 +32,11 @@ export function atualizarPrompt(id, campos) {
     p.texto = campos.texto.trim();
   }
   for (const k of ['nome', 'exemplo', 'modelos', 'notas', 'rubrica']) if (campos[k] != null) p[k] = campos[k];
-  p.atualizado = hoje();
+  p.atualizado = hoje(); p._t = Date.now();
   salvar('prompts');
   return p;
 }
-export function removerPrompt(id) { S.prompts = S.prompts.filter((x) => x.id !== id); salvar('prompts'); }
+export function removerPrompt(id) { S.prompts = S.prompts.filter((x) => x.id !== id); apagar('prompts', id); salvar('prompts'); }
 
 export function exportarMarkdown() {
   const linhas = ['# Biblioteca de prompts do APE-IA', ''];

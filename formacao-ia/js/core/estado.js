@@ -17,7 +17,9 @@ const PADRAO = () => ({
   meus: [],        // cartões importados: { id, f, v }
   dias: {},        // dia → { l: lições, c: cartões, m: missões, p: passos, s: segundos }
   semana: novaSequencia(),
-  xp: 0,
+  xp: 0,           // derivado: soma de xpPor
+  xpPor: {},       // aparelho → XP ganho nele (assim dois aparelhos somam sem contar duas vezes)
+  apagados: {},    // 'tipo:id' → quando foi apagado (para não voltar na sincronização)
   conquistas: {},  // id → dia
   marcos: {},      // primeira vez de cada habilidade: json, api200, python, rag… → dia
   diario: [],      // { d, t }
@@ -32,6 +34,19 @@ const PADRAO = () => ({
   mistura: {},     // { ult: dia, n: quantas }
   sessao: {},      // { licao: id em andamento }
 });
+// Chaves editadas por inteiro: na sincronização, vale a versão mais recente (_t).
+const INTEIRAS = new Set(['perfil', 'ficha', 'sessao', 'andaime', 'mistura']);
+// Chaves que não são gravadas (derivadas).
+const DERIVADAS = new Set(['xp']);
+
+/** Dados só deste aparelho: identificador, sincronização, plataforma. Nunca viajam para o outro aparelho. */
+export const L = { dispositivo: null, nuvem: {}, plataforma: 'auto' };
+export const salvarLocal = () => kv.set('local', { ...L });
+const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+export const uid = novoId;
+const ouvintes = new Set();
+/** Avisa quando algo é gravado (a sincronização escuta para enviar). */
+export const aoSalvar = (fn) => { ouvintes.add(fn); return () => ouvintes.delete(fn); };
 
 export const S = PADRAO();
 export let revs = [];             // histórico de revisões (para medir retenção)
@@ -41,11 +56,16 @@ const pend = new Set();
 let fila = Promise.resolve();
 /** Grava as chaves informadas (agrupa chamadas seguidas). */
 export function salvar(...chaves) {
-  for (const k of chaves) pend.add(k);
+  for (const k of chaves) {
+    if (DERIVADAS.has(k)) continue;
+    if (INTEIRAS.has(k) && S[k] && typeof S[k] === 'object') S[k]._t = Date.now();
+    pend.add(k);
+  }
   fila = fila.then(async () => {
     if (!pend.size) return;
     const ks = [...pend]; pend.clear();
     await Promise.all(ks.map((k) => kv.set(k, S[k])));
+    for (const fn of ouvintes) { try { fn(ks); } catch (e) { console.error(e); } }
   }).catch((e) => console.error('Falha ao gravar:', e));
   return fila;
 }
@@ -58,17 +78,31 @@ export async function carregar() {
     const v = all[k];
     S[k] = v === undefined ? def[k] : (k === 'perfil' || k === 'semana' || k === 'andaime' ? { ...def[k], ...v } : v);
   }
+  Object.assign(L, { dispositivo: null, nuvem: {}, plataforma: 'auto' }, all.local || {});
+  if (!L.dispositivo) { L.dispositivo = novoId(); await salvarLocal(); }
+  // migração: XP antigo (antes da sincronização) passa a ser deste aparelho
+  if (!Object.keys(S.xpPor).length && all.xp > 0) { S.xpPor[L.dispositivo] = all.xp; salvar('xpPor'); }
+  S.xp = Object.values(S.xpPor).reduce((a, b) => a + b, 0);
   revs = (await logdb.all()).filter((x) => x.t === 'rev');
   if (!S.perfil.criado) { S.perfil.criado = hoje(); salvar('perfil'); }
   eventosSemana = fecharSemanas();
   return S;
 }
 
+/** Recalcula a sequência semanal a partir dos dias de estudo (assim dois aparelhos dão o mesmo resultado). */
 export function fecharSemanas() {
-  const { estado, eventos } = fechar(S.semana, S.dias, hoje());
-  if (eventos.length) { S.semana = estado; salvar('semana'); }
-  return eventos;
+  const antes = S.semana && S.semana.ult;
+  const { estado, eventos } = fechar(novaSequencia(), S.dias, hoje());
+  const mudou = JSON.stringify(estado) !== JSON.stringify(S.semana);
+  S.semana = estado;
+  if (mudou) salvar('semana');
+  return eventos.filter((e) => !antes || e.semana > antes);
 }
+
+/** Marca algo como apagado, para a exclusão chegar ao outro aparelho. */
+export function apagar(tipo, id) { S.apagados[`${tipo}:${id}`] = new Date().toISOString(); salvar('apagados'); }
+/** Grava um evento no histórico, com identificador próprio. */
+export function registrar(ev) { const e = { ...ev, uid: novoId() }; return logdb.add(e).catch(() => {}).then(() => e); }
 
 // ---------- ações ----------
 export function tocarDia(campo = 'p', n = 1) {
@@ -77,7 +111,7 @@ export function tocarDia(campo = 'p', n = 1) {
   x[campo] = (x[campo] || 0) + n;
   salvar('dias');
 }
-export function ganhar(n) { S.xp += n; salvar('xp'); return n; }
+export function ganhar(n) { S.xpPor[L.dispositivo] = (S.xpPor[L.dispositivo] || 0) + n; S.xp += n; salvar('xpPor'); return n; }
 export function marco(id) { if (!S.marcos[id]) { S.marcos[id] = hoje(); salvar('marcos'); return true; } return false; }
 
 export function prog(id) { return S.licoes[id] || (S.licoes[id] = { p: 0 }); }
@@ -114,7 +148,7 @@ export function concluirLicao(id, quizN) {
   for (let i = 0; i < quizN; i++) { const cid = `${id}#${i}`; if (!S.cartoes[cid]) { S.cartoes[cid] = srs.novoCartao(d); novos.push(cid); } }
   const g = ganhar(primeira ? XP.licao : XP.revisita);
   if (primeira) tocarDia('l');
-  logdb.add({ t: 'licao', lid: id, d, acertos: (x.quiz || []).filter(Boolean).length, total: quizN }).catch(() => {});
+  registrar({ t: 'licao', lid: id, d, acertos: (x.quiz || []).filter(Boolean).length, total: quizN });
   salvar('licoes', 'cartoes', 'sessao');
   return { xp: g, novos, primeira };
 }
@@ -134,7 +168,7 @@ export function responderCartao(id, nota) {
   const d = hoje();
   const { cartao, log } = srs.responder(c, nota, d);
   S.cartoes[id] = cartao;
-  const ev = { t: 'rev', cid: id, d, ...log };
+  const ev = { t: 'rev', cid: id, d, ...log, uid: novoId() };
   revs.push(ev);
   logdb.add(ev).catch(() => {});
   tocarDia('c');
@@ -152,30 +186,31 @@ export const vencidosHoje = () => srs.vencidos(S.cartoes, hoje());
 
 export function adicionarMeus(lista) { // [{f, v}]
   const d = hoje(); let n = 0;
-  const base = S.meus.reduce((m, c) => Math.max(m, +String(c.id).slice(1) || 0), 0);
   for (const c of lista) {
     const f = String(c.f || '').trim(), v = String(c.v || '').trim();
     if (!f || !v) continue;
-    const id = 'u' + (base + ++n);
+    const id = 'u' + novoId(); n++;
     S.meus.push({ id, f, v });
     S.cartoes[id] = srs.novoCartao(d);
   }
   if (n) salvar('meus', 'cartoes');
   return n;
 }
-export function removerMeu(id) { S.meus = S.meus.filter((c) => c.id !== id); delete S.cartoes[id]; salvar('meus', 'cartoes'); }
+export function removerMeu(id) { S.meus = S.meus.filter((c) => c.id !== id); delete S.cartoes[id]; apagar('meus', id); salvar('meus', 'cartoes'); }
+export function apagarDiario(x) { S.diario = S.diario.filter((y) => y !== x); apagar('diario', x.id || `${x.d}|${x.t}`); salvar('diario'); }
+export function apagarPensamento(p) { S.pensamentos = S.pensamentos.filter((x) => x !== p); apagar('pensamentos', p.id); salvar('pensamentos'); }
 
 export function anotarPensamento(texto) {
   const t = String(texto || '').trim();
   if (!t) return false;
-  S.pensamentos.unshift({ id: Date.now(), d: hoje(), t, ok: false });
+  S.pensamentos.unshift({ id: Date.now(), d: hoje(), t, ok: false, _t: Date.now() });
   salvar('pensamentos');
   return true;
 }
 export function escreverDiario(texto) {
   const t = String(texto || '').trim();
   if (!t) return 0;
-  S.diario.unshift({ d: hoje(), t });
+  S.diario.unshift({ id: novoId(), d: hoje(), t });
   salvar('diario');
   tocarDia('p');
   return ganhar(XP.diario);
@@ -193,15 +228,23 @@ export function marcarMissao(mid, i, on, total) {
 // ---------- backup ----------
 export async function exportar() {
   await gravado();
-  return { app: 'formacao-ia', esquema: 1, quando: new Date().toISOString(), kv: await kv.all(), log: await logdb.all() };
+  const tudo = await kv.all(); delete tudo.local; // o token de sincronização nunca vai no arquivo
+  return { app: 'formacao-ia', esquema: 1, quando: new Date().toISOString(), kv: tudo, log: await logdb.all() };
 }
 export async function importar(obj) {
   if (!obj || obj.app !== 'formacao-ia' || typeof obj.kv !== 'object') throw new Error('Este arquivo não é um backup do Formação IA.');
   if (obj.esquema > 1) throw new Error('Backup feito por uma versão mais nova do app.');
+  await aplicar(obj.kv, Array.isArray(obj.log) ? obj.log : []);
+}
+/** Substitui os dados (menos os locais deste aparelho) e recarrega. Usado pelo backup e pela sincronização. */
+export async function aplicar(dados, eventos) {
   await gravado();
+  const local = { ...L };
   await kv.clear();
-  for (const [k, v] of Object.entries(obj.kv)) await kv.set(k, v);
-  await logdb.replace(Array.isArray(obj.log) ? obj.log : []);
+  for (const [k, v] of Object.entries(dados)) if (k !== 'local') await kv.set(k, v);
+  await kv.set('local', local);
+  if (eventos) await logdb.replace(eventos);
   await carregar();
 }
-export async function apagarTudo() { await gravado(); await kv.clear(); await logdb.clear(); await carregar(); }
+export const lerTudo = async () => { await gravado(); const tudo = await kv.all(); delete tudo.local; return { kv: tudo, log: await logdb.all() }; };
+export async function apagarTudo() { await gravado(); const local = { ...L }; await kv.clear(); await logdb.clear(); await kv.set('local', { dispositivo: local.dispositivo, nuvem: {}, plataforma: local.plataforma }); await carregar(); }
