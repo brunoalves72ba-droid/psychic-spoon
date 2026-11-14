@@ -14,9 +14,10 @@ App web instalável (PWA) para controlar o dinheiro do dia a dia: anote o que en
 | **Resumo** | Quanto entrou, saiu e sobrou no mês; gasto médio por dia e previsão para o fim do mês; comparação com o mês anterior; gastos por categoria (toque para ver no extrato); gráfico dos últimos 6 meses (com tabela). |
 | **Importar** | Lê o extrato da conta ou a fatura do cartão em **OFX ou CSV** (Nubank, Itaú, Bradesco, BB, Caixa, Santander, Inter…). Mostra uma prévia: sugere a categoria (iFood → Restaurante, Uber → Transporte… e aprende com as suas escolhas), não duplica o que já foi importado, reconhece o que você já anotou à mão e deixa de fora pagamento de fatura, aplicações e transferências entre contas. Dá para desfazer. |
 | **Extrato** | Lançamentos agrupados por dia, com busca (sem acento, aceita valor), filtro por categoria e por entrada/saída. Toque num item para editar ou apagar. |
-| **Lançar** | Valor estilo caixa eletrônico (só digitar os números), categoria em um toque, descrição com sugestões, data, forma de pagamento e **repetir todo mês** para contas fixas. Dá para desfazer. |
+| **Lançar** | **Lançamento rápido**: escreva “uber 23,50 ontem no pix” e o app preenche valor, conta, data e forma de pagamento. A conta é **reconhecida pela descrição** (o que você ensinou → lançamentos anteriores → palavras conhecidas) e o app mostra por quê. Valor estilo caixa eletrônico (só digitar os números), categoria em um toque, descrição com sugestões, data, forma de pagamento e **repetir todo mês** para contas fixas. Dá para desfazer. |
 | **Metas** | Limite mensal por categoria, com aviso perto do limite (80%) e quando passa; quanto ainda dá para gastar por dia; lista das contas fixas do mês. |
-| **Ajustes** | Tema claro/escuro, criar/renomear/apagar categorias, cópia de segurança (salvar e restaurar `.json`), planilha `.csv` para Excel/Google Planilhas e apagar tudo. |
+| **Plano de contas** | Contas organizadas em grupos (Moradia, Alimentação, Transporte, Saúde…). **Sugestões de preenchimento** a partir dos seus gastos: criar contas mais específicas (ex.: “Academia”, “Combustível”, “Streaming”) movendo os lançamentos, classificar descrições repetidas que o app não reconhece (e ele aprende), e transformar gastos que se repetem todo mês em conta fixa. Fica em Ajustes › Plano de contas, e o Resumo avisa quando há sugestões. |
+| **Ajustes** | Tema claro/escuro, cópia de segurança (salvar e restaurar `.json`), planilha `.csv` para Excel/Google Planilhas e apagar tudo. |
 
 ### Por que importar arquivo e não Open Finance?
 
@@ -47,6 +48,7 @@ Publicando a raiz do repositório (GitHub Pages, Netlify ou Cloudflare Pages, co
 index.html, manifest.webmanifest, sw.js, sw-assets.js
 css/app.css
 js/app.js              roteador (#/secao → js/views/secao.js)
+js/core/plano.js       grupos, contas sugeridas, reconhecimento, lançamento rápido e sugestões do plano
 js/core/importar.js    leitura de OFX/CSV, categorias automáticas, deduplicação
 js/core/calc.js        cálculos puros (resumo, categorias, previsão, metas, recorrentes, CSV)
 js/core/store.js       armazenamento local

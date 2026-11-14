@@ -2,7 +2,8 @@
 // Roteador: #/secao?param=valor → js/views/secao.js (export render(main, params)).
 import { carregar, atualizarRecorrentes } from './core/store.js';
 
-const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes', 'importar'];
+const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes', 'importar', 'plano'];
+const ABA_DE = { importar: 'extrato', plano: 'ajustes' }; // telas sem aba própria acendem a aba de onde vieram
 const main = document.getElementById('view');
 let limpar = null;
 
@@ -11,7 +12,7 @@ async function rotear() {
   const secao = SECOES.includes(caminho) ? caminho : 'resumo';
   const params = Object.fromEntries(new URLSearchParams(qs));
   document.querySelectorAll('.abas a').forEach((a) => {
-    if (a.dataset.aba === secao) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    if (a.dataset.aba === (ABA_DE[secao] || secao)) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
   if (typeof limpar === 'function') limpar();
   const view = await import(`./views/${secao}.js`);

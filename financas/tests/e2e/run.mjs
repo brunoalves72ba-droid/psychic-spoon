@@ -50,7 +50,7 @@ try {
     await p.locator('#descricao').fill('Salário');
     await p.locator('#repetir').check();
     await p.getByRole('button', { name: 'Salvar', exact: true }).click();
-    await p.getByText('Entrada de R$ 5.200,00 salvo (todo mês).').waitFor();
+    await p.getByText('Entrada de R$ 5.200,00 salvo em Salário (todo mês).').waitFor();
 
     // gastos
     await p.getByRole('button', { name: 'Gastei' }).click();
@@ -61,18 +61,25 @@ try {
       await p.getByRole('button', { name: 'Salvar', exact: true }).click();
       await p.waitForTimeout(80);
     }
-    await p.screenshot({ path: `${shots}lancar-${tema}.png` });
+    // lançamento rápido por frase
+    await p.locator('#frase').fill('taxi 23,50 ontem no pix');
+    await p.getByText(/Entendi: gasto de R\$ 23,50 · Taxi · em Transporte · ontem · Pix/).waitFor();
+    await p.getByText(/Reconhecido: Transporte/).waitFor();
+    await p.screenshot({ path: `${shots}lancar-${tema}.png`, fullPage: true });
+    await p.locator('#frase').press('Enter');
+    await p.getByText('Gasto de R$ 23,50 salvo em Transporte.').waitFor();
 
     // resumo
     await p.locator('.abas a[data-aba=resumo]').click();
     await p.getByText('Para onde foi o dinheiro').waitFor();
     const saiu = await p.locator('.duo .v').nth(1).textContent();
-    if (saiu !== 'R$ 2.080,80') falhar('total de saídas: ' + saiu);
+    if (saiu !== 'R$ 2.104,30') falhar('total de saídas: ' + saiu);
     await p.locator('.grafico .alvo').nth(2).hover();
     await p.locator('.dica-flutuante:not([hidden])').waitFor();
     await p.screenshot({ path: `${shots}resumo-${tema}.png`, fullPage: true });
 
     // clicar na categoria leva ao extrato filtrado
+    await p.getByRole('button', { name: 'Por conta' }).click();
     await p.locator('[data-cat=mercado]').click();
     await p.waitForURL(/extrato.*cat=mercado/);
     await p.locator('#busca').waitFor();
@@ -115,7 +122,7 @@ try {
     await p.locator('.abas a[data-aba=ajustes]').click();
     await p.locator('#arquivo').setInputFiles(caminho);
     await p.getByRole('button', { name: 'Restaurar', exact: true }).click();
-    await p.getByText(/Cópia restaurada: 20 lançamentos/).waitFor();
+    await p.getByText(/Cópia restaurada: 21 lançamentos/).waitFor();
 
     // importar fatura do cartão e extrato da conta
     const ex = fileURLToPath(new URL('../exemplos/', import.meta.url));
@@ -123,8 +130,8 @@ try {
     await p.locator('#arq').setInputFiles(ex + 'nubank-fatura.csv');
     await p.getByText('Conferir importação').waitFor();
     if ((await p.locator('#confirmar').textContent()) !== 'Importar 4') falhar('marcados na fatura: ' + await p.locator('#confirmar').textContent());
-    await p.getByLabel('Categoria de Posto Shell').selectOption('lazer');
-    await p.getByLabel('Categoria de Posto Shell').selectOption('transporte');
+    await p.getByLabel('Conta de Posto Shell').selectOption('lazer');
+    await p.getByLabel('Conta de Posto Shell').selectOption('transporte');
     await p.screenshot({ path: `${shots}importar-${tema}.png`, fullPage: true });
     await p.locator('#confirmar').click();
     await p.getByText('4 lançamentos importados.').waitFor();
@@ -140,7 +147,21 @@ try {
     await p.locator('.etq', { hasText: 'banco' }).first().waitFor();
     await p.screenshot({ path: `${shots}extrato-importado-${tema}.png`, fullPage: true });
 
-    // sem rolagem horizontal
+    // plano de contas: sugestão de criar conta a partir dos gastos
+    await p.goto(`http://localhost:${PORTA}/#/plano`);
+    await p.getByText('Sugestões para o seu plano').waitFor();
+    await p.screenshot({ path: `${shots}plano-${tema}.png`, fullPage: true });
+    const sugCinema = p.locator('.sug', { hasText: 'Cinema e shows' });
+    await sugCinema.getByRole('button', { name: 'Criar e mover' }).click();
+    await p.getByText(/Conta “Cinema e shows” criada com 5 lançamentos/).waitFor();
+    await p.locator('.grupo[data-grupo=lazer]').getByText('Cinema e shows').waitFor();
+
+    // resumo por grupo
+    await p.locator('.abas a[data-aba=resumo]').click();
+    await p.getByRole('button', { name: 'Por grupo' }).click();
+    await p.locator('[data-cat="g:moradia"]').waitFor();
+
+        // sem rolagem horizontal
     const largura = await p.evaluate(() => document.documentElement.scrollWidth);
     if (largura > 390) falhar('rolagem horizontal: ' + largura);
     await ctx.close();

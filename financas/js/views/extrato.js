@@ -4,6 +4,8 @@ import { doMes, filtrar, agruparPorDia, resumo } from '../core/calc.js';
 import { reais } from '../core/dinheiro.js';
 import { mesAtual, nomeDia } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
+import { GRUPOS, grupoDaCategoria } from '../core/plano.js';
+import { categoria as catPorId } from '../core/store.js';
 
 export const titulo = 'Extrato';
 
@@ -12,12 +14,16 @@ export function render(main, { m, cat = '', tipo = '' }) {
   const e = dados();
   const doMesTodo = doMes(e, mes);
   const usadas = [...new Set(doMesTodo.map((l) => l.categoria))].sort((a, b) => nomeCategoria(a).localeCompare(nomeCategoria(b)));
+  const grupoDe = (id) => grupoDaCategoria(catPorId(id) || { id });
+  const gruposUsados = GRUPOS.filter((g) => usadas.some((c) => grupoDe(c) === g.id));
   const filtro = { texto: '', tipo, categoria: cat };
 
   main.innerHTML = `${navMes('#/extrato', mes)}
     <div class="filtros">
       <input type="search" id="busca" placeholder="Buscar" aria-label="Buscar no extrato">
-      <select id="cat" aria-label="Filtrar por categoria"><option value="">Todas</option>${usadas.map((c) => `<option value="${esc(c)}">${esc(nomeCategoria(c))}</option>`).join('')}</select>
+      <select id="cat" aria-label="Filtrar por grupo ou conta"><option value="">Todas as contas</option>
+        <optgroup label="Grupos">${gruposUsados.map((g) => `<option value="g:${g.id}">${esc(g.nome)} (grupo)</option>`).join('')}</optgroup>
+        <optgroup label="Contas">${usadas.map((c) => `<option value="${esc(c)}">${esc(nomeCategoria(c))}</option>`).join('')}</optgroup></select>
       <div class="chips" role="group" aria-label="Tipo">
         <button type="button" class="chip" data-tipo="">Tudo</button>
         <button type="button" class="chip" data-tipo="despesa">Saídas</button>
@@ -29,7 +35,7 @@ export function render(main, { m, cat = '', tipo = '' }) {
     <div id="lista"></div>`;
 
   const $ = (s) => main.querySelector(s);
-  $('#cat').value = usadas.includes(cat) ? cat : '';
+  $('#cat').value = usadas.includes(cat) || gruposUsados.some((g) => 'g:' + g.id === cat) ? cat : '';
   filtro.categoria = $('#cat').value;
 
   const pintar = () => {
@@ -37,7 +43,8 @@ export function render(main, { m, cat = '', tipo = '' }) {
     const qs = new URLSearchParams({ m: mes, ...(filtro.categoria && { cat: filtro.categoria }), ...(filtro.tipo && { tipo: filtro.tipo }) });
     history.replaceState(null, '', `#/extrato?${qs}`);
     main.querySelectorAll('[data-tipo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === filtro.tipo)));
-    const lancs = filtrar(doMesTodo, filtro, nomeCategoria);
+    const doGrupo = filtro.categoria.startsWith('g:') ? doMesTodo.filter((l) => 'g:' + grupoDe(l.categoria) === filtro.categoria) : doMesTodo;
+    const lancs = filtrar(doGrupo, { ...filtro, categoria: filtro.categoria.startsWith('g:') ? '' : filtro.categoria }, nomeCategoria);
     const r = resumo(lancs);
     $('#total').textContent = lancs.length
       ? `${lancs.length} lançamento${lancs.length > 1 ? 's' : ''} · entrou ${reais(r.receitas)} · saiu ${reais(r.despesas)}`
@@ -50,9 +57,10 @@ export function render(main, { m, cat = '', tipo = '' }) {
       <div class="dia-cab"><span>${esc(nomeDia(g.data))}</span><span>${g.saldo >= 0 ? '+' : '−'} ${reais(Math.abs(g.saldo))}</span></div>
       <ul class="lista">${g.itens.map((l) => `<li><a class="item" href="#/lancar?id=${encodeURIComponent(l.id)}">
         <span class="ic ${l.tipo}" aria-hidden="true">${esc(nomeCategoria(l.categoria).slice(0, 1))}</span>
-        <span class="txt"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}${l.recorrente ? '<span class="etq">fixa</span>' : ''}${l.importId ? '<span class="etq">banco</span>' : ''}</span>
-          <span class="t2">${esc(nomeCategoria(l.categoria))}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}</span></span>
-        <span class="val ${l.tipo}">${l.tipo === 'receita' ? '+ ' : '− '}${reais(l.valor)}</span>
+        <span class="txt">
+          <span class="linha1"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}</span><span class="val ${l.tipo}">${l.tipo === 'receita' ? '+ ' : '− '}${reais(l.valor)}</span></span>
+          <span class="t2">${esc(nomeCategoria(l.categoria))}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}</span>
+        </span>
       </a></li>`).join('')}</ul>`).join('');
   };
 

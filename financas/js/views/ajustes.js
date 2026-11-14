@@ -1,5 +1,5 @@
 // Ajustes: categorias, cópia de segurança, planilha, tema e apagar tudo.
-import { dados, nomeCategoria, salvarCategoria, apagarCategoria, exportar, importar, apagarTudo } from '../core/store.js';
+import { dados, nomeCategoria, exportar, importar, apagarTudo } from '../core/store.js';
 import { csv, doMes } from '../core/calc.js';
 import { mesAtual, hoje } from '../core/datas.js';
 import { esc, aviso, confirmar, baixar, navegar } from '../core/ui.js';
@@ -10,11 +10,6 @@ export function render(main) {
   const e = dados();
   let tema = 'auto';
   try { tema = localStorage.getItem('fin-tema') || 'auto'; } catch {}
-  const usos = (id) => e.lancamentos.filter((l) => l.categoria === id).length;
-  const listaCats = (tipo) => e.categorias.filter((c) => c.tipo === tipo).map((c) => `
-    <li class="orc-editar" style="grid-template-columns:1fr auto auto"><span>${esc(c.nome)} <span class="muted">· ${usos(c.id)}</span></span>
-      <button class="btn" type="button" data-renomear="${esc(c.id)}" style="min-height:40px;padding:6px 12px">Renomear</button>
-      <button class="btn perigo" type="button" data-apagar="${esc(c.id)}" style="min-height:40px;padding:6px 12px" aria-label="Apagar ${esc(c.nome)}">Apagar</button></li>`).join('');
 
   main.innerHTML = `<h1>Ajustes</h1>
     <section class="cartao">
@@ -25,15 +20,9 @@ export function render(main) {
     </section>
 
     <section class="cartao">
-      <h2>Categorias de gasto</h2>
-      <ul style="list-style:none;margin:0;padding:0">${listaCats('despesa')}</ul>
-      <h2 style="margin-top:18px">Categorias de entrada</h2>
-      <ul style="list-style:none;margin:0;padding:0">${listaCats('receita')}</ul>
-      <form id="nova" style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px">
-        <input type="text" name="nome" maxlength="40" placeholder="Nova categoria" aria-label="Nome da nova categoria" required>
-        <select name="tipo" aria-label="Tipo da nova categoria"><option value="despesa">Gasto</option><option value="receita">Entrada</option></select>
-        <button class="btn primario" type="submit" style="grid-column:1/-1">Adicionar categoria</button>
-      </form>
+      <h2>Plano de contas</h2>
+      <p class="sub">Contas organizadas em grupos (Moradia, Alimentação, Transporte…), sugestões de contas novas a partir dos seus gastos e o que o app já aprendeu a reconhecer.</p>
+      <a class="btn cheio" href="#/plano">Abrir plano de contas</a>
     </section>
 
     <section class="cartao">
@@ -67,44 +56,6 @@ export function render(main) {
     if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
     main.querySelectorAll('[data-tema]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   }));
-
-  main.querySelectorAll('[data-renomear]').forEach((b) => (b.onclick = () => {
-    const c = e.categorias.find((x) => x.id === b.dataset.renomear);
-    const nome = prompt('Novo nome da categoria:', c.nome);
-    if (nome && nome.trim()) { salvarCategoria({ ...c, nome: nome.trim().slice(0, 40) }); recarregar(); }
-  }));
-
-  main.querySelectorAll('[data-apagar]').forEach((b) => (b.onclick = async () => {
-    const id = b.dataset.apagar;
-    const c = e.categorias.find((x) => x.id === id);
-    const n = usos(id) + e.recorrentes.filter((r) => r.categoria === id).length;
-    if (!n) {
-      if (await confirmar('Apagar categoria?', `“${c.nome}” não tem lançamentos.`, { sim: 'Apagar', perigo: true })) { apagarCategoria(id); recarregar(); }
-      return;
-    }
-    const outras = e.categorias.filter((x) => x.tipo === c.tipo && x.id !== id);
-    if (!outras.length) { aviso('Crie outra categoria antes de apagar esta.'); return; }
-    const d = document.createElement('dialog');
-    d.innerHTML = `<h2>Apagar “${esc(c.nome)}”?</h2><p class="sub">Ela tem ${n} lançamento${n > 1 ? 's' : ''}. Para onde eles vão?</p>
-      <select aria-label="Mover lançamentos para">${outras.map((o) => `<option value="${esc(o.id)}">${esc(o.nome)}</option>`).join('')}</select>
-      <div class="btn-linha" style="margin-top:14px"><button class="btn" value="nao">Cancelar</button><button class="btn perigo" value="sim">Mover e apagar</button></div>`;
-    d.querySelectorAll('button').forEach((x) => (x.onclick = () => d.close(x.value)));
-    d.addEventListener('close', () => {
-      if (d.returnValue === 'sim') { const destino = d.querySelector('select').value; apagarCategoria(id, destino); aviso(`Lançamentos movidos para ${nomeCategoria(destino)}.`); recarregar(); }
-      d.remove();
-    });
-    document.body.append(d); d.showModal();
-  }));
-
-  $('#nova').addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    const nome = ev.target.nome.value.trim();
-    if (!nome) return;
-    if (e.categorias.some((c) => c.nome.toLowerCase() === nome.toLowerCase() && c.tipo === ev.target.tipo.value)) { aviso('Essa categoria já existe.'); return; }
-    salvarCategoria({ nome: nome.slice(0, 40), tipo: ev.target.tipo.value });
-    aviso(`Categoria “${nome}” criada.`);
-    recarregar();
-  });
 
   $('#exportar').onclick = () => { baixar(`financas-copia-${hoje()}.json`, exportar(), 'application/json'); aviso('Cópia salva na pasta de downloads.'); };
   $('#importar').onclick = () => $('#arquivo').click();
