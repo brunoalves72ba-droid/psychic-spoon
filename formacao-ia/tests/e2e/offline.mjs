@@ -39,6 +39,11 @@ const nCache = await page.evaluate(async () => { const ks = await caches.keys();
 const esperado = readFileSync(root + 'sw-assets.js', 'utf8').match(/FIA_ASSETS = (\[.*\])/)[1];
 if (nCache !== JSON.parse(esperado).length) falha(`pré-cache com ${nCache} de ${JSON.parse(esperado).length} arquivos`); else console.log(`ok  ${nCache} arquivos no pré-cache`);
 
+await page.evaluate(() => { location.hash = '#/mais/instalar'; }); await page.waitForTimeout(1200);
+const txtInst = await page.evaluate(() => document.getElementById('view').innerText);
+if (!/Tudo guardado neste aparelho/.test(txtInst)) falha('a tela Instalar não confirmou tudo guardado'); else console.log('ok  a tela Instalar confirma tudo guardado no aparelho');
+await page.screenshot({ path: root + 'tests/e2e/shots/instalar.png' });
+
 // 3. sem rede
 await ctx.setOffline(true);
 await page.reload(); await page.waitForTimeout(800);

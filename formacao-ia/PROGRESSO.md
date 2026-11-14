@@ -38,6 +38,11 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - Fotos: `assets/fotos/` (22 fotos, 33 lições e 7 módulos); registro em `js/data/fotos.js`, créditos em `CREDITOS.md`.
 - **Não testado contra o GitHub de verdade** (este ambiente não alcança a API): o teste `tests/e2e/sync.mjs` usa uma API de Gist falsa com o mesmo formato.
 
+## Instalação separada do Sexteto
+
+- O manifesto do Sexteto passou a ter `"scope": "./index.html"`: antes, a área dele (`/psychic-spoon/`) incluía `/formacao-ia/`, e o Android abria este app dentro do Sexteto instalado. O `id` do Sexteto não mudou (o app instalado continua o mesmo); a mudança chega aos celulares quando o Chrome atualiza o Sexteto instalado, o que pode levar um ou dois dias.
+- `id` próprio no manifesto deste app, ícone novo (“IA” com faísca) e tela `#/mais/instalar`: botão de instalar (quando o navegador oferece), passo a passo para Android e iPhone, conferência de que os arquivos do app estão guardados e pedido de armazenamento permanente.
+
 ## Pendências e limites conhecidos
 
 - **Testar em aparelho real** (iPhone e Android): instalação, Python de bolso, download do .ics.

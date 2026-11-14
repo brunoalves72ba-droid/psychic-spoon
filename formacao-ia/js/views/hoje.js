@@ -11,6 +11,7 @@ import { desafioDaVez } from '../data/desafios.js';
 import { ehPC } from '../core/plataforma.js';
 import { faixa, fotoDoModulo } from '../core/fotos.js';
 import * as nuvem from '../core/nuvem.js';
+import { instalado } from '../core/instalar.js';
 import { licao as licaoDe } from '../data/curso.js';
 
 let avisouSemana = false;
@@ -139,6 +140,7 @@ export default async function (el, args) {
       h('a.btn.primary.block', { href: '#/projeto/pendencias' }, 'Fazer agora')));
   }
   dir.append(semana);
+  if (!instalado()) dir.append(h('a.item', { href: '#/mais/instalar' }, h('img', { src: 'assets/icons/icon-192.png', alt: '', width: 38, height: 38, style: { borderRadius: '10px', flex: 'none' } }), h('span.t', h('b', 'Instalar como app próprio'), h('span', 'Ícone separado do Sexteto, tudo salvo para usar sem internet.')), h('span.chev', '›')));
   // ---- sincronização ----
   const ns = nuvem.status();
   dir.append(ns.ligado

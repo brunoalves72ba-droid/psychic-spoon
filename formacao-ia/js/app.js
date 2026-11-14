@@ -5,6 +5,7 @@ import { h, clear, toast } from './core/ui.js';
 import { S, carregar } from './core/estado.js';
 import * as nuvem from './core/nuvem.js';
 import { aplicarPlataforma } from './core/plataforma.js';
+import './core/instalar.js'; // escuta o convite de instalação desde o início
 import { persistir } from './core/store.js';
 
 export const OWNER = 'Bruno Moura';
@@ -18,7 +19,7 @@ const VIEWS = new Set([
   'projeto', 'projeto-m', 'projeto-diario', 'projeto-ficha', 'projeto-prompts', 'projeto-kits', 'projeto-pendencias',
   'progresso', 'progresso-semana', 'progresso-cronograma', 'progresso-conquistas',
   'labs', 'labs-x',
-  'mais-ficha', 'mais-porque', 'mais-ajustes', 'mais-backup', 'mais-pensamentos', 'mais-lembretes', 'mais-sync',
+  'mais-ficha', 'mais-porque', 'mais-ajustes', 'mais-backup', 'mais-pensamentos', 'mais-lembretes', 'mais-sync', 'mais-instalar',
   'foco',
 ]);
 const ABA = { hoje: 'hoje', foco: 'hoje', trilha: 'trilha', licao: 'trilha', labs: 'trilha', revisar: 'revisar', projeto: 'projeto', progresso: 'progresso', mais: 'progresso' };
