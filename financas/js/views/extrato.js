@@ -25,6 +25,7 @@ export function render(main, { m, cat = '', tipo = '' }) {
       </div>
     </div>
     <p class="sub" id="total" aria-live="polite"></p>
+    <a class="btn cheio" href="#/importar" style="margin-bottom:4px">Importar extrato do banco</a>
     <div id="lista"></div>`;
 
   const $ = (s) => main.querySelector(s);
@@ -42,14 +43,14 @@ export function render(main, { m, cat = '', tipo = '' }) {
       ? `${lancs.length} lançamento${lancs.length > 1 ? 's' : ''} · entrou ${reais(r.receitas)} · saiu ${reais(r.despesas)}`
       : '';
     if (!lancs.length) {
-      $('#lista').innerHTML = `<div class="cartao vazio">${icone('carteira')}<p>${doMesTodo.length ? 'Nada encontrado com esses filtros.' : 'Nenhum lançamento neste mês.'}</p>${doMesTodo.length ? '' : '<a class="btn primario" href="#/lancar">Lançar</a>'}</div>`;
+      $('#lista').innerHTML = `<div class="cartao vazio">${icone('carteira')}<p>${doMesTodo.length ? 'Nada encontrado com esses filtros.' : 'Nenhum lançamento neste mês.'}</p>${doMesTodo.length ? '' : '<div class="btn-linha"><a class="btn primario" href="#/lancar">Lançar</a><a class="btn" href="#/importar">Importar extrato</a></div>'}</div>`;
       return;
     }
     $('#lista').innerHTML = agruparPorDia(lancs).map((g) => `
       <div class="dia-cab"><span>${esc(nomeDia(g.data))}</span><span>${g.saldo >= 0 ? '+' : '−'} ${reais(Math.abs(g.saldo))}</span></div>
       <ul class="lista">${g.itens.map((l) => `<li><a class="item" href="#/lancar?id=${encodeURIComponent(l.id)}">
         <span class="ic ${l.tipo}" aria-hidden="true">${esc(nomeCategoria(l.categoria).slice(0, 1))}</span>
-        <span class="txt"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}${l.recorrente ? '<span class="etq">fixa</span>' : ''}</span>
+        <span class="txt"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}${l.recorrente ? '<span class="etq">fixa</span>' : ''}${l.importId ? '<span class="etq">banco</span>' : ''}</span>
           <span class="t2">${esc(nomeCategoria(l.categoria))}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}</span></span>
         <span class="val ${l.tipo}">${l.tipo === 'receita' ? '+ ' : '− '}${reais(l.valor)}</span>
       </a></li>`).join('')}</ul>`).join('');

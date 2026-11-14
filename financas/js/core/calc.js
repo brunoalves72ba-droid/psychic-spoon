@@ -26,6 +26,7 @@ export const estadoVazio = () => ({
   lancamentos: [],
   recorrentes: [],
   orcamentos: {},
+  regras: {}, // descrição do banco → categoria escolhida por você
 });
 
 export const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -37,6 +38,7 @@ export function normalizar(bruto) {
   if (Array.isArray(bruto.categorias) && bruto.categorias.length) e.categorias = bruto.categorias.filter((c) => c && c.id && c.nome && (c.tipo === 'despesa' || c.tipo === 'receita'));
   e.lancamentos = bruto.lancamentos.filter((l) => l && l.id && Number.isInteger(l.valor) && l.valor > 0 && /^\d{4}-\d{2}-\d{2}$/.test(l.data) && (l.tipo === 'despesa' || l.tipo === 'receita'));
   e.recorrentes = (bruto.recorrentes || []).filter((r) => r && r.id && Number.isInteger(r.valor) && /^\d{4}-\d{2}$/.test(r.inicio)).map((r) => ({ gerados: [], fim: null, ...r }));
+  e.regras = bruto.regras && typeof bruto.regras === 'object' ? { ...bruto.regras } : {};
   e.orcamentos = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? { ...bruto.orcamentos } : {};
   return e;
 }

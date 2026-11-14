@@ -103,6 +103,33 @@ export function apagarCategoria(id, moverPara = null) {
   return true;
 }
 
+/**
+ * Grava os itens marcados da prévia de importação e aprende a categoria de cada descrição.
+ * Devolve os ids dos lançamentos criados.
+ */
+export function importarItens(itens) {
+  const e = dados();
+  const ja = new Set(e.lancamentos.map((l) => l.importId).filter(Boolean));
+  const ids = [];
+  for (const it of itens) {
+    if (!it.marcado || ja.has(it.importId)) continue;
+    const id = novoId();
+    e.lancamentos.push({ id, tipo: it.tipo, valor: it.valor, data: it.data, categoria: it.categoria, descricao: it.descricao, pagamento: it.tipo === 'despesa' ? it.pagamento || '' : '', importId: it.importId });
+    if (it.chave) e.regras[it.tipo + ':' + it.chave] = it.categoria;
+    ja.add(it.importId);
+    ids.push(id);
+  }
+  salvar();
+  return ids;
+}
+
+export function apagarLancamentos(ids) {
+  const fora = new Set(ids);
+  const e = dados();
+  e.lancamentos = e.lancamentos.filter((l) => !fora.has(l.id));
+  salvar();
+}
+
 export const exportar = () => JSON.stringify({ app: 'financas', exportadoEm: new Date().toISOString(), ...dados() }, null, 1);
 
 export function importar(texto) {

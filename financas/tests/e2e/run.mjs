@@ -117,6 +117,29 @@ try {
     await p.getByRole('button', { name: 'Restaurar', exact: true }).click();
     await p.getByText(/Cópia restaurada: 20 lançamentos/).waitFor();
 
+    // importar fatura do cartão e extrato da conta
+    const ex = fileURLToPath(new URL('../exemplos/', import.meta.url));
+    await p.goto(`http://localhost:${PORTA}/#/importar`);
+    await p.locator('#arq').setInputFiles(ex + 'nubank-fatura.csv');
+    await p.getByText('Conferir importação').waitFor();
+    if ((await p.locator('#confirmar').textContent()) !== 'Importar 4') falhar('marcados na fatura: ' + await p.locator('#confirmar').textContent());
+    await p.getByLabel('Categoria de Posto Shell').selectOption('lazer');
+    await p.getByLabel('Categoria de Posto Shell').selectOption('transporte');
+    await p.screenshot({ path: `${shots}importar-${tema}.png`, fullPage: true });
+    await p.locator('#confirmar').click();
+    await p.getByText('4 lançamentos importados.').waitFor();
+    await p.goto(`http://localhost:${PORTA}/#/importar`);
+    await p.locator('#arq').setInputFiles(ex + 'nubank-fatura.csv');
+    await p.getByText(/4.já tinham sido importados/).waitFor();
+    if ((await p.locator('#confirmar').textContent()) !== 'Nada marcado') falhar('reimportação duplicou');
+    await p.getByRole('button', { name: 'Cancelar' }).click();
+    await p.locator('#arq').setInputFiles(ex + 'itau.ofx');
+    await p.getByText('Conferir importação').waitFor();
+    await p.locator('#confirmar').click();
+    await p.waitForURL(/extrato/);
+    await p.locator('.etq', { hasText: 'banco' }).first().waitFor();
+    await p.screenshot({ path: `${shots}extrato-importado-${tema}.png`, fullPage: true });
+
     // sem rolagem horizontal
     const largura = await p.evaluate(() => document.documentElement.scrollWidth);
     if (largura > 390) falhar('rolagem horizontal: ' + largura);

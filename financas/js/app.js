@@ -2,7 +2,7 @@
 // Roteador: #/secao?param=valor → js/views/secao.js (export render(main, params)).
 import { carregar, atualizarRecorrentes } from './core/store.js';
 
-const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes'];
+const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes', 'importar'];
 const main = document.getElementById('view');
 let limpar = null;
 

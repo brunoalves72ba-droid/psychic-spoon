@@ -153,6 +153,23 @@ th { color: var(--tinta-2); font-weight: 600; }
 .val.receita { color: var(--texto-entrada); }
 .etq { display: inline-block; font-size: .72rem; font-weight: 600; padding: 1px 6px; border-radius: 6px; background: var(--superficie-2); color: var(--tinta-2); margin-left: 4px; vertical-align: 1px; }
 
+/* importação */
+.imp { display: flex; gap: 10px; padding: 10px 12px; align-items: flex-start; }
+.imp.fora .imp-txt { opacity: .55; }
+.imp-sel { padding-top: 2px; }
+.imp-sel input { width: 22px; height: 22px; accent-color: var(--marca); }
+.imp-txt { flex: 1; min-width: 0; }
+.imp-l1, .imp-l2 { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.imp-l1 .t1 { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imp-l1 .val { font-weight: 700; white-space: nowrap; }
+.imp-l2 { margin-top: 6px; flex-wrap: wrap; }
+.imp-l2 .t2 { font-size: .82rem; color: var(--tinta-2); }
+.imp-l2 select { width: auto; max-width: 100%; min-height: 36px; padding: 4px 8px; font-size: .88rem; border-radius: 10px; margin-left: auto; }
+.barra-importar { position: sticky; bottom: calc(72px + env(safe-area-inset-bottom)); background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 12px; margin-top: 12px; box-shadow: 0 -4px 20px rgba(0,0,0,.08); }
+.barra-importar p { margin-bottom: 8px; text-align: center; }
+@media (min-width: 900px) { .barra-importar { bottom: 12px; } }
+body:has(.barra-importar) #avisos { bottom: calc(196px + env(safe-area-inset-bottom)); }
+
 /* formulários */
 label.campo { display: block; margin-bottom: 14px; }
 label.campo > span, .campo-rotulo { display: block; font-size: .88rem; color: var(--tinta-2); margin-bottom: 6px; font-weight: 600; }

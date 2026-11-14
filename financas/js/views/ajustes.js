@@ -44,6 +44,7 @@ export function render(main) {
         <button class="btn" type="button" id="importar">Restaurar cópia</button>
       </div>
       <input type="file" id="arquivo" accept="application/json,.json" hidden>
+      <a class="btn cheio" href="#/importar" style="margin-top:10px">Importar extrato do banco (OFX/CSV)</a>
       <div class="btn-linha" style="margin-top:10px">
         <button class="btn" type="button" id="csv-mes">Planilha do mês</button>
         <button class="btn" type="button" id="csv-tudo">Planilha completa</button>

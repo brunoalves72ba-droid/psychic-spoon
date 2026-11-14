@@ -23,7 +23,7 @@ export function render(main, { m }) {
         <h2>Comece anotando um gasto</h2>
         <p>Cada vez que pagar algo, toque em <b>Lançar</b>. Leva uns 5 segundos. Em poucos dias você já vê para onde vai o seu dinheiro.</p>
         <p class="sub">Dica: lance primeiro o salário e as contas fixas (aluguel, internet…) marcando “repetir todo mês”.</p>
-        <a class="btn primario" href="#/lancar">Fazer o primeiro lançamento</a>
+        <div class="btn-linha"><a class="btn primario" href="#/lancar">Fazer o primeiro lançamento</a><a class="btn" href="#/importar">Importar extrato do banco</a></div>
       </div>`;
     return;
   }
