@@ -34,7 +34,11 @@ npm test             # testes dos cálculos
 npm run e2e          # percorre o app no Chromium em tela de celular (capturas em tests/e2e/shots/)
 ```
 
-Depois de mudar qualquer arquivo do app, rode `npm run precache` (regera `sw-assets.js`; sem isso, quem já instalou não recebe a mudança e o `npm test` falha de propósito).
+Depois de mudar qualquer arquivo do app, rode `npm run precache` (regera `sw-assets.js` e a linha de versão do `sw.js`; sem isso, quem já instalou não recebe a mudança e o `npm test` falha de propósito).
+
+### Atualização no celular
+
+O app instalado procura versão nova sempre que é aberto ou volta para a tela. Quando termina de baixar, aparece o aviso **“Nova versão do app disponível — Atualizar”**. Os dados ficam no aparelho e não mudam com a atualização. `npm run e2e:atualizacao` simula esse caminho no Chromium.
 
 ## Publicar e instalar
 

@@ -15,12 +15,16 @@ for (const i of INCLUDE) if (existsSync(join(root, i))) walk(join(root, i));
 const list = files.filter((f) => !SKIP.some((re) => re.test(f)));
 const hash = createHash('sha256');
 for (const f of list) { hash.update(f); hash.update(readFileSync(join(root, f))); }
-hash.update(readFileSync(join(root, 'sw.js')));
+const swPath = join(root, 'sw.js');
+const swAtual = readFileSync(swPath, 'utf8');
+const LINHA = /^\/\/ versao: .*$/m; // a própria linha da versão fica fora do cálculo
+hash.update(swAtual.replace(LINHA, ''));
 const version = hash.digest('hex').slice(0, 12);
 const out = `// Gerado por tools/gen-precache.mjs — não edite à mão.\nself.FIN_VERSION = '${version}';\nself.FIN_ASSETS = ${JSON.stringify(['./', ...list], null, 0)};\n`;
 const target = join(root, 'sw-assets.js');
+const swNovo = swAtual.replace(LINHA, `// versao: ${version}`);
 if (process.argv.includes('--check')) {
   const cur = existsSync(target) ? readFileSync(target, 'utf8') : '';
-  if (cur !== out) { console.error('sw-assets.js está desatualizado. Rode: npm run precache'); process.exit(1); }
+  if (cur !== out || swAtual !== swNovo) { console.error('sw-assets.js está desatualizado. Rode: npm run precache'); process.exit(1); }
   console.log(`sw-assets.js em dia (${list.length} arquivos, versão ${version}).`);
-} else { writeFileSync(target, out); console.log(`sw-assets.js: ${list.length} arquivos, versão ${version}.`); }
+} else { writeFileSync(target, out); writeFileSync(swPath, swNovo); console.log(`sw-assets.js: ${list.length} arquivos, versão ${version}.`); }
