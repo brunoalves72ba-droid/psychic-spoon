@@ -33,6 +33,14 @@ Plano combinado com Bruno e Rita (os dois usam Android, bancos tradicionais e di
 ### Etapa 4 — Avaliação conjunta
 - Fechamento do mês da casa: comparação, metas, maiores gastos, gastos por cartão, faturas a vencer e acerto (“Marcar como acertado”).
 
+## Gasto individual x dividido (sugestão da Rita)
+Compartilhar diz **quem vê**; o rateio diz **quem paga**. Cada gasto compartilhado é:
+- **Dos dois (dividir)**: entra no acerto pela divisão combinada (padrão; os lançamentos antigos continuam assim).
+- **Só meu**: o outro vê, mas fica fora do acerto.
+- **Só do outro**: quem pagou recebe o valor inteiro de volta no acerto.
+
+Escolha no Lançar (aparece ao marcar “Compartilhar”), no Extrato (botão 🔒/👥 de cada gasto) e no A confirmar. O app reconhece pela descrição o que foi escolhido da última vez, e a conta fixa leva a escolha para os meses seguintes. A aba Casal mostra os divididos, os individuais de cada um e explica o acerto. Metas do casal e “Para onde foi o dinheiro do casal” contam só os divididos.
+
 ## Decisões (aprovadas)
 1. Sincronização: **Gist do GitHub**, com os dados cifrados.
 2. Divisão da casa: **proporcional à renda, definida manualmente** — o app calcula e sugere o percentual de cada um pela renda do mês, mas o percentual usado é o que vocês definirem à mão.

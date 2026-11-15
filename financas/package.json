@@ -14,6 +14,7 @@
     "e2e:atualizacao": "node tests/e2e/atualizacao.mjs",
     "e2e:casal": "node tests/e2e/casal.mjs",
     "e2e:pdf": "node tests/e2e/pdf.mjs",
-    "exemplos-pdf": "node tools/gerar-exemplos-pdf.mjs"
+    "exemplos-pdf": "node tools/gerar-exemplos-pdf.mjs",
+    "e2e:rateio": "node tests/e2e/rateio.mjs"
   }
 }

@@ -362,3 +362,16 @@ dialog h2 { margin-top: 0; }
 .etq.confira { background: color-mix(in srgb, var(--atencao) 22%, transparent); color: var(--tinta); }
 .aviso-pdf { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--atencao) 14%, transparent); }
 .senha-pdf .btn-linha input { min-height: 46px; }
+
+/* de quem é o gasto compartilhado */
+.rateio { border: 0; padding: 0; margin: 0 0 14px; }
+.rateio legend { font-weight: 650; margin-bottom: 8px; padding: 0; }
+.alternar.tres { grid-template-columns: repeat(3, 1fr); margin-bottom: 6px; }
+.alternar.tres button { padding: 8px 4px; font-size: .9rem; }
+.etq.ind { background: color-mix(in srgb, var(--marca) 18%, transparent); color: var(--tinta); }
+.duo.individuais { margin-top: 8px; opacity: .9; }
+.pend:not(:has([data-campo=compartilhado]:checked)) .rateio-caixa { display: none; }
+dialog.escolha .opcoes { display: grid; gap: 8px; margin: 12px 0 14px; }
+dialog.escolha .opcao { text-align: left; display: grid; gap: 2px; padding: 12px 14px; min-height: 56px; border-radius: 14px; border: 1px solid var(--borda); background: var(--superficie-2); color: var(--tinta); font: inherit; cursor: pointer; }
+dialog.escolha .opcao small { color: var(--tinta-2); font-size: .86rem; }
+dialog.escolha .opcao[aria-pressed=true] { border: 2px solid var(--marca); }

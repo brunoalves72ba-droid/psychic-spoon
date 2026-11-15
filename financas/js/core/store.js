@@ -87,11 +87,12 @@ export function salvarLancamento(l, { repetir = false } = {}) {
   const e = dados();
   if (l.id) {
     const i = e.lancamentos.findIndex((x) => x.id === l.id);
-    if (i >= 0) e.lancamentos[i] = tocar({ ...e.lancamentos[i], ...l });
+    if (i >= 0) { const n = { ...e.lancamentos[i], ...l }; if (!n.compartilhado || n.tipo !== 'despesa' || n.rateio === 'dividir') delete n.rateio; e.lancamentos[i] = tocar(n); }
   } else {
     l = tocar({ dono: eu() || undefined, compartilhado: compartilhaPorPadrao(l.categoria), ...l, id: novoId() });
+    if (!l.compartilhado || l.tipo !== 'despesa' || !l.rateio || l.rateio === 'dividir') delete l.rateio;
     if (repetir) {
-      const r = tocar({ id: novoId(), tipo: l.tipo, valor: l.valor, dia: +l.data.slice(8, 10), categoria: l.categoria, descricao: l.descricao, pagamento: l.pagamento, inicio: l.data.slice(0, 7), fim: null, gerados: [l.data.slice(0, 7)], dono: l.dono, compartilhado: !!l.compartilhado });
+      const r = tocar({ id: novoId(), tipo: l.tipo, valor: l.valor, dia: +l.data.slice(8, 10), categoria: l.categoria, descricao: l.descricao, pagamento: l.pagamento, inicio: l.data.slice(0, 7), fim: null, gerados: [l.data.slice(0, 7)], dono: l.dono, compartilhado: !!l.compartilhado, ...(l.rateio && { rateio: l.rateio }) });
       e.recorrentes.push(r);
       l.recorrente = r.id;
     }
@@ -175,7 +176,7 @@ export function importarItens(itens) {
   for (const it of itens) {
     if (!it.marcado || ja.has(it.importId)) continue;
     const id = novoId();
-    e.lancamentos.push(tocar({ id, tipo: it.tipo, valor: it.valor, data: it.data, categoria: it.categoria, descricao: it.descricao, pagamento: it.tipo === 'despesa' ? it.pagamento || '' : '', importId: it.importId, dono: eu() || undefined, compartilhado: compartilhaPorPadrao(it.categoria) }));
+    e.lancamentos.push(tocar({ id, tipo: it.tipo, valor: it.valor, data: it.data, categoria: it.categoria, descricao: it.descricao, pagamento: it.tipo === 'despesa' ? it.pagamento || '' : '', importId: it.importId, dono: eu() || undefined, compartilhado: compartilhaPorPadrao(it.categoria), ...rateioSeCompartilhar(it.tipo, it.descricao, compartilhaPorPadrao(it.categoria)) }));
     if (it.chave) e.regras[it.tipo + ':' + it.chave] = it.categoria;
     ja.add(it.importId);
     ids.push(id);
@@ -280,6 +281,7 @@ export function confirmarPendente(id, ajustes = {}) {
       id: id2, tipo: l.tipo, valor: parte.valor, data: parte.data, categoria: l.categoria, descricao: parte.descricao,
       pagamento: l.tipo === 'despesa' ? l.pagamento || '' : '', origem: 'notificacao',
       dono: eu() || undefined, compartilhado: 'compartilhado' in ajustes ? !!ajustes.compartilhado : compartilhaPorPadrao(l.categoria),
+      ...(() => { const comp = 'compartilhado' in ajustes ? !!ajustes.compartilhado : compartilhaPorPadrao(l.categoria); return ajustes.rateio && comp && l.tipo === 'despesa' && ajustes.rateio !== 'dividir' ? { rateio: ajustes.rateio } : rateioSeCompartilhar(l.tipo, l.descricao, comp); })(),
       ...(l.cartao && { cartao: l.cartao }), ...(grupo && { parcelamento: grupo, parcela: parte.parcela }),
     }));
     ids.push(id2);
@@ -326,10 +328,42 @@ export function compartilharSempre(categoria, sim) {
   tocar(o);
   salvar();
 }
-/** Compartilha (ou volta a deixar privado) lançamentos meus. */
+/** Compartilha (ou volta a deixar privado) lançamentos meus. Ao compartilhar, reconhece o rateio pela descrição. */
 export function compartilhar(ids, sim = true) {
   const alvo = new Set(ids);
-  for (const l of dados().lancamentos) if (alvo.has(l.id) && (!l.dono || l.dono === eu())) { l.compartilhado = !!sim; tocar(l); }
+  for (const l of dados().lancamentos) if (alvo.has(l.id) && (!l.dono || l.dono === eu())) {
+    l.compartilhado = !!sim;
+    if (!sim) delete l.rateio;
+    else if (!l.rateio && l.tipo === 'despesa') { const r = rateioPadrao(l.descricao, l.id); if (r.rateio !== 'dividir') l.rateio = r.rateio; }
+    tocar(l);
+  }
+  salvar();
+}
+
+/**
+ * De quem é um gasto compartilhado: reconhece pela descrição (o que você escolheu da última vez
+ * para um gasto com a mesma descrição) e, sem histórico, é dividido. Devolve { rateio, fonte }.
+ */
+export function rateioPadrao(descricao, ignorarId) {
+  const k = chaveDescricao(descricao || '');
+  if (k) {
+    const ant = dados().lancamentos
+      .filter((x) => x.id !== ignorarId && x.tipo === 'despesa' && x.compartilhado && (!x.dono || x.dono === eu()) && chaveDescricao(x.descricao) === k)
+      .sort((a, b) => (b._t || 0) - (a._t || 0) || b.data.localeCompare(a.data))[0];
+    if (ant) return { rateio: ant.rateio === 'meu' || ant.rateio === 'outro' ? ant.rateio : 'dividir', fonte: 'historico' };
+  }
+  return { rateio: 'dividir', fonte: 'padrao' };
+}
+const rateioSeCompartilhar = (tipo, descricao, comp) => { if (!comp || tipo !== 'despesa') return {}; const r = rateioPadrao(descricao).rateio; return r !== 'dividir' ? { rateio: r } : {}; };
+
+/** Define de quem é: 'privado' (deixa de compartilhar), 'dividir', 'meu' ou 'outro'. */
+export function definirRateio(ids, escolha) {
+  const alvo = new Set(ids);
+  for (const l of dados().lancamentos) if (alvo.has(l.id) && (!l.dono || l.dono === eu())) {
+    if (escolha === 'privado') { l.compartilhado = false; delete l.rateio; }
+    else { l.compartilhado = true; if (l.tipo === 'despesa' && escolha !== 'dividir') l.rateio = escolha; else delete l.rateio; }
+    tocar(l);
+  }
   salvar();
 }
 export function definirDivisao(pct) {

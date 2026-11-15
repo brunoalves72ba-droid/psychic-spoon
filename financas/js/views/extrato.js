@@ -5,8 +5,9 @@ import { reais } from '../core/dinheiro.js';
 import { mesAtual, nomeDia } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
 import { GRUPOS, grupoDaCategoria } from '../core/plano.js';
-import { categoria as catPorId, nomeCartao, eu, nomePessoa, outra, compartilhar } from '../core/store.js';
-import { aviso } from '../core/ui.js';
+import { categoria as catPorId, nomeCartao, eu, nomePessoa, outra, compartilhar, definirRateio } from '../core/store.js';
+import { aviso, escolher } from '../core/ui.js';
+import { rateioDe, responsavel } from '../core/calc.js';
 
 export const titulo = 'Extrato';
 
@@ -16,6 +17,7 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
   const visao = ver === 'casal' ? 'casal' : 'minhas';
   const doMesTodo = daVisao(doMes(e, mes), visao === 'casal' ? 'casal' : 'eu', eu());
   const parceira = outra()?.nome || '';
+  const rotuloComp = (l) => !l.compartilhado ? '🔒 Privado' : l.tipo !== 'despesa' ? '👥 Compartilhado' : ({ dividir: '👥 Dividido', meu: '👤 Só meu', outro: `👤 Só de ${parceira}` })[rateioDe(l)];
   let selecionando = false;
   const sel = new Set();
   const usadas = [...new Set(doMesTodo.map((l) => l.categoria))].sort((a, b) => nomeCategoria(a).localeCompare(nomeCategoria(b)));
@@ -74,9 +76,9 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
         <span class="ic ${l.tipo}" aria-hidden="true">${esc(visao === 'casal' ? (nomePessoa(l.dono) || '?').slice(0, 1) : nomeCategoria(l.categoria).slice(0, 1))}</span>
         <span class="txt">
           <span class="linha1"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}</span><span class="val ${l.tipo}">${l.tipo === 'receita' ? '+ ' : '− '}${reais(l.valor)}</span></span>
-          <span class="t2">${esc(nomeCategoria(l.categoria))}${visao === 'casal' ? ` · pago por ${esc(nomePessoa(l.dono) || '—')}` : ''}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.cartao ? ` · ${esc(nomeCartao(l.cartao))}` : ''}${l.origem === 'notificacao' ? ' <span class="etq">notificação</span>' : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}</span>
+          <span class="t2">${esc(nomeCategoria(l.categoria))}${visao === 'casal' ? ` · pago por ${esc(nomePessoa(l.dono) || '—')}${l.tipo === 'despesa' && responsavel(l, dados().pessoas) ? ` <span class="etq ind">só de ${esc(nomePessoa(responsavel(l, dados().pessoas)))}</span>` : ''}` : ''}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.cartao ? ` · ${esc(nomeCartao(l.cartao))}` : ''}${l.origem === 'notificacao' ? ' <span class="etq">notificação</span>' : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}</span>
         </span>
-      </${meu && !selecionando ? 'a' : 'div'}>${visao === 'minhas' && !selecionando ? `<button type="button" class="btn-comp" data-comp="${esc(l.id)}" aria-pressed="${!!l.compartilhado}" aria-label="${l.compartilhado ? 'Compartilhado com ' + esc(parceira) + '. Tocar para deixar privado' : 'Privado. Tocar para compartilhar com ' + esc(parceira)}">${l.compartilhado ? '👥 Compartilhado' : '🔒 Privado'}</button>` : ''}</li>`;
+      </${meu && !selecionando ? 'a' : 'div'}>${visao === 'minhas' && !selecionando ? `<button type="button" class="btn-comp" data-comp="${esc(l.id)}" aria-pressed="${!!l.compartilhado}" aria-label="${esc(rotuloComp(l))}. Tocar para mudar">${esc(rotuloComp(l))}</button>` : ''}</li>`;
       }).join('')}</ul>`).join('');
   };
 
@@ -85,9 +87,22 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
     const b = ev.target.closest('[data-comp]');
     if (!b) return;
     const l = dados().lancamentos.find((x) => x.id === b.dataset.comp);
-    compartilhar([l.id], !l.compartilhado);
-    aviso(l.compartilhado ? `Compartilhado com ${parceira}.` : 'Agora é privado.');
-    pintar();
+    if (l.tipo !== 'despesa') {   // entradas: só ver ou não ver
+      compartilhar([l.id], !l.compartilhado);
+      aviso(l.compartilhado ? `Compartilhado com ${parceira}.` : 'Agora é privado.');
+      pintar(); return;
+    }
+    escolher(`${l.descricao || nomeCategoria(l.categoria)} · ${reais(l.valor)}`, [
+      { v: 'privado', t: '🔒 Privado', d: `Só você vê. ${parceira} não vê.` },
+      { v: 'dividir', t: '👥 Dos dois (dividir)', d: 'Compartilhado e dividido no acerto pela divisão combinada.' },
+      { v: 'meu', t: '👤 Só meu', d: `${parceira} vê, mas não entra no acerto.` },
+      { v: 'outro', t: `👤 Só de ${parceira}`, d: `Você pagou, mas é de ${parceira}: no acerto, volta inteiro para você.` },
+    ], l.compartilhado ? rateioDe(l) : 'privado').then((v) => {
+      if (!v) return;
+      definirRateio([l.id], v);
+      aviso({ privado: 'Agora é privado.', dividir: `Compartilhado e dividido com ${parceira}.`, meu: `Compartilhado, mas só seu: fora do acerto.`, outro: `Marcado como de ${parceira}: volta para você no acerto.` }[v]);
+      pintar();
+    });
   });
   $('#lista').addEventListener('change', (ev) => {
     const c = ev.target.closest('[data-sel]');

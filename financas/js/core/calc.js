@@ -91,7 +91,7 @@ export function gerarRecorrentes(estado, hoje = hojeStr()) {
       const id = `rec-${r.id}-${mes}`; // id fixo: os dois celulares geram o mesmo lançamento, sem duplicar
       if (estado.lancamentos.some((l) => l.id === id) || estado.apagados?.[id]) { r.gerados.push(mes); continue; }
       estado.lancamentos.push({ id, tipo: r.tipo, valor: r.valor, data, categoria: r.categoria, descricao: r.descricao, pagamento: r.pagamento, recorrente: r.id,
-        ...(r.dono && { dono: r.dono }), ...(r.compartilhado && { compartilhado: true }), _t: 1 });
+        ...(r.dono && { dono: r.dono }), ...(r.compartilhado && { compartilhado: true }), ...(r.compartilhado && r.rateio && r.rateio !== 'dividir' && { rateio: r.rateio }), _t: 1 });
       r.gerados.push(mes);
       n++;
     }
@@ -192,20 +192,52 @@ export function divisaoPelaRenda(lancsDoMes, pessoas) {
   return { renda, pct };
 }
 
+// De quem é um gasto compartilhado (compartilhar diz quem vê; o rateio diz quem paga):
+//   'dividir' — dos dois, pela divisão combinada (padrão)
+//   'meu'     — só de quem lançou: o outro vê, mas não entra no acerto
+//   'outro'   — só do outro: quem pagou recebe tudo de volta no acerto
+export const RATEIOS = ['dividir', 'meu', 'outro'];
+export const rateioDe = (l) => (l.rateio === 'meu' || l.rateio === 'outro' ? l.rateio : 'dividir');
+/** Quem é o responsável por um gasto individual (null quando é dividido). */
+export function responsavel(l, pessoas) {
+  const r = rateioDe(l);
+  if (r === 'dividir') return null;
+  if (r === 'meu') return l.dono || null;
+  return pessoas.find((p) => p.id !== l.dono)?.id || null;
+}
+
 /**
- * Acerto do mês: quanto cada um pagou das contas compartilhadas, quanto deveria pela divisão
- * e quem transfere quanto para quem.
+ * Acerto do mês. Os gastos compartilhados “dividir” são rateados pela divisão combinada; os
+ * individuais pagos por quem não é o responsável voltam inteiros para quem pagou; os individuais
+ * pagos pelo próprio responsável ficam fora. Devolve também os totais de cada tipo.
  */
 export function acerto(lancsDoMes, pessoas, divisao) {
+  const ids = pessoas.map((p) => p.id);
+  const zero = () => Object.fromEntries(ids.map((id) => [id, 0]));
   const comp = lancsDoMes.filter((l) => l.compartilhado && l.tipo === 'despesa' && conta(l));
-  const total = comp.reduce((a, l) => a + l.valor, 0);
-  const pagou = Object.fromEntries(pessoas.map((p) => [p.id, 0]));
-  for (const l of comp) if (l.dono in pagou) pagou[l.dono] += l.valor;
-  const deveria = Object.fromEntries(pessoas.map((p) => [p.id, Math.round(total * (divisao[p.id] ?? 50) / 100)]));
-  const [a, b] = pessoas.map((p) => p.id);
-  const saldoA = pagou[a] - deveria[a]; // positivo: A pagou a mais e deve receber
+  const divididos = comp.filter((l) => rateioDe(l) === 'dividir');
+  const total = divididos.reduce((a, l) => a + l.valor, 0);
+  const pagou = zero(), individual = zero();
+  for (const l of divididos) if (l.dono in pagou) pagou[l.dono] += l.valor;
+  const deveria = Object.fromEntries(ids.map((id) => [id, Math.round(total * (divisao[id] ?? 50) / 100)]));
+  // individuais: reembolsos[devedor][credor] — o que um pagou e era do outro
+  const reembolsos = [];
+  for (const l of comp) {
+    const resp = responsavel(l, pessoas);
+    if (!resp) continue;
+    if (resp in individual) individual[resp] += l.valor;
+    if (resp !== l.dono && l.dono in pagou) {
+      const r = reembolsos.find((x) => x.de === resp && x.para === l.dono);
+      if (r) r.valor += l.valor; else reembolsos.push({ de: resp, para: l.dono, valor: l.valor });
+    }
+  }
+  const [a, b] = ids;
+  // positivo: A pagou a mais e deve receber
+  let saldoA = pagou[a] - deveria[a];
+  for (const r of reembolsos) saldoA += r.para === a ? r.valor : -r.valor;
   const transf = Math.abs(saldoA) < 100 ? null : saldoA > 0 ? { de: b, para: a, valor: saldoA } : { de: a, para: b, valor: -saldoA };
-  return { total, pagou, deveria, transf };
+  const totalCompartilhado = comp.reduce((s, l) => s + l.valor, 0);
+  return { total, pagou, deveria, transf, individual, reembolsos, totalCompartilhado };
 }
 
 const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
