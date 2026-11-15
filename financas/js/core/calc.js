@@ -2,11 +2,25 @@
 import { GRUPO_PADRAO, grupoDaCategoria, CONTAS, NEUTRAS } from './plano.js';
 import { mesDe, mesesEntre, somarMeses, dataNoMes, diasNoMes, hoje as hojeStr } from './datas.js';
 
-export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Dinheiro', 'Boleto', 'Transferência'];
+export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Ticket Alimentação', 'Ticket Refeição', 'Dinheiro', 'Boleto', 'Transferência'];
+
+/** Benefícios (vale-alimentação e vale-refeição): a conta de entrada e a forma de pagamento de cada um. */
+export const TICKETS = [
+  { id: 'ticket-alimentacao', nome: 'Ticket Alimentação', pagamento: 'Ticket Alimentação' },
+  { id: 'ticket-refeicao', nome: 'Ticket Refeição', pagamento: 'Ticket Refeição' },
+];
+/** Saldo de cada ticket no mês: o que entrou (crédito do benefício), o que foi pago com ele e o que sobra. */
+export function saldoTickets(lancsDoMes) {
+  return TICKETS.map((t) => {
+    const recebido = lancsDoMes.filter((l) => l.tipo === 'receita' && l.categoria === t.id).reduce((s, l) => s + l.valor, 0);
+    const gasto = lancsDoMes.filter((l) => l.tipo === 'despesa' && l.pagamento === t.pagamento).reduce((s, l) => s + l.valor, 0);
+    return { ...t, recebido, gasto, saldo: recebido - gasto };
+  }).filter((t) => t.recebido || t.gasto);
+}
 
 /** Contas que já vêm no app: as do plano de contas pessoal marcadas como padrão. */
 export const CATEGORIAS_PADRAO = CONTAS.filter((c) => c.padrao).map(({ id, nome, tipo, grupo }) => ({ id, nome, tipo, grupo }));
-export const VERSAO_PLANO = 3; // 3: Devoluções e Complemento de receita
+export const VERSAO_PLANO = 4; // 3: Devoluções e Complemento de receita · 4: Ticket Alimentação e Ticket Refeição
 
 // nomes que as contas tinham antes do plano pessoal: só são trocados se você não os renomeou
 const NOMES_ANTIGOS = {

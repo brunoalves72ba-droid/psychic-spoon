@@ -80,7 +80,7 @@ test('backup antigo é atualizado para o plano pessoal sem perder o que a pessoa
   assert.deepEqual([c('saude').nome, c('saude').grupo], ['Saúde da família', 'saude']);
   assert.deepEqual([c('zz').grupo, c('yy').grupo], ['outros', 'receitas']);
   for (const id of ['iptu', 'dae', 'ref-teto', 'fatura-cartao', 'invest-auto']) assert.ok(c(id), id);
-  assert.equal(e.planoVersao, 3);
+  assert.equal(e.planoVersao, 4);
   assert.equal(grupoDaCategoria({ id: 'farmacia' }), 'saude');
 });
 
@@ -128,4 +128,23 @@ test('sugestões encontram entradas recorrentes, além dos gastos', () => {
   // já recorrente: não sugere de novo
   const comRec = sugestoesPlano({ ...estadoVazio(), lancamentos: ls, recorrentes: [{ id: 'r', tipo: 'receita', descricao: 'Salário Empresa X', valor: 520000, dia: 5, inicio: '2026-11', fim: null, gerados: [] }], regras: {} }, '2026-11-20').fixas;
   assert.deepEqual(comRec.map((f) => f.tipo), ['despesa']);
+});
+
+test('Ticket Alimentação e Ticket Refeição: contas de entrada, forma de pagamento e frase rápida', () => {
+  const e = normalizar({ planoVersao: 3, lancamentos: [], categorias: [{ id: 'salario', nome: 'Salário / pró-labore', tipo: 'receita' }] });
+  const c = (id) => e.categorias.find((x) => x.id === id);
+  assert.deepEqual([c('ticket-alimentacao').nome, c('ticket-alimentacao').tipo], ['Ticket Alimentação', 'receita']);
+  assert.deepEqual([c('ticket-refeicao').nome, c('ticket-refeicao').tipo], ['Ticket Refeição', 'receita']);
+  const est = { ...estadoVazio(), lancamentos: [], regras: {} };
+  assert.equal(reconhecer('Crédito Ticket Alimentação', 'receita', est).categoria, 'ticket-alimentacao');
+  assert.equal(reconhecer('Alelo Refeição - crédito do benefício', 'receita', est).categoria, 'ticket-refeicao');
+  assert.equal(reconhecer('Recarga VR', 'receita', est).categoria, 'ticket-refeicao');
+  assert.equal(interpretarFrase('mercado 120 no ticket alimentação').pagamento, 'Ticket Alimentação');
+  assert.equal(interpretarFrase('almoço 35 no vr').pagamento, 'Ticket Refeição');
+  assert.equal(interpretarFrase('feira 80 no ticket').pagamento, 'Ticket Alimentação');     // sem dizer qual: comida para casa
+  assert.equal(interpretarFrase('almoço 42 no ticket').pagamento, 'Ticket Refeição');       // sem dizer qual: comida pronta
+  const f = interpretarFrase('almoço 42 no ticket');
+  assert.equal(f.descricao, 'Almoço');
+  const r = interpretarFrase('caiu o vr 600');
+  assert.deepEqual([r.tipo, r.descricao, r.valor, r.pagamento], ['receita', 'Ticket Refeição', 60000, undefined]);
 });

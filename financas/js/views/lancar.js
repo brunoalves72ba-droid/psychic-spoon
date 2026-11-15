@@ -100,7 +100,7 @@ export function render(main, params) {
     pintarContas();
     pintarRateio();
     const dica = $('#repetir-dica');
-    if (dica) dica.textContent = f.tipo === 'receita' ? 'Entrada recorrente: salário, pró-labore, aluguel recebido, complemento de receita…' : 'Despesa recorrente: aluguel, condomínio, internet, assinaturas…';
+    if (dica) dica.textContent = f.tipo === 'receita' ? 'Entrada recorrente: salário, ticket alimentação ou refeição, aluguel recebido, complemento de receita…' : 'Despesa recorrente: aluguel, condomínio, internet, assinaturas…';
   };
 
   // de quem é o gasto compartilhado: dos dois (dividido), só meu ou só do outro

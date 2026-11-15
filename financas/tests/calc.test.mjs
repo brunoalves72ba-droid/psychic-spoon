@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lerValor, digitosParaCentavos, reais, centavosParaCampo } from '../js/core/dinheiro.js';
 import { somarMeses, dataNoMes, mesesEntre, nomeDia } from '../js/core/datas.js';
-import { estadoVazio, normalizar, gerarRecorrentes, doMes, resumo, porCategoria, historico, previsao, orcamentos, filtrar, agruparPorDia, csv, recorrencias } from '../js/core/calc.js';
+import { estadoVazio, normalizar, gerarRecorrentes, doMes, resumo, porCategoria, historico, previsao, orcamentos, filtrar, agruparPorDia, csv, recorrencias, saldoTickets } from '../js/core/calc.js';
 
 const L = (id, tipo, valor, data, categoria, extra = {}) => ({ id, tipo, valor, data, categoria, descricao: '', pagamento: 'Pix', ...extra });
 
@@ -123,4 +123,18 @@ test('recorrências do mês: entradas e despesas separadas, o que já entrou e a
   assert.equal(r.aReceber, 80000);
   assert.equal(r.aPagar, 0);
   assert.deepEqual(r.encerradas.map((x) => x.id), ['velha']);
+});
+
+test('saldo dos tickets no mês: crédito do benefício menos o que foi pago com ele', () => {
+  const ls = [
+    { id: 'a', tipo: 'receita', valor: 80000, data: '2026-11-01', categoria: 'ticket-alimentacao' },
+    { id: 'b', tipo: 'despesa', valor: 30000, data: '2026-11-03', categoria: 'mercado', pagamento: 'Ticket Alimentação' },
+    { id: 'c', tipo: 'despesa', valor: 5000, data: '2026-11-04', categoria: 'restaurante', pagamento: 'Ticket Refeição' },
+    { id: 'd', tipo: 'despesa', valor: 9000, data: '2026-11-04', categoria: 'restaurante', pagamento: 'Pix' },
+  ];
+  assert.deepEqual(saldoTickets(ls).map((t) => [t.nome, t.recebido, t.gasto, t.saldo]), [
+    ['Ticket Alimentação', 80000, 30000, 50000],
+    ['Ticket Refeição', 0, 5000, -5000],
+  ]);
+  assert.deepEqual(saldoTickets([]), []);
 });
