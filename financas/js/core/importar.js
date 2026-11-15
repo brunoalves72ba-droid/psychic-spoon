@@ -170,3 +170,169 @@ export function prepararImportacao(itens, estado) {
     };
   });
 }
+
+// ---------- PDF ----------
+// Os bancos não seguem um padrão em PDF. A leitura procura, linha a linha, uma data no começo e um valor
+// em reais; usa a posição das colunas (Valor, Crédito, Débito, Saldo) quando o cabeçalho aparece; aceita
+// a data só na primeira linha do dia e os cabeçalhos de dia com “Total de entradas/saídas” (Nubank);
+// e deduz o ano das datas curtas (dd/mm, “15 OUT”) pela data completa mais recente do documento.
+// O que fica em dúvida (entrada ou saída) vem marcado na prévia para conferir.
+const MESES = { jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6, jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12 };
+const IGNORAR_PDF = /\bsaldo\b|\btotal\b|subtotal|\blimite\b|pagamento minimo|valor minimo|taxa de juros|\bcet\b|vencimento|fechamento|melhor dia|^data\b|pagina \d|\bpag\.? \d/;
+const RECEITA_PDF = /receb|credito|deposito|salario|rendimento|estorno|devolu|reembolso|resgate|cashback/;
+const ESTRANGEIRA = /(US\$|U\$|USD|EUR|€)\s*$/i;
+
+const iso = (a, m, d) => `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+/** Junta os pedaços de texto em células (pedaços colados) e monta o texto da linha com a posição de cada letra. */
+function montarLinha(l) {
+  const celulas = [];
+  for (const it of l.itens) {
+    const ult = celulas[celulas.length - 1];
+    const vao = ult ? it.x - (ult.x + ult.w) : Infinity;
+    if (ult && vao < Math.max(1.5, it.h * 0.3)) { ult.t += (vao > it.h * 0.08 ? ' ' : '') + it.t; ult.w = it.x + it.w - ult.x; }
+    else celulas.push({ t: it.t, x: it.x, w: it.w });
+  }
+  let texto = ''; const pos = [];
+  for (const c of celulas) {
+    if (texto) { texto += '  '; pos.push(null, null); }
+    const t = c.t.replace(/\s+/g, ' ');
+    for (let k = 0; k < t.length; k++) pos.push(c.x + (c.w * (k + 1)) / Math.max(1, t.length));
+    texto += t;
+  }
+  return { texto, pos, celulas };
+}
+
+/** Valores em reais da linha, com sinal (se houver marca), posição da borda direita e trecho ocupado. */
+function valoresDaLinha(texto, pos) {
+  const out = [];
+  for (const m of texto.matchAll(/\d{1,3}(?:\.\d{3})*,\d{2}(?!\d)/g)) {
+    const i = m.index, j = i + m[0].length;
+    if (i > 0 && /[\d.,]/.test(texto[i - 1])) continue;
+    const antes = texto.slice(Math.max(0, i - 8), i), depois = texto.slice(j, j + 3);
+    let ini = i, fim = j, sinal = 0;
+    if (ESTRANGEIRA.test(antes)) { out.push({ estrangeira: true, ini: i - antes.match(ESTRANGEIRA)[0].length, fim }); continue; }
+    let mm;
+    if ((mm = antes.match(/([-−+])\s?R\$\s?$|([-−+])$|R\$\s?([-−+])$/))) { sinal = (mm[1] || mm[2] || mm[3]) === '+' ? 1 : -1; ini = i - mm[0].length; }
+    else if ((mm = antes.match(/R\$\s?$/))) ini = i - mm[0].length;
+    if ((mm = depois.match(/^\s?([-−])(?![\d\w])/))) { sinal = -1; fim = j + mm[0].length; }
+    else if ((mm = depois.match(/^\s?([DC])\b/))) { sinal = mm[1] === 'D' ? -1 : 1; fim = j + mm[0].length; }
+    const centavos = Math.round(Number(m[0].replace(/\./g, '').replace(',', '.')) * 100);
+    out.push({ centavos, sinal, ini, fim, direita: pos[j - 1] ?? 0 });
+  }
+  return out;
+}
+
+/** Data no começo da linha: { dia, mes, ano|null, fim }. */
+function dataNoInicio(texto) {
+  const t = texto.trimStart(), off = texto.length - t.length;
+  let m = t.match(/^(\d{2})[/.-](\d{2})[/.-](\d{4}|\d{2})(?![\d/])/);
+  if (m) return valida(+m[1], +m[2], m[3].length === 2 ? 2000 + +m[3] : +m[3], off + m[0].length);
+  m = t.match(/^(\d{2})\/(\d{2})(?![\d/])/);
+  if (m) return valida(+m[1], +m[2], null, off + m[0].length);
+  m = norm(t).match(/^(\d{1,2})\s*(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?(?:\s*(?:de\s+)?(\d{4}))?(?![a-z])/);
+  if (m) return valida(+m[1], MESES[m[2]], m[3] ? +m[3] : null, off + m[0].length);
+  return null;
+}
+function valida(dia, mes, ano, fim) { return dia >= 1 && dia <= 31 && mes >= 1 && mes <= 12 ? { dia, mes, ano, fim } : null; }
+
+/** Datas completas do documento: a mais recente vira referência para as datas sem ano. */
+function dataReferencia(textos, hojeIso) {
+  let ref = '';
+  for (const t of textos) {
+    for (const m of t.matchAll(/(?<!\d)(\d{2})\/(\d{2})\/(\d{4})(?!\d)/g)) { const d = valida(+m[1], +m[2], +m[3], 0); if (d) { const s = iso(d.ano, d.mes, d.dia); if (s > ref) ref = s; } }
+    for (const m of norm(t).matchAll(/(?<!\d)(\d{1,2})\s*(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\.?\s*(?:de\s+)?(\d{4})/g)) { const d = valida(+m[1], MESES[m[2]], +m[3], 0); if (d) { const s = iso(d.ano, d.mes, d.dia); if (s > ref) ref = s; } }
+  }
+  return ref || hojeIso;
+}
+function completarAno(d, ref) {
+  if (d.ano) return iso(d.ano, d.mes, d.dia);
+  const a = +ref.slice(0, 4);
+  const s = iso(a, d.mes, d.dia);
+  // fatura que vence em janeiro com compras de dezembro: a data passaria da referência
+  return Date.parse(s) - Date.parse(ref) > 45 * 864e5 ? iso(a - 1, d.mes, d.dia) : s;
+}
+
+/** Cabeçalho de tabela: guarda a borda direita de cada coluna de valor. */
+function colunas(celulas) {
+  const c = {}; let achou = 0, temData = false;
+  for (const cel of celulas) {
+    const n = norm(cel.t);
+    const tipo = /^saldo/.test(n) ? 'saldo' : /^(credito|creditos|entrada|entradas)\b/.test(n) ? 'credito' : /^(debito|debitos|saida|saidas)\b/.test(n) ? 'debito' : /^(valor|montante|quantia)\b/.test(n) ? 'valor' : null;
+    if (/^data\b/.test(n)) temData = true;
+    if (tipo && c[tipo] === undefined) { c[tipo] = cel.x + cel.w; achou++; }
+  }
+  return achou && (temData || achou >= 2) && (c.valor !== undefined || c.credito !== undefined || c.debito !== undefined) ? c : null;
+}
+
+/**
+ * Extrato ou fatura em PDF → { itens, cartao, duvidas }.
+ * `linhas`: [{ pagina, y, h, itens: [{ t, x, w, h }] }] (veja linhasDoPDF em pdf.js).
+ */
+export function lerPDF(linhas, { hoje: hojeIso = new Date().toISOString().slice(0, 10) } = {}) {
+  const montadas = linhas.map((l) => ({ ...montarLinha(l), pagina: l.pagina, y: l.y, h: l.h || 8 }));
+  const tudo = norm(montadas.map((l) => l.texto).join(' \n '));
+  if (tudo.replace(/\s/g, '').length < 30) throw new Error('Esse PDF parece ser uma imagem (escaneado ou foto): não há texto para ler. Use o PDF gerado pelo app ou site do banco, ou baixe o extrato em OFX ou CSV.');
+  const cartao = /fatura/.test(tudo) && /(cartao|vencimento)/.test(tudo) && !/conta corrente|extrato de conta/.test(tudo);
+  const ref = dataReferencia(montadas.map((l) => l.texto), hojeIso);
+  const itens = [];
+  let cols = null, dataAtual = null, secao = 0, ultimo = null, orfa = null, marcaSaida = false, marcaEntrada = false;
+
+  for (const l of montadas) {
+    const n = norm(l.texto);
+    const valores = valoresDaLinha(l.texto, l.pos);
+    const reais = valores.filter((v) => !v.estrangeira && v.centavos > 0);
+    const cab = !reais.length && colunas(l.celulas);
+    if (cab) { cols = cab; ultimo = null; orfa = null; continue; }
+    const d = dataNoInicio(l.texto);
+    // Nubank: "01 OUT 2026   Total de entradas   + 1.000,00" abre o dia e diz o sinal do que vem abaixo
+    if (/total de entradas/.test(n)) { if (d) dataAtual = completarAno(d, ref); secao = 1; ultimo = null; continue; }
+    if (/total de saidas/.test(n)) { if (d) dataAtual = completarAno(d, ref); secao = -1; ultimo = null; continue; }
+    if (d && !reais.length && !/[a-z]{3}/i.test(norm(l.texto.slice(d.fim)).replace(/\b(de|seg|ter|qua|qui|sex|sab|dom)\w*\b/g, ''))) { dataAtual = completarAno(d, ref); secao = 0; ultimo = null; continue; }
+    if (IGNORAR_PDF.test(n)) { ultimo = null; continue; }
+    if (!reais.length) {
+      // continuação da descrição (nome de quem recebeu, detalhe do Pix) logo abaixo do lançamento
+      if (ultimo && ultimo.pagina === l.pagina && ultimo.y - l.y <= ultimo.h * 2.2 && ultimo.extra < 1 && /[a-z]{2}/i.test(l.texto) && !d) {
+        ultimo.item.descricao = limparTexto(ultimo.item.descricao + ' · ' + l.texto); ultimo.extra++; ultimo.y = l.y;
+      } else if (!d && /[a-z]{2}/i.test(l.texto)) orfa = { texto: l.texto, pagina: l.pagina, y: l.y };
+      continue;
+    }
+    if (d) dataAtual = completarAno(d, ref);
+    if (!dataAtual) continue;
+
+    // qual valor é o lançamento (e não o saldo) e para que lado vai
+    let escolhido = null, sinal = 0, fonte = '';
+    if (cols) {
+      const nomes = Object.keys(cols);
+      for (const v of reais) {
+        const col = nomes.reduce((a, b) => (Math.abs(cols[b] - v.direita) < Math.abs(cols[a] - v.direita) ? b : a));
+        if (col === 'saldo') continue;
+        escolhido = v; sinal = col === 'debito' ? -1 : col === 'credito' ? 1 : 0; fonte = sinal ? 'coluna' : '';
+        break;
+      }
+      if (!escolhido) continue;      // só saldo nesta linha
+    } else escolhido = reais[0];
+    if (!sinal && escolhido.sinal) { sinal = cartao ? -escolhido.sinal : escolhido.sinal; fonte = 'marca'; }
+    let descricao = l.texto.slice(d ? d.fim : 0);
+    for (const v of [...valores].sort((a, b) => b.ini - a.ini)) descricao = descricao.slice(0, Math.max(0, v.ini - (d ? d.fim : 0))) + ' ' + descricao.slice(Math.max(0, v.fim - (d ? d.fim : 0)));
+    descricao = limparTexto(descricao.replace(/\bR\$/g, ' ').replace(/(^|\s)\d{6,}(?=\s|$)/g, ' ').replace(/\s[-−·]\s*$/, ''));
+    // descrição em duas linhas com a data e o valor centralizados: o nome ficou na linha de cima
+    if (!/[a-z]/i.test(descricao) && orfa && orfa.pagina === l.pagina && orfa.y - l.y <= l.h * 1.8) descricao = limparTexto(orfa.texto);
+    orfa = null;
+    if (!/[a-z]/i.test(descricao)) continue;
+    const nd = norm(descricao);
+    let duvida = false;
+    if (!sinal && secao) { sinal = secao; fonte = 'secao'; }
+    if (!sinal && cartao) sinal = /pagamento|estorno|credito|devolu|reembolso/.test(nd) ? 1 : -1;
+    if (!sinal) { sinal = RECEITA_PDF.test(nd) ? 1 : -1; duvida = true; }
+    if (fonte === 'marca' && !cartao) { if (escolhido.sinal < 0) marcaSaida = true; else marcaEntrada = true; }
+    const item = { data: dataAtual, valor: sinal * escolhido.centavos, descricao, idBanco: '', ...(duvida ? { duvida: true } : {}) };
+    itens.push(item);
+    ultimo = { item, pagina: l.pagina, y: l.y, h: l.h, extra: 0 };
+  }
+  // extrato que só marca as saídas (com “−” ou D): o que vem sem marca é entrada
+  if (marcaSaida && !marcaEntrada) for (const it of itens) if (it.duvida) { it.valor = Math.abs(it.valor); delete it.duvida; }
+  const duvidas = itens.filter((i) => i.duvida).length;
+  if (!itens.length) throw new Error('Não encontrei lançamentos com data e valor neste PDF. Se for o extrato de um banco com outro formato, baixe em OFX ou CSV (veja “Como baixar o extrato”).');
+  return { itens, cartao, duvidas };
+}

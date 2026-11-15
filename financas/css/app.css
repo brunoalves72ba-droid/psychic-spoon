@@ -282,7 +282,7 @@ textarea { resize: none; overflow: hidden; line-height: 1.4; }
 /* formulários */
 label.campo { display: block; margin-bottom: 14px; }
 label.campo > span, .campo-rotulo { display: block; font-size: .88rem; color: var(--tinta-2); margin-bottom: 6px; font-weight: 600; }
-input[type=text], input[type=date], input[type=search], input[type=number], select, textarea {
+input[type=text], input[type=password], input[type=date], input[type=search], input[type=number], select, textarea {
   width: 100%; min-height: 46px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--borda);
   background: var(--superficie); outline: none;
 }
@@ -356,3 +356,9 @@ dialog h2 { margin-top: 0; }
   #avisos { bottom: 24px; }
 }
 @media (forced-colors: active) { .trilho i, .grafico rect, .ponto { forced-color-adjust: none; } }
+
+/* importação de PDF */
+.link-btn { background: none; border: 0; padding: 10px 2px; min-height: 44px; font: inherit; font-weight: 600; color: var(--marca); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.etq.confira { background: color-mix(in srgb, var(--atencao) 22%, transparent); color: var(--tinta); }
+.aviso-pdf { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--atencao) 14%, transparent); }
+.senha-pdf .btn-linha input { min-height: 46px; }
