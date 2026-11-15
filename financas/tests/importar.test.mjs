@@ -50,12 +50,14 @@ test('categorias sugeridas por palavra e pelo que você já usou', () => {
   const e = estadoVazio();
   const cat = (descricao, valor = -100) => sugerirCategoria({ descricao, valor }, e);
   assert.equal(cat('Compra no débito - iFood'), 'restaurante');
-  assert.equal(cat('PIX ENVIADO UBER DO BRASIL'), 'transporte');
-  assert.equal(cat('DEB AUTOMATICO ENEL DISTRIBUICAO'), 'contas');
-  assert.equal(cat('NETFLIX.COM'), 'assinaturas');
-  assert.equal(cat('Drogasil'), 'saude');
+  assert.equal(cat('PIX ENVIADO UBER DO BRASIL'), 'app-transporte');
+  assert.equal(cat('DEB AUTOMATICO ENEL DISTRIBUICAO'), 'energia');
+  assert.equal(cat('NETFLIX.COM'), 'streaming');
+  assert.equal(cat('Drogasil'), 'farmacia');
   assert.equal(cat('PAGAMENTO DE SALÁRIO EMPRESA X', 100), 'salario');
   assert.equal(cat('Fatima Costureira'), 'outros'); // "tim" dentro de palavra não é a operadora
+  assert.equal(cat('PAGAMENTO FATURA CARTAO'), 'fatura-cartao'); // não conta como gasto
+  assert.equal(cat('RESGATE CDB', 100), 'resgate');
   e.lancamentos.push({ id: 'x', tipo: 'despesa', valor: 4500, data: '2026-10-01', categoria: 'lazer', descricao: 'Pix - Fulano de Tal 123' });
   assert.equal(cat('Transferência enviada pelo Pix - Fulano de Tal'), 'outros');
   assert.equal(cat('Pix - Fulano de Tal 456'), 'lazer');

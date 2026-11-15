@@ -5,24 +5,39 @@ import { mesDe, somarMeses, hoje as hojeStr, mesAtual } from './datas.js';
 export const GRUPOS = [
   { id: 'receitas', nome: 'Receitas', tipo: 'receita' },
   { id: 'moradia', nome: 'Moradia', tipo: 'despesa' },
+  { id: 'reforma', nome: 'Reforma', tipo: 'despesa' },
   { id: 'alimentacao', nome: 'Alimentação', tipo: 'despesa' },
-  { id: 'transporte', nome: 'Transporte', tipo: 'despesa' },
+  { id: 'transporte', nome: 'Transporte e veículo', tipo: 'despesa' },
   { id: 'saude', nome: 'Saúde e bem-estar', tipo: 'despesa' },
   { id: 'educacao', nome: 'Educação', tipo: 'despesa' },
   { id: 'lazer', nome: 'Lazer', tipo: 'despesa' },
   { id: 'pessoal', nome: 'Pessoal e compras', tipo: 'despesa' },
-  { id: 'servicos', nome: 'Assinaturas e serviços', tipo: 'despesa' },
-  { id: 'financeiro', nome: 'Financeiro e impostos', tipo: 'despesa' },
+  { id: 'servicos', nome: 'Serviços e assinaturas', tipo: 'despesa' },
+  { id: 'domesticos', nome: 'Empregados domésticos', tipo: 'despesa' },
+  { id: 'impostos', nome: 'Impostos e taxas', tipo: 'despesa' },
+  { id: 'financeiro', nome: 'Financeiro e seguros', tipo: 'despesa' },
+  { id: 'patrimonio', nome: 'Investimentos e patrimônio', tipo: 'despesa' },
+  { id: 'transferencias', nome: 'Transferências (não contam como gasto)', tipo: 'despesa' },
   { id: 'outros', nome: 'Outros', tipo: 'despesa' },
+  { id: 'transferencias-entrada', nome: 'Transferências recebidas (não contam como renda)', tipo: 'receita' },
 ];
 export const nomeGrupo = (id) => GRUPOS.find((g) => g.id === id)?.nome || 'Outros';
 
-/** Grupo de cada categoria que vem no app. */
-export const GRUPO_PADRAO = {
-  mercado: 'alimentacao', restaurante: 'alimentacao', casa: 'moradia', contas: 'moradia', transporte: 'transporte',
-  saude: 'saude', educacao: 'educacao', lazer: 'lazer', compras: 'pessoal', assinaturas: 'servicos', outros: 'outros',
-  salario: 'receitas', extra: 'receitas', 'outras-receitas': 'receitas',
-};
+/**
+ * Contas que movimentam dinheiro mas NÃO são gasto nem renda (pagar a fatura, passar
+ * dinheiro entre as próprias contas, aplicar ou resgatar investimento). Ficam no extrato,
+ * mas fora dos totais, gráficos, metas e previsões — assim nada é contado duas vezes.
+ */
+export const NEUTRAS = new Set(['transf-contas', 'transf-identificar', 'fatura-cartao', 'invest-auto', 'transf-entrada', 'resgate']);
+
+/**
+ * Plano de contas pessoal (adaptado da lista de validação do Bruno: o que era só de empresa
+ * — PIS, COFINS, ICMS, Simples, estoque, fornecedores, maquininha, marketing, Abrasel,
+ * Sindipan — ficou de fora; o que era de funcionário virou "Empregados domésticos").
+ * `padrao`: já vem no app. `pai`: conta que recebe o lançamento se esta não existir.
+ * `kw`: palavras que reconhecem a descrição (sem acentos, minúsculas). A ordem importa:
+ * as mais específicas vêm antes.
+ */
 
 /**
  * Contas do plano. As que têm `padrao` já vêm no app; as outras são SUGERIDAS quando
@@ -30,69 +45,122 @@ export const GRUPO_PADRAO = {
  * a conta mais específica não for criada. `kw` reconhece a descrição (sem acentos, minúsculas).
  */
 export const CONTAS = [
-  // receitas
-  { id: 'salario', nome: 'Salário', grupo: 'receitas', tipo: 'receita', padrao: true, kw: /salario|folha|proventos|vencimentos|pagamento de salario|holerite/ },
-  { id: 'rendimentos', nome: 'Rendimentos', grupo: 'receitas', tipo: 'receita', pai: 'extra', kw: /rendimento|dividendo|\bjcp\b|juros sobre capital|remuneracao (da )?conta|rend pago/ },
-  { id: 'reembolsos', nome: 'Reembolsos e cashback', grupo: 'receitas', tipo: 'receita', pai: 'outras-receitas', kw: /reembolso|cashback|estorno|devolucao/ },
-  { id: 'vendas', nome: 'Vendas', grupo: 'receitas', tipo: 'receita', pai: 'extra', kw: /venda|mercado ?pago.*recebid|olx|enjoei/ },
+  // ----- receitas
+  { id: 'salario', nome: 'Salário / pró-labore', grupo: 'receitas', tipo: 'receita', padrao: true, kw: /salario|folha|proventos|vencimentos|pagamento de salario|holerite|pro-?labore/ },
+  { id: 'decimo-ferias', nome: '13º e férias', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'salario', kw: /13o|decimo terceiro|\bferias\b/ },
+  { id: 'bonus', nome: 'Bonificações e premiações', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'extra', kw: /bonus|bonifica|premia|\bplr\b|participacao nos lucros/ },
+  { id: 'lucros', nome: 'Distribuição de lucros', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'extra', kw: /distribuicao de lucros|lucros distribuidos/ },
+  { id: 'rendimentos', nome: 'Rendimentos', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'extra', kw: /rendimento|dividendo|\bjcp\b|juros sobre capital|remuneracao (da )?conta|rend pago/ },
+  { id: 'reembolsos', nome: 'Reembolsos e devoluções', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'outras-receitas', kw: /reembolso|cashback|estorno|devolucao/ },
+  { id: 'vendas', nome: 'Vendas', grupo: 'receitas', tipo: 'receita', pai: 'extra', kw: /venda|olx|enjoei/ },
   { id: 'extra', nome: 'Renda extra', grupo: 'receitas', tipo: 'receita', padrao: true, kw: /freela|bico|comissao|honorario/ },
   { id: 'outras-receitas', nome: 'Outras entradas', grupo: 'receitas', tipo: 'receita', padrao: true },
-  // moradia
-  { id: 'casa', nome: 'Moradia', grupo: 'moradia', tipo: 'despesa', padrao: true, kw: /aluguel|imobiliaria|quinto ?andar|financiamento (imob|habit)/ },
-  { id: 'condominio', nome: 'Condomínio', grupo: 'moradia', tipo: 'despesa', pai: 'casa', kw: /condominio|\bcond\b/ },
-  { id: 'energia', nome: 'Energia', grupo: 'moradia', tipo: 'despesa', pai: 'contas', kw: /enel|\blight\b|cemig|copel|celesc|coelba|neoenergia|energisa|equatorial|cpfl|elektro|conta de luz|energia/ },
-  { id: 'agua', nome: 'Água', grupo: 'moradia', tipo: 'despesa', pai: 'contas', kw: /sabesp|cedae|copasa|sanepar|embasa|compesa|caesb|cagece|saneago|conta de agua|aguas de/ },
-  { id: 'gas', nome: 'Gás', grupo: 'moradia', tipo: 'despesa', pai: 'contas', kw: /comgas|naturgy|ultragaz|liquigas|supergasbras|copagaz|botijao|\bgas\b/ },
-  { id: 'internet', nome: 'Internet e celular', grupo: 'moradia', tipo: 'despesa', pai: 'contas', kw: /\bclaro\b|\bvivo\b|\btim\b|\boi\b|\bnet\b|\bsky\b|internet|telefon|recarga celular|desktop|brisanet|algar/ },
-  { id: 'contas', nome: 'Contas (luz, água, internet)', grupo: 'moradia', tipo: 'despesa', padrao: true },
-  { id: 'manutencao-casa', nome: 'Manutenção da casa', grupo: 'moradia', tipo: 'despesa', pai: 'casa', kw: /leroy|telhanorte|c&c|material de constru|eletricista|encanador|dedetiz|tok ?stok|camicado|mobly|madeira ?madeira/ },
-  // alimentação
-  { id: 'mercado', nome: 'Mercado', grupo: 'alimentacao', tipo: 'despesa', padrao: true, kw: /supermerc|mercado(?! ?(livre|pago))|atacad|assai|carrefour|pao de acucar|\bextra\b|\bbig\b|zaffari|condor|savegnago|guanabara|st marche|oba hortifruti|mambo|sonda/ },
+  { id: 'resgate', nome: 'Resgate de investimento', grupo: 'transferencias-entrada', tipo: 'receita', padrao: true, kw: /resgate|resg\b/ },
+  { id: 'transf-entrada', nome: 'Transferência entre contas (entrada)', grupo: 'transferencias-entrada', tipo: 'receita', padrao: true, kw: /transferencia entre contas|mesma titularidade|transf(erencia)? propria/ },
+  // ----- moradia
+  { id: 'casa', nome: 'Aluguel', grupo: 'moradia', tipo: 'despesa', padrao: true, kw: /aluguel|imobiliaria|quinto ?andar|financiamento (imob|habit)/ },
+  { id: 'condominio', nome: 'Condomínio', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'casa', kw: /condominio|\bcond\b/ },
+  { id: 'iptu', nome: 'IPTU', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'casa', kw: /\biptu\b/ },
+  { id: 'agua', nome: 'Água', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'contas', kw: /sabesp|cedae|copasa|sanepar|embasa|compesa|caesb|cagece|saneago|conta de agua|aguas de/ },
+  { id: 'energia', nome: 'Energia', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'contas', kw: /enel|\blight\b|cemig|copel|celesc|coelba|neoenergia|energisa|equatorial|cpfl|elektro|conta de luz|energia/ },
+  { id: 'gas', nome: 'Gás', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'contas', kw: /comgas|naturgy|ultragaz|liquigas|supergasbras|copagaz|botijao|\bgas\b/ },
+  { id: 'internet', nome: 'Telefonia fixa e internet', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'contas', kw: /\bclaro\b|\bvivo\b|\btim\b|\boi\b|\bnet\b|\bsky\b|internet|telefon|recarga celular|desktop|brisanet|algar/ },
+  { id: 'contas', nome: 'Contas (luz, água, internet)', grupo: 'moradia', tipo: 'despesa' },
+  { id: 'limpeza', nome: 'Material de limpeza', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'mercado', kw: /material de limpeza|produtos de limpeza|limpeza/ },
+  { id: 'dedetizacao', nome: 'Dedetização e desentupidora', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /dedetiz|desentup|controle de pragas/ },
+  { id: 'manutencao-casa', nome: 'Manutenção da casa', grupo: 'moradia', tipo: 'despesa', padrao: true, pai: 'casa', kw: /leroy|telhanorte|c&c|tok ?stok|camicado|mobly|madeira ?madeira|chaveiro|marido de aluguel/ },
+  // ----- reforma
+  { id: 'ref-mao-de-obra', nome: 'Mão de obra (trabalhadores)', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /pedreiro|eletricista|encanador|mestre de obras|mao de obra|servente/ },
+  { id: 'ref-hidraulica', nome: 'Hidráulica', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /hidraulic|\btigre\b|amanco|\bdocol\b|deca\b/ },
+  { id: 'ref-eletrica', nome: 'Elétrica', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /material eletrico|eletrica|\bfios?\b|disjuntor/ },
+  { id: 'ref-estrutural', nome: 'Estrutural', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /estrutural|engenheir|laje|fundacao/ },
+  { id: 'ref-teto', nome: 'Teto', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /telha|forro|gesso|calha/ },
+  { id: 'ref-alvenaria', nome: 'Alvenaria', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /cimento|areia|tijolo|bloco|votoran|argamassa|reboco|deposito de material|material de construcao/ },
+  { id: 'ref-ferros', nome: 'Colunas e ferros', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /vergalhao|gerdau|ferragens?|\bferro\b/ },
+  { id: 'ref-portas', nome: 'Portas e janelas', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /portas?\b|janelas?\b|vidracaria|serralheria|esquadria/ },
+  { id: 'ref-fachada', nome: 'Fachada e pintura', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /fachada|pintura|tintas?\b|suvinil|\bcoral\b|pintor/ },
+  { id: 'reforma', nome: 'Reforma (outros)', grupo: 'reforma', tipo: 'despesa', padrao: true, pai: 'manutencao-casa', kw: /reforma|obra\b/ },
+  // ----- alimentação
+  { id: 'mercado', nome: 'Mercado', grupo: 'alimentacao', tipo: 'despesa', padrao: true, kw: /supermerc|mercado(?! ?(livre|pago))|atacad|assai|carrefour|pao de acucar|\bextra\b|\bbig\b|zaffari|condor|savegnago|guanabara|st marche|mambo|sonda/ },
   { id: 'feira', nome: 'Feira e hortifrúti', grupo: 'alimentacao', tipo: 'despesa', pai: 'mercado', kw: /hortifruti|sacolao|(?<!-)\bfeira\b|quitanda|acougue|peixaria/ },
   { id: 'padaria', nome: 'Padaria e café', grupo: 'alimentacao', tipo: 'despesa', pai: 'restaurante', kw: /padaria|panificadora|\bcafe\b|cafeteria|starbucks|confeitaria/ },
   { id: 'delivery', nome: 'Delivery', grupo: 'alimentacao', tipo: 'despesa', pai: 'restaurante', kw: /ifood|rappi|ze delivery|aiqfome|delivery|uber ?eats/ },
   { id: 'restaurante', nome: 'Restaurante e delivery', grupo: 'alimentacao', tipo: 'despesa', padrao: true, kw: /restaurante|lanchonete|pizza|burger|mcdonald|\bbk\b|subway|churrasc|sushi|outback|lanche|almoco|jantar|marmita/ },
-  // transporte
-  { id: 'combustivel', nome: 'Combustível', grupo: 'transporte', tipo: 'despesa', pai: 'transporte', kw: /posto|combust|gasolina|etanol|\bshell\b|ipiranga|petrobras|br mania|abasteci/ },
-  { id: 'app-transporte', nome: 'Uber e táxi', grupo: 'transporte', tipo: 'despesa', pai: 'transporte', kw: /\buber\b(?! ?eats)|\b99\b|99 ?(app|pop|taxi)|cabify|indrive|taxi/ },
-  { id: 'estacionamento', nome: 'Estacionamento e pedágio', grupo: 'transporte', tipo: 'despesa', pai: 'transporte', kw: /estacion|zona azul|pedagio|sem parar|conectcar|veloe|move mais|taggy/ },
+  // ----- transporte e veículo
+  { id: 'combustivel', nome: 'Combustível', grupo: 'transporte', tipo: 'despesa', padrao: true, pai: 'transporte', kw: /posto|combust|gasolina|etanol|\bshell\b|ipiranga|petrobras|br mania|abasteci/ },
+  { id: 'estacionamento', nome: 'Estacionamento e pedágio', grupo: 'transporte', tipo: 'despesa', padrao: true, pai: 'transporte', kw: /estacion|zona azul|pedagio|sem parar|conectcar|veloe|move mais|taggy/ },
+  { id: 'ipva', nome: 'IPVA e licenciamento', grupo: 'transporte', tipo: 'despesa', padrao: true, pai: 'transporte', kw: /\bipva\b|licenciamento|detran/ },
+  { id: 'carro', nome: 'Manutenção do automóvel', grupo: 'transporte', tipo: 'despesa', padrao: true, pai: 'transporte', kw: /oficina|mecanic|pneu|auto ?pecas|lava ?rapido|funilaria|autocenter|troca de oleo/ },
+  { id: 'app-transporte', nome: 'Deslocamento (Uber, táxi)', grupo: 'transporte', tipo: 'despesa', padrao: true, pai: 'transporte', kw: /\buber\b(?! ?eats)|\b99\b|99 ?(app|pop|taxi)|cabify|indrive|taxi/ },
   { id: 'transporte-publico', nome: 'Transporte público', grupo: 'transporte', tipo: 'despesa', pai: 'transporte', kw: /\bmetro\b|onibus|bilhete unico|sptrans|riocard|top recarga|cartao transporte|\btrem\b|\bbrt\b/ },
-  { id: 'carro', nome: 'Carro (manutenção, IPVA, seguro)', grupo: 'transporte', tipo: 'despesa', pai: 'transporte', kw: /oficina|mecanic|pneu|auto ?pecas|lava ?rapido|ipva|licenciamento|detran|seguro auto|funilaria/ },
-  { id: 'transporte', nome: 'Transporte', grupo: 'transporte', tipo: 'despesa', padrao: true },
-  // saúde
-  { id: 'farmacia', nome: 'Farmácia', grupo: 'saude', tipo: 'despesa', pai: 'saude', kw: /farmac|drogaria|droga ?raia|drogasil|pague menos|panvel|nissei|drogao/ },
-  { id: 'plano-saude', nome: 'Plano de saúde', grupo: 'saude', tipo: 'despesa', pai: 'saude', kw: /unimed|amil|hapvida|sulamerica|bradesco saude|notredame|porto saude|plano de saude|prevent senior/ },
-  { id: 'academia', nome: 'Academia e esporte', grupo: 'saude', tipo: 'despesa', pai: 'saude', kw: /academia|smart ?fit|bluefit|bodytech|selfit|gympass|wellhub|totalpass|crossfit|pilates|natacao/ },
-  { id: 'consultas', nome: 'Consultas e exames', grupo: 'saude', tipo: 'despesa', pai: 'saude', kw: /clinica|consulta|medic|odonto|dentist|laborat|exame|psicolog|fisioterap|hospital|fleury|dasa|lavoisier/ },
-  { id: 'saude', nome: 'Saúde', grupo: 'saude', tipo: 'despesa', padrao: true },
-  // educação
-  { id: 'cursos', nome: 'Cursos', grupo: 'educacao', tipo: 'despesa', pai: 'educacao', kw: /udemy|alura|curso|hotmart|coursera|duolingo|rocketseat/ },
-  { id: 'livros', nome: 'Livros', grupo: 'educacao', tipo: 'despesa', pai: 'educacao', kw: /livraria|kindle|livro|saraiva|leitura|estante virtual/ },
-  { id: 'educacao', nome: 'Educação', grupo: 'educacao', tipo: 'despesa', padrao: true, kw: /escola|faculdade|universidade|mensalidade|colegio|material escolar/ },
-  // lazer
-  { id: 'viagem', nome: 'Viagens', grupo: 'lazer', tipo: 'despesa', pai: 'lazer', kw: /hotel|airbnb|booking|decolar|\blatam\b|\bgol\b|\bazul\b|passagem|pousada|hostel|123 ?milhas|maxmilhas|cvc/ },
+  { id: 'frete', nome: 'Frete e entregas', grupo: 'transporte', tipo: 'despesa', padrao: true, pai: 'transporte', kw: /frete|transportadora|loggi|jadlog|mudanca|lalamove/ },
+  { id: 'transporte', nome: 'Transporte (outros)', grupo: 'transporte', tipo: 'despesa', padrao: true },
+  // ----- saúde
+  { id: 'farmacia', nome: 'Farmácia', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /farmac|drogaria|droga ?raia|drogasil|pague menos|panvel|nissei|drogao/ },
+  { id: 'plano-saude', nome: 'Plano de saúde', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /unimed|amil|hapvida|sulamerica saude|bradesco saude|notredame|porto saude|plano de saude|prevent senior/ },
+  { id: 'telemedicina', nome: 'Telemedicina', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /telemedicina|teleconsulta|conexa|doutor online/ },
+  { id: 'consultas', nome: 'Consultas e exames médicos', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /clinica|consulta|medic|odonto|dentist|laborat|exame|psicolog|fisioterap|hospital|fleury|dasa|lavoisier/ },
+  { id: 'nutricionista', nome: 'Nutricionista', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /nutricion/ },
+  { id: 'academia', nome: 'Academia e esporte', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /academia|smart ?fit|bluefit|bodytech|selfit|gympass|wellhub|totalpass|crossfit|pilates|natacao/ },
+  { id: 'seguro-vida', nome: 'Seguro de vida', grupo: 'saude', tipo: 'despesa', padrao: true, pai: 'saude', kw: /seguro de vida|vida e previdencia|prudential|mag seguros|icatu|metlife/ },
+  { id: 'saude', nome: 'Saúde (outros)', grupo: 'saude', tipo: 'despesa', padrao: true },
+  // ----- educação
+  { id: 'cursos', nome: 'Cursos e treinamentos', grupo: 'educacao', tipo: 'despesa', padrao: true, pai: 'educacao', kw: /udemy|alura|curso|hotmart|coursera|duolingo|rocketseat|treinamento|digital college/ },
+  { id: 'livros', nome: 'Livros', grupo: 'educacao', tipo: 'despesa', pai: 'educacao', kw: /livraria|kindle|livro|saraiva|estante virtual/ },
+  { id: 'material-escritorio', nome: 'Material de escritório e escolar', grupo: 'educacao', tipo: 'despesa', padrao: true, pai: 'educacao', kw: /papelaria|kalunga|material escolar|escritorio/ },
+  { id: 'educacao', nome: 'Educação (escola, faculdade)', grupo: 'educacao', tipo: 'despesa', padrao: true, kw: /escola|faculdade|universidade|mensalidade|colegio/ },
+  // ----- lazer
+  { id: 'viagem', nome: 'Viagens', grupo: 'lazer', tipo: 'despesa', padrao: true, pai: 'lazer', kw: /hotel|airbnb|booking|decolar|\blatam\b|\bgol\b|\bazul\b(?! seguros)|passagem|pousada|hostel|123 ?milhas|maxmilhas|cvc/ },
+  { id: 'festas', nome: 'Confraternizações e festas', grupo: 'lazer', tipo: 'despesa', padrao: true, pai: 'lazer', kw: /festa|confraterniz|buffet|aniversario|decoracao de festa/ },
   { id: 'cinema-shows', nome: 'Cinema e shows', grupo: 'lazer', tipo: 'despesa', pai: 'lazer', kw: /cinema|cinemark|kinoplex|ingresso|sympla|eventim|\bshow\b|teatro/ },
   { id: 'jogos', nome: 'Jogos', grupo: 'lazer', tipo: 'despesa', pai: 'lazer', kw: /steam|playstation|\bpsn\b|xbox|nintendo|epic games|riot|garena/ },
   { id: 'bares', nome: 'Bares e saídas', grupo: 'lazer', tipo: 'despesa', pai: 'lazer', kw: /\bbar\b|boteco|cervejaria|\bpub\b|balada|adega/ },
-  { id: 'lazer', nome: 'Lazer', grupo: 'lazer', tipo: 'despesa', padrao: true },
-  // pessoal
-  { id: 'vestuario', nome: 'Roupas e calçados', grupo: 'pessoal', tipo: 'despesa', pai: 'compras', kw: /renner|riachuelo|c&a|\bcea\b|zara|shein|hering|centauro|netshoes|calcad|marisa|youcom|dafiti|nike|adidas/ },
-  { id: 'beleza', nome: 'Beleza e cuidados', grupo: 'pessoal', tipo: 'despesa', pai: 'compras', kw: /salao|barbearia|cabeleir|manicure|boticario|natura|sephora|avon|eudora|estetica/ },
+  { id: 'lazer', nome: 'Lazer (outros)', grupo: 'lazer', tipo: 'despesa', padrao: true },
+  // ----- pessoal
+  { id: 'vestuario', nome: 'Roupas, calçados e uniformes', grupo: 'pessoal', tipo: 'despesa', padrao: true, pai: 'compras', kw: /renner|riachuelo|c&a|\bcea\b|zara|shein|hering|centauro|netshoes|calcad|marisa|youcom|dafiti|nike|adidas|uniforme|fardamento/ },
+  { id: 'beleza', nome: 'Beleza e cuidados', grupo: 'pessoal', tipo: 'despesa', padrao: true, pai: 'compras', kw: /salao|barbearia|cabeleir|manicure|boticario|natura|sephora|avon|eudora|estetica/ },
   { id: 'pets', nome: 'Pets', grupo: 'pessoal', tipo: 'despesa', pai: 'compras', kw: /petz|cobasi|pet ?shop|veterin|racao|petlove/ },
-  { id: 'eletronicos', nome: 'Eletrônicos', grupo: 'pessoal', tipo: 'despesa', pai: 'compras', kw: /kabum|fast ?shop|apple store|samsung|pichau|terabyte|xiaomi/ },
-  { id: 'compras', nome: 'Compras', grupo: 'pessoal', tipo: 'despesa', padrao: true, kw: /amazon(?! prime)|mercado ?livre|mercadolivre|magalu|magazine|shopee|aliexpress|americanas|casas bahia|temu|loja/ },
-  // serviços
-  { id: 'streaming', nome: 'Streaming', grupo: 'servicos', tipo: 'despesa', pai: 'assinaturas', kw: /netflix|spotify|amazon prime|prime video|disney|hbo|globoplay|youtube premium|deezer|paramount|crunchyroll|apple tv|apple music|max\.com/ },
-  { id: 'apps', nome: 'Apps e nuvem', grupo: 'servicos', tipo: 'despesa', pai: 'assinaturas', kw: /apple\.com|icloud|google (one|storage|play)|microsoft|office 365|dropbox|chatgpt|openai|anthropic|claude\.ai|canva|adobe/ },
-  { id: 'assinaturas', nome: 'Assinaturas', grupo: 'servicos', tipo: 'despesa', padrao: true, kw: /assinatura|mensalidade app/ },
-  // financeiro
-  { id: 'tarifas', nome: 'Tarifas bancárias', grupo: 'financeiro', tipo: 'despesa', pai: 'outros', kw: /tarifa|anuidade|cesta de servicos|pacote de servicos|manutencao de conta/ },
-  { id: 'juros', nome: 'Juros e multas', grupo: 'financeiro', tipo: 'despesa', pai: 'outros', kw: /juros|\biof\b|multa|encargo|\bmora\b|rotativo/ },
-  { id: 'impostos', nome: 'Impostos', grupo: 'financeiro', tipo: 'despesa', pai: 'outros', kw: /iptu|darf|imposto|irpf|\bdas\b|\bgps\b|inss|receita federal/ },
-  { id: 'emprestimos', nome: 'Empréstimos e parcelas', grupo: 'financeiro', tipo: 'despesa', pai: 'outros', kw: /emprestimo|financiamento|consignado|parcela credito|credito pessoal/ },
+  { id: 'eletronicos', nome: 'Eletrônicos, informática e manutenção', grupo: 'pessoal', tipo: 'despesa', padrao: true, pai: 'compras', kw: /kabum|fast ?shop|apple store|samsung|pichau|terabyte|xiaomi|assistencia tecnica|conserto de celular|informatica/ },
+  { id: 'compras', nome: 'Compras (outros)', grupo: 'pessoal', tipo: 'despesa', padrao: true, kw: /amazon(?! prime)|mercado ?livre|mercadolivre|magalu|magazine|shopee|aliexpress|americanas|casas bahia|temu|loja/ },
+  // ----- serviços e assinaturas
+  { id: 'streaming', nome: 'Streaming', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'assinaturas', kw: /netflix|spotify|amazon prime|prime video|disney|hbo|globoplay|youtube premium|deezer|paramount|crunchyroll|apple tv|apple music|max\.com/ },
+  { id: 'apps', nome: 'Aluguel de software e apps', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'assinaturas', kw: /apple\.com|icloud|google (one|storage|play|workspace)|microsoft|office 365|dropbox|chatgpt|openai|anthropic|claude\.ai|canva|adobe|software/ },
+  { id: 'cartorio', nome: 'Cartório e correios', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /cartorio|correios|registro de imoveis|tabelionato|reconhecimento de firma/ },
+  { id: 'contador', nome: 'Consultoria contábil', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /contabil|contador|contabilidade/ },
+  { id: 'advogado', nome: 'Consultoria jurídica', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /advoca|juridic|advogado/ },
+  { id: 'associacoes', nome: 'Associações e sindicatos', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /associacao|sindicato|contribuicao sindical|conselho regional|\bcrea\b|\boab\b|\bcrm\b|\bcrc\b/ },
+  { id: 'assinaturas', nome: 'Assinaturas (outras)', grupo: 'servicos', tipo: 'despesa', padrao: true, kw: /assinatura|mensalidade app/ },
+  { id: 'servicos-outros', nome: 'Outras prestações de serviços', grupo: 'servicos', tipo: 'despesa', padrao: true, pai: 'outros' },
+  // ----- empregados domésticos
+  { id: 'folha-domestica', nome: 'Salário de empregada / diarista', grupo: 'domesticos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /diarista|empregada|\bbaba\b|cuidadora|faxina|domestica/ },
+  { id: 'dae', nome: 'DAE eSocial (INSS e FGTS)', grupo: 'domesticos', tipo: 'despesa', padrao: true, pai: 'impostos', kw: /\bdae\b|esocial|e-social|fgts|inss domestic/ },
+  { id: 'dom-13-ferias', nome: '13º, férias e rescisão', grupo: 'domesticos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /rescisao|13o salario da|ferias da/ },
+  { id: 'dom-beneficios', nome: 'Vale-transporte e benefícios', grupo: 'domesticos', tipo: 'despesa', padrao: true, pai: 'outros', kw: /vale ?transporte|vale ?alimentacao|ajuda de custo/ },
+  // ----- impostos e taxas
+  { id: 'darf', nome: 'DARF / Imposto de renda', grupo: 'impostos', tipo: 'despesa', padrao: true, pai: 'impostos', kw: /darf|imposto de renda|irpf|receita federal|carne-?leao/ },
+  { id: 'iof', nome: 'IOF', grupo: 'impostos', tipo: 'despesa', padrao: true, pai: 'impostos', kw: /\biof\b/ },
+  { id: 'parc-impostos', nome: 'Parcelamento de impostos', grupo: 'impostos', tipo: 'despesa', padrao: true, pai: 'impostos', kw: /parcelamento de (imposto|debito|tributo)|regularize|pgfn/ },
+  { id: 'documentos', nome: 'Alvarás, licenças, laudos e documentos', grupo: 'impostos', tipo: 'despesa', padrao: true, pai: 'impostos', kw: /alvara|licenca|laudo|passaporte|\brg\b|segunda via|taxa de emissao/ },
+  { id: 'impostos', nome: 'Tributos diversos', grupo: 'impostos', tipo: 'despesa', padrao: true, kw: /imposto|tributo|\bgps\b|inss|\bdas\b|taxa municipal/ },
+  // ----- financeiro e seguros
+  { id: 'tarifas', nome: 'Taxas e tarifas bancárias', grupo: 'financeiro', tipo: 'despesa', padrao: true, pai: 'outros', kw: /tarifa|anuidade|cesta de servicos|pacote de servicos|manutencao de conta/ },
+  { id: 'juros', nome: 'Juros e multas', grupo: 'financeiro', tipo: 'despesa', padrao: true, pai: 'outros', kw: /juros|multa|encargo|\bmora\b|rotativo/ },
+  { id: 'emprestimos', nome: 'Amortização de empréstimos e financiamentos', grupo: 'financeiro', tipo: 'despesa', padrao: true, pai: 'outros', kw: /emprestimo|financiamento|consignado|parcela credito|credito pessoal|amortiza/ },
+  { id: 'seguros', nome: 'Seguros (carro, casa)', grupo: 'financeiro', tipo: 'despesa', padrao: true, pai: 'outros', kw: /seguro(?! de vida)|seguradora|porto seguro|tokio marine|allianz|mapfre|azul seguros|bradesco seguros|hdi|liberty/ },
   { id: 'doacoes', nome: 'Doações', grupo: 'financeiro', tipo: 'despesa', pai: 'outros', kw: /doacao|dizimo|oferta|vakinha/ },
-  { id: 'outros', nome: 'Outros gastos', grupo: 'outros', tipo: 'despesa', padrao: true },
+  // ----- investimentos e patrimônio
+  { id: 'invest-auto', nome: 'Investimento automático / aplicação', grupo: 'patrimonio', tipo: 'despesa', padrao: true, kw: /aplicacao|investimento|\bcdb\b|\brdb\b|tesouro direto|corretora|caixinha|cofrinho|poupanca|previdencia privada/ },
+  { id: 'bens', nome: 'Aquisição de bens (carro, imóvel, móveis)', grupo: 'patrimonio', tipo: 'despesa', padrao: true, kw: /concessionaria|compra de veiculo|moveis planejados|entrada do apartamento|entrada do imovel/ },
+  // ----- transferências (fora dos totais)
+  { id: 'fatura-cartao', nome: 'Pagamento da fatura do cartão', grupo: 'transferencias', tipo: 'despesa', padrao: true, kw: /pagamento (de |da )?fatura|pgto fatura|fatura (do )?cartao/ },
+  { id: 'transf-contas', nome: 'Transferência entre contas', grupo: 'transferencias', tipo: 'despesa', padrao: true, kw: /transferencia entre contas|mesma titularidade|transf(erencia)? propria/ },
+  { id: 'transf-identificar', nome: 'Transferência a identificar', grupo: 'transferencias', tipo: 'despesa', padrao: true },
+  // ----- outros
+  { id: 'outros', nome: 'Outras despesas', grupo: 'outros', tipo: 'despesa', padrao: true },
 ];
+
+/** Grupo de cada conta do plano. */
+export const GRUPO_PADRAO = Object.fromEntries(CONTAS.map((c) => [c.id, c.grupo]));
 
 export const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 export const chaveDescricao = (s) => semAcento(s).replace(/\d+/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
