@@ -15,7 +15,7 @@ export default async function (el) {
   const qual = h('span.small.dim');
   const pintarQual = () => { qual.textContent = `Agora: ${plataforma() === 'pc' ? 'computador (menu lateral, duas colunas, atalhos de teclado)' : 'celular (abas embaixo, uma coluna, botões grandes)'}.`; };
   pintarQual();
-  el.append(top('Ajustes', '#/progresso'),
+  el.append(top('Ajustes'),
     h('section.card.dest.col', h('h3', 'Celular e PC'),
       h('p.small.dim', ns.ligado ? `Sincronização ligada${ns.erro ? `, com problema: ${ns.erro}` : '.'}` : 'O progresso é salvo sozinho, mas só neste aparelho. Para continuar do mesmo ponto no outro, ligue a sincronização.'),
       h('a.btn.primary.block', { href: '#/mais/sync' }, ns.ligado ? 'Ver a sincronização' : 'Ligar a sincronização'),

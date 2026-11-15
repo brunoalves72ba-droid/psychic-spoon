@@ -24,6 +24,8 @@ const VIEWS = new Set([
   'foco',
 ]);
 const ABA = { hoje: 'hoje', foco: 'hoje', trilha: 'trilha', licao: 'trilha', labs: 'trilha', revisar: 'revisar', projeto: 'projeto', progresso: 'progresso', mais: 'progresso' };
+// telas de configuração ficam na aba Ajustes
+const ABA_AJUSTES = new Set(['mais-ajustes', 'mais-sync', 'mais-instalar', 'mais-backup']);
 const IMERSIVO = new Set(['licao', 'revisar-cartoes', 'revisar-mistura', 'foco']);
 
 const view = document.getElementById('view');
@@ -48,7 +50,7 @@ async function render() {
   const r = parse();
   leave();
   document.body.classList.toggle('imersivo', IMERSIVO.has(r.name));
-  document.querySelectorAll('.tabs a').forEach((a) => { if (a.dataset.tab === ABA[r.sec]) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('.tabs a').forEach((a) => { if (a.dataset.tab === (ABA_AJUSTES.has(r.name) ? 'ajustes' : ABA[r.sec])) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   let mod;
   try { mod = await import(`./views/${r.name}.js`); }
   catch (e) {
