@@ -1,5 +1,5 @@
 // Resumo do mês: quanto entrou, quanto saiu, para onde foi e como está o ritmo.
-import { dados, nomeCategoria, categoria as catPorId } from '../core/store.js';
+import { dados, nomeCategoria, categoria as catPorId, pendentesAtivos } from '../core/store.js';
 import { GRUPOS, grupoDaCategoria, sugestoesPlano } from '../core/plano.js';
 import { doMes, resumo, porCategoria, historico, previsao, orcamentos } from '../core/calc.js';
 import { reais, reaisCurto } from '../core/dinheiro.js';
@@ -73,6 +73,7 @@ export function render(main, { m }) {
 
     ${dicas.length ? `<section class="cartao dicas" aria-label="Como está o mês">${dicas.map(([ic, t]) => `<div class="dica">${icone(ic)}<div>${t}</div></div>`).join('')}</section>` : ''}
 
+    ${pendentesAtivos().length ? `<a class="cartao aviso-plano aviso-caixa" href="#/caixa"><b>${pendentesAtivos().length} lançamento${pendentesAtivos().length > 1 ? 's' : ''} a confirmar</b><span class="sub">Lidos das notificações do banco. Toque para conferir.</span></a>` : ''}
     ${sug.total ? `<a class="cartao aviso-plano" href="#/plano"><b>${sug.total} sugest${sug.total > 1 ? 'ões' : 'ão'} para o seu plano de contas</b><span class="sub">Contas novas, gastos para classificar e contas fixas que o app encontrou.</span></a>` : ''}
 
     <section class="cartao">

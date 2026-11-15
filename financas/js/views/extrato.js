@@ -5,7 +5,7 @@ import { reais } from '../core/dinheiro.js';
 import { mesAtual, nomeDia } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
 import { GRUPOS, grupoDaCategoria } from '../core/plano.js';
-import { categoria as catPorId } from '../core/store.js';
+import { categoria as catPorId, nomeCartao } from '../core/store.js';
 
 export const titulo = 'Extrato';
 
@@ -59,7 +59,7 @@ export function render(main, { m, cat = '', tipo = '' }) {
         <span class="ic ${l.tipo}" aria-hidden="true">${esc(nomeCategoria(l.categoria).slice(0, 1))}</span>
         <span class="txt">
           <span class="linha1"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}</span><span class="val ${l.tipo}">${l.tipo === 'receita' ? '+ ' : '− '}${reais(l.valor)}</span></span>
-          <span class="t2">${esc(nomeCategoria(l.categoria))}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}</span>
+          <span class="t2">${esc(nomeCategoria(l.categoria))}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.cartao ? ` · ${esc(nomeCartao(l.cartao))}` : ''}${l.origem === 'notificacao' ? ' <span class="etq">notificação</span>' : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}</span>
         </span>
       </a></li>`).join('')}</ul>`).join('');
   };

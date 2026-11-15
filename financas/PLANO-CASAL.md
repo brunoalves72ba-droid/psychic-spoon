@@ -27,11 +27,11 @@ Plano combinado com Bruno e Rita (os dois usam Android, bancos tradicionais e di
 ### Etapa 4 — Avaliação conjunta
 - Fechamento do mês da casa: comparação, metas, maiores gastos, gastos por cartão, faturas a vencer e acerto (“Marcar como acertado”).
 
-## Decisões pendentes (recomendação entre parênteses)
-1. Sincronização: Gist cifrado (recomendado) ou Firebase.
-2. Divisão da casa: 50/50 (recomendado para começar), proporcional à renda ou outro percentual.
-3. Privacidade dos individuais: transparência total, só totais (recomendado) ou privado.
-4. Compras parceladas: cada parcela no seu mês (recomendado) ou total no mês da compra.
+## Decisões (aprovadas)
+1. Sincronização: **Gist do GitHub**, com os dados cifrados.
+2. Divisão da casa: **proporcional à renda, definida manualmente** — o app calcula e sugere o percentual de cada um pela renda do mês, mas o percentual usado é o que vocês definirem à mão.
+3. Privacidade dos individuais: **só totais** (o outro vê o total de gastos pessoais, sem detalhes); cada um pode mudar para si.
+4. Compras parceladas: **cada parcela no seu mês**.
 
 ## Ideias para depois
 

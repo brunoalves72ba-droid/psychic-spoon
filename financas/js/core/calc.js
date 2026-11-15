@@ -29,6 +29,9 @@ export const estadoVazio = () => ({
   orcamentos: {},
   regras: {}, // descrição do banco → categoria escolhida por você
   dispensadas: [], // sugestões do plano de contas que você recusou
+  pendentes: [], // caixa "A confirmar": notificações lidas aguardando confirmação
+  cartoes: {}, // final do cartão → { apelido, banco }
+  notifVistas: [], // últimas notificações recebidas, para não duplicar
 });
 
 export const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -41,6 +44,9 @@ export function normalizar(bruto) {
   e.categorias = e.categorias.map((c) => ({ ...c, grupo: grupoDaCategoria(c) }));
   e.lancamentos = bruto.lancamentos.filter((l) => l && l.id && Number.isInteger(l.valor) && l.valor > 0 && /^\d{4}-\d{2}-\d{2}$/.test(l.data) && (l.tipo === 'despesa' || l.tipo === 'receita'));
   e.recorrentes = (bruto.recorrentes || []).filter((r) => r && r.id && Number.isInteger(r.valor) && /^\d{4}-\d{2}$/.test(r.inicio)).map((r) => ({ gerados: [], fim: null, ...r }));
+  e.pendentes = Array.isArray(bruto.pendentes) ? bruto.pendentes.filter((p) => p && p.id && p.lido) : [];
+  e.cartoes = bruto.cartoes && typeof bruto.cartoes === 'object' ? { ...bruto.cartoes } : {};
+  e.notifVistas = Array.isArray(bruto.notifVistas) ? bruto.notifVistas.slice(-300) : [];
   e.dispensadas = Array.isArray(bruto.dispensadas) ? bruto.dispensadas.filter((x) => typeof x === 'string') : [];
   e.regras = bruto.regras && typeof bruto.regras === 'object' ? { ...bruto.regras } : {};
   e.orcamentos = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? { ...bruto.orcamentos } : {};

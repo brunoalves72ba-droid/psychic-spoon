@@ -1,6 +1,7 @@
 // Armazenamento local: tudo fica no aparelho (localStorage). Sem conta, sem servidor.
 import { estadoVazio, normalizar, gerarRecorrentes, novoId } from './calc.js';
-import { CONTAS, chaveDescricao } from './plano.js';
+import { CONTAS, chaveDescricao, reconhecer } from './plano.js';
+import { lerNotificacao, chaveNotificacao, dividirParcelas } from './notificacoes.js';
 import { mesAtual } from './datas.js';
 
 const CHAVE = 'fin-dados';
@@ -177,6 +178,82 @@ export function dispensarSugestao(chave) {
   if (!e.dispensadas.includes(chave)) e.dispensadas.push(chave);
   salvar();
 }
+
+// ---------- caixa "A confirmar" (notificações) ----------
+/**
+ * Recebe o texto de uma notificação (MacroDroid ou Compartilhar) e põe na caixa "A confirmar".
+ * Devolve { status: 'novo' | 'repetido' | 'sem-valor', pendente? }.
+ */
+export function receberNotificacao(texto, { app = '', titulo = '', agora = Date.now() } = {}) {
+  const e = dados();
+  const lido = lerNotificacao(texto, { app, titulo });
+  if (!lido) return { status: 'sem-valor' };
+  const k = chaveNotificacao([titulo, texto].join(' '));
+  // o mesmo texto em menos de 10 minutos é a mesma notificação disparada de novo
+  if (e.notifVistas.some((x) => x.k === k && agora - x.t < 10 * 60 * 1000)) return { status: 'repetido' };
+  e.notifVistas.push({ k, t: agora });
+  e.notifVistas = e.notifVistas.slice(-300);
+  const r = reconhecer(lido.descricao, lido.tipo, e);
+  if (lido.cartao && !e.cartoes[lido.cartao]) e.cartoes[lido.cartao] = { apelido: '', banco: lido.banco };
+  const pendente = { id: novoId(), recebidoEm: new Date(agora).toISOString(), texto: String(texto).slice(0, 500), titulo: String(titulo).slice(0, 120), app: String(app).slice(0, 60), lido, categoria: r.categoria, reconhecido: r };
+  e.pendentes.push(pendente);
+  // ignoradas (recusada, estorno…) ficam guardadas por 30 dias, para conferência
+  const limite = new Date(agora - 30 * 864e5).toISOString();
+  e.pendentes = e.pendentes.filter((p) => !p.lido.ignorar || p.recebidoEm >= limite);
+  salvar();
+  return { status: 'novo', pendente };
+}
+
+export const pendentesAtivos = () => dados().pendentes.filter((p) => !p.lido.ignorar);
+
+/** Confirma um item da caixa: vira lançamento (ou um por parcela, mês a mês). */
+export function confirmarPendente(id, ajustes = {}) {
+  const e = dados();
+  const p = e.pendentes.find((x) => x.id === id);
+  if (!p) return [];
+  const l = { ...p.lido, categoria: p.categoria, ...ajustes };
+  const partes = dividirParcelas(l);
+  const grupo = partes.length > 1 ? novoId() : null;
+  const ids = [];
+  for (const parte of partes) {
+    const id2 = novoId();
+    e.lancamentos.push({
+      id: id2, tipo: l.tipo, valor: parte.valor, data: parte.data, categoria: l.categoria, descricao: parte.descricao,
+      pagamento: l.tipo === 'despesa' ? l.pagamento || '' : '', origem: 'notificacao',
+      ...(l.cartao && { cartao: l.cartao }), ...(grupo && { parcelamento: grupo, parcela: parte.parcela }),
+    });
+    ids.push(id2);
+  }
+  if (ajustes.categoria && ajustes.categoria !== p.reconhecido?.categoria && l.descricao) {
+    e.regras[l.tipo + ':' + chaveDescricao(l.descricao)] = ajustes.categoria; // aprende com a correção
+  }
+  e.pendentes = e.pendentes.filter((x) => x.id !== id);
+  salvar();
+  return ids;
+}
+
+export function descartarPendente(id) {
+  const e = dados();
+  e.pendentes = e.pendentes.filter((x) => x.id !== id);
+  salvar();
+}
+
+/** Volta um item ignorado (ex.: "estorno" lido errado) para a caixa como compra normal. */
+export function reconsiderarPendente(id) {
+  const p = dados().pendentes.find((x) => x.id === id);
+  if (p) { p.lido = { ...p.lido, ignorar: '' }; salvar(); }
+}
+
+export function apelidarCartao(final, apelido) {
+  const e = dados();
+  e.cartoes[final] = { ...(e.cartoes[final] || {}), apelido: String(apelido || '').trim().slice(0, 30) };
+  salvar();
+}
+export const nomeCartao = (final) => {
+  if (!final) return '';
+  const c = dados().cartoes[final] || {};
+  return c.apelido || `${c.banco ? c.banco + ' ' : ''}•${final}`;
+};
 
 export const exportar = () => JSON.stringify({ app: 'financas', exportadoEm: new Date().toISOString(), ...dados() }, null, 1);
 

@@ -5,6 +5,7 @@ import { reconhecer, interpretarFrase, chaveDescricao, CONTAS, nomeGrupo, grupoD
 import { reais, digitosParaCentavos } from '../core/dinheiro.js';
 import { hoje, mesDe, somarMeses, nomeDia } from '../core/datas.js';
 import { esc, aviso, confirmar } from '../core/ui.js';
+import { pendentesAtivos, nomeCartao } from '../core/store.js';
 import { opcoesAgrupadas } from './plano.js';
 
 export const titulo = 'Lançar';
@@ -21,7 +22,9 @@ export function render(main, params) {
   let catEscolhida = !!existente; // depois que você escolhe a conta, o reconhecimento não troca mais
   const catOriginal = existente?.categoria;
 
+  const nPend = existente ? 0 : pendentesAtivos().length;
   main.innerHTML = `<h1>${existente ? 'Editar lançamento' : 'Novo lançamento'}</h1>
+    ${nPend ? `<a class="cartao aviso-plano aviso-caixa" href="#/caixa"><b>${nPend} a confirmar</b><span class="sub">Lidos das notificações do banco.</span></a>` : ''}
     ${existente ? '' : `<section class="cartao rapido">
       <label class="campo" style="margin:0"><span>Lançamento rápido</span>
         <input id="frase" type="text" autocomplete="off" enterkeyhint="done" placeholder="Ex.: uber 23,50 ontem no pix">
@@ -49,6 +52,7 @@ export function render(main, params) {
         <label class="campo" style="background:none;padding:0"><span>Como pagou</span>
           <select id="pagamento">${PAGAMENTOS.map((p) => `<option>${p}</option>`).join('')}</select></label>
       </div>
+      ${existente?.cartao ? `<p class="sub">Cartão: <b>${esc(nomeCartao(existente.cartao))}</b>${existente.origem === 'notificacao' ? ' · lido da notificação do banco' : ''}</p>` : ''}
       ${existente ? (rec ? `<p class="sub">Esta é uma conta fixa, lançada todo dia ${rec.dia}${rec.fim ? ` até ${rec.fim.split('-').reverse().join('/')}` : ''}. Mudanças aqui valem só para este mês.</p>` : '')
         : `<label class="marcar"><input type="checkbox" id="repetir"><span><b>Repetir todo mês</b><small>Para salário, aluguel, internet, assinaturas…</small></span></label>`}
       ${existente && existente.descricao ? `<label class="marcar"><input type="checkbox" id="ensinar"><span><b>Usar esta conta sempre</b><small>Lançamentos e importações com esta descrição vão para a conta escolhida.</small></span></label>` : ''}
@@ -138,7 +142,8 @@ export function render(main, params) {
   $('#pagamento').value = PAGAMENTOS.includes(f.pagamento) ? f.pagamento : 'Pix';
   pintarValor(); pintarTipo();
   requestAnimationFrame(ajustarAltura);
-  if (!existente) setTimeout(() => $('#frase').focus(), 50);
+  // cursor no lançamento rápido, mas sem roubar o foco de quem já começou a digitar noutro campo
+  if (!existente) setTimeout(() => { const a = document.activeElement; if (!a || a === document.body || a === main) $('#frase')?.focus(); }, 50);
 
   main.querySelector('form').addEventListener('submit', (ev) => {
     ev.preventDefault();
