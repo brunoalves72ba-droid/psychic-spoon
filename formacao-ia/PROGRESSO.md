@@ -27,7 +27,7 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - [x] 14 laboratórios e Python no navegador.
 - [x] Camadas de apoio: check-in de energia, modo foco, captura de pensamento, revisão semanal, desafio surpresa, conquistas por habilidade, cronograma recalculável, ficha viva, lembretes .ics, “por que o app é assim”.
 - [x] Kits de código: mini-RAG (M3), fábrica de flashcards (M5), agente com Streamlit (M6).
-- [x] Testes: 141 unitários; 60 cenários ponta a ponta em tema claro e escuro; teste offline e de convivência com o Sexteto.
+- [x] Testes: 156 unitários; 60 cenários ponta a ponta em tema claro e escuro; teste offline e de convivência com o Sexteto.
 
 ## Sincronização, PC e navegação (novembro de 2026)
 
@@ -42,6 +42,14 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 
 - O manifesto do Sexteto passou a ter `"scope": "./index.html"`: antes, a área dele (`/psychic-spoon/`) incluía `/formacao-ia/`, e o Android abria este app dentro do Sexteto instalado. O `id` do Sexteto não mudou (o app instalado continua o mesmo); a mudança chega aos celulares quando o Chrome atualiza o Sexteto instalado, o que pode levar um ou dois dias.
 - `id` próprio no manifesto deste app, ícone novo (“IA” com faísca) e tela `#/mais/instalar`: botão de instalar (quando o navegador oferece), passo a passo para Android e iPhone, conferência de que os arquivos do app estão guardados e pedido de armazenamento permanente.
+
+## Leitura em voz alta
+
+- `js/core/voz.js`: usa as vozes do próprio aparelho (Web Speech API). Grátis, sem servidor e, com uma voz instalada no aparelho, sem internet. Lê frase por frase (frases longas travam no Chrome); a pausa guarda a frase e recomeça dela, porque `pause()` falha no Android. Para ao trocar de tela ou sair do app.
+- Lê o que está na tela, na ordem da tela (`textoDe`): o quiz embaralha as opções, e a explicação só é lida depois da resposta. Pula código (avisa “o código está na tela”), botões, campos, fotos e etiquetas.
+- `js/core/voz-texto.js`: limpeza do texto e dicionário de pronúncia dos termos em inglês (prompt, token, JSON, API, RAG, LangChain…). Para corrigir uma pronúncia, edite a lista `PRONUNCIA`.
+- Preferências (ligada, ler sozinho, voz, velocidade) em `L.voz`: ficam só no aparelho, porque cada aparelho tem vozes diferentes.
+- `tests/e2e/voz.mjs` usa uma voz falsa que anota o que seria falado. **A qualidade da voz de verdade não foi testada** (depende do aparelho).
 
 ## Pendências e limites conhecidos
 

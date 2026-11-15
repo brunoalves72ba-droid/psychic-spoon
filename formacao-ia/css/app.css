@@ -422,3 +422,11 @@ body.pc .ilhas-grade .ilha{background:var(--bg2);border:1px solid var(--line);bo
 .ptop .segs.passos{order:3;flex:1 0 100%}
 .ptop:has(.segs.passos)::after{content:"";order:2;flex:1}
 .segs.passos .pp i{flex:none}
+
+/* leitura em voz alta */
+.voz-linha{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-2px 0 4px}
+.voz-linha .btn{min-height:44px;padding:4px 14px;font-size:.9rem;gap:6px}
+.voz-linha .btn .ic{width:18px;height:18px}
+.voz-linha .btn.mudo{padding:4px 10px}
+.voz-linha .ouvir[aria-pressed=true]{background:var(--acao);border-color:var(--acao);color:var(--acao-ink)}
+.cartao .voz-linha{margin-bottom:8px}
