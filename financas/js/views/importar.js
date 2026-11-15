@@ -1,6 +1,6 @@
-// Importar extrato do banco ou fatura do cartão (OFX ou CSV), com prévia antes de gravar.
+// Importar extrato do banco ou fatura do cartão (OFX, CSV ou PDF), com prévia antes de gravar.
 import { dados, importarItens, apagarLancamentos } from '../core/store.js';
-import { decodificar, lerExtrato, prepararImportacao, chaveDescricao } from '../core/importar.js';
+import { decodificar, lerExtrato, lerPDF, prepararImportacao, chaveDescricao, sugerirCategoria, idImportacao } from '../core/importar.js';
 import { reais } from '../core/dinheiro.js';
 import { esc, aviso, navegar } from '../core/ui.js';
 import { opcoesAgrupadas } from './plano.js';
@@ -15,16 +15,18 @@ const BANCOS = [
   ['Caixa', 'Internet banking: Extrato › período › “Exportar” (OFX).'],
   ['Santander', 'Internet banking: Conta corrente › Extrato › período › “Exportar” OFX ou Excel (salve como CSV).'],
   ['Inter', 'App: Extrato › ícone de download › escolha o período e o formato OFX ou CSV.'],
-  ['C6, PicPay, Mercado Pago e outros', 'Procure por “Extrato” › “Exportar” ou “Baixar”. Se só houver PDF, peça o extrato em OFX ou CSV pelo atendimento ou use o internet banking pelo computador.'],
+  ['C6, PicPay, Mercado Pago e outros', 'Procure por “Extrato” › “Exportar” ou “Baixar”. Se só houver PDF, pode usar o PDF mesmo.'],
+  ['Só tenho o PDF', 'Funciona com o PDF que o app ou o site do banco gera (extrato da conta ou fatura do cartão). Se ele tiver senha, o app pede. Foto ou PDF escaneado não dá: não há texto para ler. Como cada banco monta o PDF de um jeito, confira datas, valores e se é entrada ou saída antes de importar; OFX e CSV são mais exatos.'],
 ];
 
 export function render(main) {
   main.innerHTML = `<h1>Importar extrato</h1>
     <section class="cartao">
-      <p>Traga os lançamentos do banco ou do cartão sem digitar nada. Baixe o extrato no app ou site do seu banco em <b>OFX</b> ou <b>CSV</b> e escolha o arquivo aqui.</p>
+      <p>Traga os lançamentos do banco ou do cartão sem digitar nada. Baixe o extrato no app ou site do seu banco em <b>OFX</b>, <b>CSV</b> ou <b>PDF</b> e escolha o arquivo aqui.</p>
       <p class="sub">O arquivo é lido só neste aparelho; nada é enviado para lugar nenhum. Antes de gravar você vê tudo, ajusta as categorias e desmarca o que não quiser.</p>
       <label class="btn primario cheio" style="cursor:pointer">Escolher arquivo
-        <input type="file" id="arq" accept=".ofx,.qfx,.csv,.txt,text/csv,application/x-ofx" class="oculto"></label>
+        <input type="file" id="arq" accept=".ofx,.qfx,.csv,.txt,.pdf,text/csv,application/x-ofx,application/pdf" class="oculto"></label>
+      <div id="pdf-estado" aria-live="polite"></div>
     </section>
     <section class="cartao">
       <h2>Como baixar o extrato</h2>
@@ -36,7 +38,10 @@ export function render(main) {
     const arq = ev.target.files[0];
     if (!arq) return;
     try {
-      const texto = decodificar(await arq.arrayBuffer());
+      const bytes = await arq.arrayBuffer();
+      const { ehPDF } = await import('../core/pdf.js');
+      if (ehPDF(bytes, arq.name)) { await abrirPDF(main, bytes, arq.name); ev.target.value = ''; return; }
+      const texto = decodificar(bytes);
       const lido = lerExtrato(texto, arq.name);
       previa(main, lido, arq.name);
     } catch (err) {
@@ -44,6 +49,30 @@ export function render(main) {
       ev.target.value = '';
     }
   });
+}
+
+/** Lê o PDF no aparelho; se tiver senha, pede e tenta de novo. */
+async function abrirPDF(main, bytes, nome, senha) {
+  const estado = main.querySelector('#pdf-estado');
+  estado.innerHTML = '<p class="sub" style="margin-top:10px">Lendo o PDF…</p>';
+  try {
+    const { linhasDoPDF } = await import('../core/pdf.js');
+    const lido = lerPDF(await linhasDoPDF(bytes, senha));
+    previa(main, { formato: 'PDF', ...lido }, nome);
+  } catch (err) {
+    if (err && err.name === 'SenhaPDF') {
+      estado.innerHTML = `<form id="form-senha" class="senha-pdf" style="margin-top:12px">
+        <label for="senha-pdf"><b>${esc(nome)}</b> tem senha.${err.errada ? ' <span class="erro">Senha incorreta.</span>' : ''}</label>
+        <p class="sub">A senha costuma vir no e-mail ou no app do banco (muitas vezes, os primeiros dígitos do CPF). Ela é usada só para abrir o arquivo e não fica guardada.</p>
+        <div class="btn-linha"><input id="senha-pdf" type="password" autocomplete="off" inputmode="text" required style="flex:1;min-width:0">
+        <button class="btn primario" type="submit">Abrir</button></div></form>`;
+      const campo = estado.querySelector('#senha-pdf'); campo.focus();
+      estado.querySelector('#form-senha').onsubmit = (e) => { e.preventDefault(); abrirPDF(main, bytes, nome, campo.value); };
+      return;
+    }
+    estado.innerHTML = '';
+    aviso(err.message || 'Não consegui ler esse PDF.', null, 9000);
+  }
 }
 
 function formaDePagamento(item, cartao) {
@@ -57,7 +86,7 @@ function formaDePagamento(item, cartao) {
   return 'Débito';
 }
 
-function previa(main, { formato, itens: brutos, cartao }, nome) {
+function previa(main, { formato, itens: brutos, cartao, duvidas = 0 }, nome) {
   const e = dados();
   const itens = prepararImportacao(brutos, e).sort((a, b) => b.data.localeCompare(a.data));
   const datas = itens.map((i) => i.data).sort();
@@ -87,6 +116,7 @@ function previa(main, { formato, itens: brutos, cartao }, nome) {
     ja && `<p><b>${ja}</b> já tinha${ja > 1 ? 'm' : ''} sido importado${ja > 1 ? 's' : ''} antes e não ${ja > 1 ? 'vão' : 'vai'} se repetir.</p>`,
     man && `<p><b>${man}</b> parece${man > 1 ? 'm' : ''} com lançamento${man > 1 ? 's' : ''} que você já anotou à mão; ficaram desmarcados.</p>`,
     tr && `<p><b>${tr}</b> parece${tr > 1 ? 'm' : ''} pagamento de fatura, estorno, aplicação ou transferência entre suas contas (confira antes de marcar); ficaram desmarcados.</p>`,
+    formato === 'PDF' && `<p class="aviso-pdf"><b>Lido de um PDF.</b> Cada banco monta o PDF de um jeito: confira datas, valores e se é entrada ou saída. ${duvidas ? `<b>${duvidas}</b> ${duvidas > 1 ? 'vieram' : 'veio'} sem indicação clara de entrada ou saída (marcados com “confira”). ` : ''}Para trocar o lado de um lançamento, toque em “trocar entrada/saída”.</p>`,
   ].filter(Boolean).join('');
 
   const opcoes = (tipo, sel) => opcoesAgrupadas(e, tipo, sel);
@@ -107,7 +137,7 @@ function previa(main, { formato, itens: brutos, cartao }, nome) {
       <label class="imp-sel"><input type="checkbox" data-i="${i}" ${it.marcado ? 'checked' : ''} ${it.jaImportado ? 'disabled' : ''} aria-label="Importar ${esc(it.descricao)} de ${reais(it.valor)}"></label>
       <div class="imp-txt">
         <div class="imp-l1"><span class="t1">${esc(it.descricao || '(sem descrição)')}</span><span class="val ${it.tipo}">${it.tipo === 'receita' ? '+ ' : '− '}${reais(it.valor)}</span></div>
-        <div class="t2">${br(it.data)}${motivo(it) ? ` · <span class="etq">${motivo(it)}</span>` : ''}</div>
+        <div class="t2">${br(it.data)}${motivo(it) ? ` · <span class="etq">${motivo(it)}</span>` : ''}${it.duvida ? ' · <span class="etq confira">confira: entrada ou saída?</span>' : ''}${formato === 'PDF' && !it.jaImportado ? ` · <button type="button" class="link-btn" data-inv="${i}">trocar entrada/saída</button>` : ''}</div>
         <label class="imp-conta"><span>Conta <small class="muted">${esc(porque(it))}</small></span>
           <select data-cat="${i}" aria-label="Conta de ${esc(it.descricao)}" ${it.jaImportado ? 'disabled' : ''}>${opcoes(it.tipo, it.categoria)}</select></label>
       </div></li>`).join('') : '<li class="vazio">Nada aqui.</li>';
@@ -131,6 +161,18 @@ function previa(main, { formato, itens: brutos, cartao }, nome) {
       if (n) aviso(`Mudei também ${n} outro${n > 1 ? 's' : ''} com a mesma descrição.`);
       pintar();
     }
+  });
+  // PDF: trocar entrada ⇄ saída de um lançamento (o sinal nem sempre vem claro no PDF)
+  $('#itens').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-inv]');
+    if (!b) return;
+    const it = itens[+b.dataset.inv];
+    it.tipo = it.tipo === 'despesa' ? 'receita' : 'despesa';
+    const comSinal = it.tipo === 'despesa' ? -it.valor : it.valor;
+    it.importId = idImportacao({ data: it.data, valor: comSinal, descricao: it.descricao, idBanco: it.idBanco });
+    it.categoria = sugerirCategoria({ descricao: it.descricao, valor: comSinal }, e);
+    delete it.duvida; delete it.chave;
+    pintar();
   });
   $('#cancelar').onclick = () => render(main);
   main.querySelectorAll('[data-f]').forEach((b) => (b.onclick = () => { filtro = b.dataset.f; pintar(); }));

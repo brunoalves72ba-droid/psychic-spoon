@@ -13,7 +13,7 @@ App web instalável (PWA) para controlar o dinheiro do dia a dia: anote o que en
 |---|---|
 | **Minhas** | As contas de quem usa este celular (Conta Bruno ou Conta Rita), privadas e compartilhadas. Quanto entrou, saiu e sobrou no mês; gasto médio por dia e previsão para o fim do mês; comparação com o mês anterior; gastos por categoria (toque para ver no extrato); gráfico dos últimos 6 meses (com tabela). |
 | **Casal** | Só o que cada um compartilhou, igual nos dois celulares: total, quem pagou, para onde foi, divisão proporcional à renda (definida à mão), acerto do mês com “Marcar como acertado”, metas do casal e o total (sem detalhes) dos gastos pessoais de cada um. |
-| **Importar** | Lê o extrato da conta ou a fatura do cartão em **OFX ou CSV** (Nubank, Itaú, Bradesco, BB, Caixa, Santander, Inter…). Mostra uma prévia: sugere a categoria (iFood → Restaurante, Uber → Transporte… e aprende com as suas escolhas), não duplica o que já foi importado, reconhece o que você já anotou à mão e deixa de fora pagamento de fatura, aplicações e transferências entre contas. Dá para desfazer. |
+| **Importar** | Lê o extrato da conta ou a fatura do cartão em **OFX, CSV ou PDF** (Nubank, Itaú, Bradesco, BB, Caixa, Santander, Inter…). PDF com senha: o app pede a senha. PDF escaneado (imagem) não dá para ler. Mostra uma prévia: sugere a categoria (iFood → Restaurante, Uber → Transporte… e aprende com as suas escolhas), não duplica o que já foi importado, reconhece o que você já anotou à mão e deixa de fora pagamento de fatura, aplicações e transferências entre contas. Dá para desfazer. |
 | **Extrato** | Lançamentos agrupados por dia, com busca (sem acento, aceita valor), filtro por categoria e por entrada/saída. Toque num item para editar ou apagar. |
 | **Lançar** | **Lançamento rápido**: escreva “uber 23,50 ontem no pix” e o app preenche valor, conta, data e forma de pagamento. A conta é **reconhecida pela descrição** (o que você ensinou → lançamentos anteriores → palavras conhecidas) e o app mostra por quê. Valor estilo caixa eletrônico (só digitar os números), categoria em um toque, descrição com sugestões, data, forma de pagamento e **repetir todo mês** para contas fixas. Dá para desfazer. |
 | **Metas** | Limite mensal por categoria, com aviso perto do limite (80%) e quando passa; quanto ainda dá para gastar por dia; lista das contas fixas do mês. |
@@ -28,6 +28,18 @@ Em **Mais › Conectar celulares**: no primeiro celular, cole uma chave do GitHu
 
 Adaptado da lista de validação do Bruno (`js/core/plano.js`): grupos de moradia, reforma (hidráulica, elétrica, teto…), empregados domésticos (DAE/eSocial), impostos e taxas, financeiro e seguros, patrimônio e transferências. Pagamento de fatura, transferência entre contas e aplicação/resgate ficam **fora dos totais**, para nada ser contado duas vezes.
 
+### Extratos em PDF
+
+O PDF é lido no próprio aparelho com o **pdf.js** (Mozilla, Apache 2.0, em `js/vendor/pdfjs/`, carregado só quando você escolhe um PDF). Cada banco monta o PDF de um jeito; o leitor (`lerPDF` em `js/core/importar.js`):
+
+- procura, linha a linha, uma data no começo e um valor em reais;
+- usa a posição das colunas **Valor**, **Crédito**, **Débito** e **Saldo** quando o cabeçalho aparece, e ignora o saldo;
+- aceita a data só na primeira linha do dia, cabeçalhos de dia com “Total de entradas/saídas” (Nubank) e descrição em duas linhas;
+- deduz o ano das datas curtas (`15/12`, `15 DEZ`) pela data completa mais recente do documento (fatura que vence em janeiro);
+- ignora valores em dólar e linhas de saldo, total, limite e vencimento.
+
+O que vem sem indicação clara de entrada ou saída aparece marcado com “confira”, e todo lançamento lido de PDF tem o botão **trocar entrada/saída** na prévia. OFX e CSV continuam mais exatos. Os PDFs de exemplo (`tests/exemplos/*.pdf`, fictícios) são gerados por `npm run exemplos-pdf`; `npm run e2e:pdf` importa todos pela tela, inclusive com senha e sem internet. **Testado só com esses exemplos**: os PDFs reais de cada banco podem trazer surpresas.
+
 ### Por que importar arquivo e não Open Finance?
 
 Para a pessoa, o Open Finance é gratuito. Mas um app só acessa o Open Finance sendo instituição autorizada pelo Banco Central ou por meio de um agregador (Pluggy, Belvo…), que cobra de quem desenvolve (na casa de milhares de reais por mês) e exige um servidor guardando a chave de acesso, com os dados bancários passando por terceiros. A importação de OFX/CSV é gratuita, funciona com praticamente todos os bancos e mantém tudo só no aparelho.
@@ -41,6 +53,7 @@ cd financas
 npm start            # http://localhost:8091
 npm test             # testes dos cálculos
 npm run e2e          # percorre o app no Chromium em tela de celular (capturas em tests/e2e/shots/)
+npm run e2e:pdf      # importa os extratos em PDF de exemplo pela tela
 ```
 
 Depois de mudar qualquer arquivo do app, rode `npm run precache` (regera `sw-assets.js` e a linha de versão do `sw.js`; sem isso, quem já instalou não recebe a mudança e o `npm test` falha de propósito).
@@ -62,7 +75,9 @@ index.html, manifest.webmanifest, sw.js, sw-assets.js
 css/app.css
 js/app.js              roteador (#/secao → js/views/secao.js)
 js/core/plano.js       grupos, contas sugeridas, reconhecimento, lançamento rápido e sugestões do plano
-js/core/importar.js    leitura de OFX/CSV, categorias automáticas, deduplicação
+js/core/importar.js    leitura de OFX/CSV/PDF, categorias automáticas, deduplicação
+js/core/pdf.js         texto e posição das linhas do PDF (pdf.js), PDF com senha
+js/vendor/pdfjs/       pdf.js 5.4.624 (Mozilla, Apache 2.0)
 js/core/calc.js        cálculos puros (resumo, categorias, previsão, metas, recorrentes, CSV)
 js/core/store.js       armazenamento local
 js/core/dinheiro.js    valores em centavos e formatação em reais

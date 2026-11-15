@@ -1,0 +1,2 @@
+pdf.js 5.4.624 (build "legacy"), da Mozilla — https://github.com/mozilla/pdf.js
+Licença Apache 2.0 (LICENSE.txt). Arquivos copiados sem alteração do pacote npm pdfjs-dist@5.4.624.

@@ -12,6 +12,8 @@
     "precache": "node tools/gen-precache.mjs",
     "e2e": "node tests/e2e/run.mjs",
     "e2e:atualizacao": "node tests/e2e/atualizacao.mjs",
-    "e2e:casal": "node tests/e2e/casal.mjs"
+    "e2e:casal": "node tests/e2e/casal.mjs",
+    "e2e:pdf": "node tests/e2e/pdf.mjs",
+    "exemplos-pdf": "node tools/gerar-exemplos-pdf.mjs"
   }
 }
