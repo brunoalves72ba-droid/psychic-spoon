@@ -5,6 +5,18 @@ import {
   formatarBytes, escolhaDoArraste,
 } from './core/fila.js';
 
+// Uma versão antiga do service worker do Sexteto (que fica na raiz do site) pode entregar a tela dele
+// no lugar desta. Se acontecer, desliga aquele service worker e recarrega: o Sexteto o instala de novo,
+// já atualizado, na próxima vez que for aberto.
+if (!document.getElementById('inicio')) {
+  const reg = await navigator.serviceWorker?.getRegistration();
+  let tentou = false;
+  try { tentou = sessionStorage.getItem('lf-conserto') === '1'; sessionStorage.setItem('lf-conserto', '1'); } catch {}
+  if (reg && !tentou) { await reg.unregister(); location.reload(); }
+  throw new Error('Limpa Fotos: página errada entregue pelo service worker do site.');
+}
+try { sessionStorage.removeItem('lf-conserto'); } catch {}
+
 const $ = (s) => document.querySelector(s);
 const telas = ['inicio', 'triagem', 'revisao'];
 const mostrar = (id) => { for (const t of telas) $('#' + t).hidden = t !== id; };
@@ -91,7 +103,6 @@ function comecar(fotos) {
   aviso(`${fotos.length} ${fotos.length === 1 ? 'foto' : 'fotos'}. Arraste para escolher.`);
   mostrar('triagem');
   desenhar();
-  $('#carta').focus({ preventScroll: true });
 }
 
 // ---------- Imagens ----------
