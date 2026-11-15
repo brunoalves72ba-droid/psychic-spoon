@@ -10,7 +10,7 @@ export function render(main, params = {}) {
   const temDados = e.lancamentos.some((l) => !l.dono);
   main.innerHTML = `<h1>Este celular é de quem?</h1>
     <p class="sub">O Finanças agora separa as contas de cada um. Tudo o que for lançado ou capturado neste celular fica na conta escolhida, e você decide o que compartilhar com o casal.</p>
-    ${temDados ? `<p class="cartao sub">Os ${e.lancamentos.filter((l) => !l.dono).length} lançamentos que já estão neste celular passam a ser da conta escolhida, como <b>privados</b>. Depois você escolhe quais compartilhar.</p>` : ''}
+    ${temDados ? (() => { const n = e.lancamentos.filter((l) => !l.dono).length; return `<p class="cartao sub">${n === 1 ? 'O lançamento que já está' : `Os ${n} lançamentos que já estão`} neste celular ${n === 1 ? 'passa' : 'passam'} a ser da conta escolhida, como <b>${n === 1 ? 'privado' : 'privados'}</b>. Depois você escolhe o que compartilhar.</p>`; })() : ''}
     <div class="quem">${e.pessoas.map((p) => `<button type="button" class="btn quem-btn" data-p="${esc(p.id)}">
         <span class="avatar" aria-hidden="true">${esc(p.nome.slice(0, 1))}</span>
         <span><b>Conta ${esc(p.nome)}</b>${ocupados.has(p.id) && p.id !== eu() ? '<small>já tem um celular conectado</small>' : ''}</span>

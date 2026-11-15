@@ -26,6 +26,17 @@ function svgQR(texto) {
 export function render(main, params = {}) {
   // convite aberto no outro celular (#/conectar?c=...)
   if (params.c) return renderConvite(main, params.c);
+  pintar(main);
+  // redesenha quando a sincronização muda de estado (um ouvinte só; o roteador o desliga ao sair da tela)
+  let agendado = false;
+  return aoMudar(() => {
+    if (agendado || !location.hash.startsWith('#/conectar')) return;
+    agendado = true;
+    setTimeout(() => { agendado = false; if (location.hash.startsWith('#/conectar')) pintar((main.innerHTML = '', main)); }, 0);
+  });
+}
+
+function pintar(main) {
   const s = status();
   const e = dados();
   const aparelhos = Object.entries(e.aparelhos || {}).sort((a, b) => (b[1].ult || '').localeCompare(a[1].ult || ''));
@@ -52,7 +63,7 @@ export function render(main, params = {}) {
       await conectar(t);
       const st = status();
       if (st.erro) aviso(st.erro, null, 8000); else aviso('Conectado! Agora convide o outro celular.');
-      render((main.innerHTML = '', main));
+      pintar((main.innerHTML = '', main));
     });
     return;
   }
@@ -83,17 +94,15 @@ export function render(main, params = {}) {
 
     <button class="btn perigo cheio" type="button" id="desligar">Desconectar este celular</button>`;
 
-  main.querySelector('#agora').onclick = async () => { await sincronizar(); const st = status(); aviso(st.erro || 'Sincronizado.'); render((main.innerHTML = '', main)); };
+  main.querySelector('#agora').onclick = async () => { await sincronizar(); const st = status(); aviso(st.erro || 'Sincronizado.'); pintar((main.innerHTML = '', main)); };
   main.querySelector('#enviar').onclick = async () => {
     try { await navigator.share({ title: 'Convite — Finanças do casal', text: 'Abra no seu celular para conectar o Finanças:', url: link }); }
     catch { try { await navigator.clipboard.writeText(link); aviso('Link copiado.'); } catch { aviso('Não consegui compartilhar o link.'); } }
   };
   main.querySelector('#desligar').onclick = async () => {
     if (!(await confirmar('Desconectar este celular?', 'Os dados continuam neste celular, mas param de sincronizar com o outro.', { sim: 'Desconectar', perigo: true }))) return;
-    desconectar(); aviso('Desconectado.'); render((main.innerHTML = '', main));
+    desconectar(); aviso('Desconectado.'); pintar((main.innerHTML = '', main));
   };
-  const parar = aoMudar(() => { if (location.hash.startsWith('#/conectar')) render((main.innerHTML = '', main)); });
-  return parar;
 }
 
 function renderConvite(main, c) {

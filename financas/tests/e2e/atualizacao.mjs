@@ -24,13 +24,17 @@ try {
   await p.goto(`http://localhost:${PORTA}/`);
   await p.waitForFunction(() => !!navigator.serviceWorker.controller);
   await p.reload();
+  await p.evaluate(() => localStorage.setItem('fin-aparelho', JSON.stringify({ id: 'teste', pessoa: 'bruno', nuvem: {} })));
   await p.evaluate(() => localStorage.setItem('fin-dados', JSON.stringify({ lancamentos: [{ id: 'x', tipo: 'despesa', valor: 1234, data: '2026-11-10', categoria: 'mercado', descricao: 'Teste antigo' }] })));
+  await p.reload(); // a página lê de novo a conta deste celular
+  await p.evaluate(() => { location.hash = '#/resumo'; });
+  await p.getByText('Para onde foi o dinheiro').waitFor();
   execSync(`sed -i 's/Para onde foi o dinheiro/Para onde foi o seu dinheiro/' js/views/resumo.js && node tools/gen-precache.mjs`, { cwd: copia, stdio: 'ignore' });
   await p.waitForTimeout(300); // deixa o app terminar de registrar o service worker
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await p.getByText('Nova versão do app disponível.').waitFor({ timeout: 15000 });
   await Promise.all([p.waitForEvent('load'), p.getByRole('button', { name: 'Atualizar' }).click()]);
-  await p.getByText('Para onde foi o seu dinheiro').waitFor({ timeout: 10000 });
+  await p.getByText('Para onde foi o seu dinheiro').waitFor({ timeout: 10000 }).catch(async (e) => { await p.screenshot({ path: fileURLToPath(new URL('./shots/atualizacao-erro.png', import.meta.url)) }); throw e; });
   if (!(await p.evaluate(() => localStorage.getItem('fin-dados').includes('Teste antigo')))) throw new Error('dados perdidos na atualização');
   console.log('Atualização ok: aviso, versão nova e dados preservados.');
 } finally { await b.close(); srv.kill(); rmSync(copia, { recursive: true, force: true }); }

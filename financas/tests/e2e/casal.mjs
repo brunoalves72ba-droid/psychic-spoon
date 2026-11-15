@@ -16,6 +16,12 @@ const PORTA = 8192, BASE = `http://localhost:${PORTA}/`;
 const srv = spawn(process.execPath, ['tools/serve.mjs', String(PORTA)], { cwd: raiz, stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 400));
 const falhar = (m) => { throw new Error(m); };
+// sincroniza com tempo limite e devolve o estado da sincronização (para diagnóstico)
+const sync = (p) => p.evaluate(async () => {
+  const n = await import('./js/core/nuvem.js');
+  const r = await Promise.race([n.sincronizar().then(() => 'ok'), new Promise((ok) => setTimeout(() => ok('demorou'), 10000))]);
+  return { r, ...n.status() };
+});
 
 // ---- GitHub de mentira: guarda os gists em memória
 const gists = new Map();
@@ -38,6 +44,7 @@ const browser = await pw.chromium.launch();
 async function celular() {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark' });
   await ctx.route('https://api.github.com/**', github);
+  ctx.setDefaultTimeout(15000);
   const p = await ctx.newPage();
   p.on('pageerror', (e) => erros.push(e.message));
   p.on('console', (m) => { if (m.type() === 'error' && !/401|404/.test(m.text())) erros.push(m.text()); });
@@ -77,10 +84,10 @@ try {
   await rita.getByText('Contas do casal').waitFor();
   await rita.locator('.saldo .valor', { hasText: 'R$ 1.500,00' }).waitFor(); // aluguel compartilhado do Bruno já chegou
   await lancar(rita, 'mercado 300', true);
-  await rita.evaluate(async () => (await import('./js/core/nuvem.js')).sincronizar());
+  await sync(rita);
 
   // ---- Bruno recebe e os dois veem a mesma aba Casal
-  await bruno.evaluate(async () => (await import('./js/core/nuvem.js')).sincronizar());
+  await sync(bruno);
   for (const [quem, p] of [['Bruno', bruno], ['Rita', rita]]) {
     await p.goto(BASE + '#/casal');
     await p.locator('.saldo .valor', { hasText: 'R$ 1.800,00' }).waitFor();
@@ -99,8 +106,7 @@ try {
   await bruno.goto(BASE + '#/casal');
   await bruno.getByText('Rita transfere R$ 625,00 para Bruno').waitFor();
   await bruno.getByRole('button', { name: 'Marcar como acertado' }).click();
-  await bruno.evaluate(async () => (await import('./js/core/nuvem.js')).sincronizar());
-  await rita.evaluate(async () => (await import('./js/core/nuvem.js')).sincronizar());
+  await sync(bruno); await sync(rita);
   await rita.goto(BASE + '#/casal');
   await rita.getByText(/Acertado em .* por Bruno/).waitFor();
 
