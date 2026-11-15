@@ -11,19 +11,19 @@
 <meta name="app-id" content="financas">
 <meta name="description" content="Anote entradas e gastos em segundos e veja para onde vai o seu dinheiro. Tudo fica só no seu aparelho.">
 <meta name="author" content="Bruno Moura">
-<meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
-<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#101010">
+<meta name="color-scheme" content="dark light">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Finanças">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <script>
-try { var t = localStorage.getItem('fin-tema'); if (t === 'claro' || t === 'escuro') document.documentElement.dataset.theme = t; } catch (e) {}
+// tema escolhido nos Ajustes (escuro é o padrão), aplicado antes da primeira pintura
+try { var t = localStorage.getItem('fin-tema'); if (t === 'claro' || t === 'auto') document.documentElement.dataset.theme = t; } catch (e) {}
 </script>
 <link rel="stylesheet" href="css/app.css">
 </head>

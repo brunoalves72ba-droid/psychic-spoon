@@ -8,14 +8,14 @@ export const titulo = 'Ajustes';
 
 export function render(main) {
   const e = dados();
-  let tema = 'auto';
-  try { tema = localStorage.getItem('fin-tema') || 'auto'; } catch {}
+  let tema = 'escuro';
+  try { tema = localStorage.getItem('fin-tema') || 'escuro'; } catch {}
 
   main.innerHTML = `<h1>Ajustes</h1>
     <section class="cartao">
       <h2>Aparência</h2>
       <div class="chips" role="group" aria-label="Tema">
-        ${[['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']].map(([v, r]) => `<button type="button" class="chip" data-tema="${v}" aria-pressed="${tema === v}">${r}</button>`).join('')}
+        ${[['escuro', 'Escuro'], ['claro', 'Claro'], ['auto', 'Igual ao celular']].map(([v, r]) => `<button type="button" class="chip" data-tema="${v}" aria-pressed="${tema === v}">${r}</button>`).join('')}
       </div>
     </section>
 
@@ -52,8 +52,8 @@ export function render(main) {
 
   main.querySelectorAll('[data-tema]').forEach((b) => (b.onclick = () => {
     const v = b.dataset.tema;
-    try { v === 'auto' ? localStorage.removeItem('fin-tema') : localStorage.setItem('fin-tema', v); } catch {}
-    if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
+    try { v === 'escuro' ? localStorage.removeItem('fin-tema') : localStorage.setItem('fin-tema', v); } catch {}
+    if (v === 'escuro') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
     main.querySelectorAll('[data-tema]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   }));
 

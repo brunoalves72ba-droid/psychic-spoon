@@ -22,6 +22,8 @@ const browser = await pw.chromium.launch();
 try {
   for (const tema of ['light', 'dark']) {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: tema, acceptDownloads: true });
+    // escuro é o padrão; na rodada "light" o teste escolhe o tema Claro, como nos Ajustes
+    if (tema === 'light') await ctx.addInitScript(() => { try { localStorage.setItem('fin-tema', 'claro'); } catch {} });
     const p = await ctx.newPage();
     p.on('pageerror', (e) => erros.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error') erros.push(m.text()); });
