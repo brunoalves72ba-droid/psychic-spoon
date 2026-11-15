@@ -65,6 +65,17 @@ test('o que não é lançamento fica marcado para ignorar', () => {
   assert.equal(ler('Promoção! Ganhe 10% de cashback.', 'Inter'), null);
 });
 
+test('compra com "limite disponível", "saldo" ou "senha" no texto continua sendo compra', () => {
+  const a = ler('Compra aprovada no cartão final 1234 de R$ 89,90 em DROGASIL. Limite disponível: R$ 3.210,00.', 'Itaú');
+  assert.deepEqual([a.valor, a.descricao, a.ignorar], [8990, 'DROGASIL', '']);
+  const b = ler('Compra no débito de R$ 45,00 em PADARIA. Saldo disponível R$ 1.200,00', 'Caixa');
+  assert.deepEqual([b.valor, b.pagamento, b.ignorar], [4500, 'Débito', '']);
+  const c = ler('Compra aprovada com senha: R$ 120,00 em POSTO SHELL, cartão final 9999.', 'Bradesco');
+  assert.deepEqual([c.valor, c.descricao, c.ignorar], [12000, 'POSTO SHELL', '']);
+  // aviso só de saldo (sem compra) continua ignorado
+  assert.equal(ler('Seu saldo disponível é R$ 1.200,00.', 'Caixa').ignorar, 'Aviso de saldo ou limite');
+});
+
 test('parcelas viram um lançamento por mês, com os centavos na primeira', () => {
   const p = dividirParcelas({ valor: 10000, parcelas: 3, valorParcela: null, data: '2026-11-30', descricao: 'TV' });
   assert.deepEqual(p.map((x) => [x.valor, x.data, x.descricao]), [
