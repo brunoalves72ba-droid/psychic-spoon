@@ -22,6 +22,7 @@ App web instalável (PWA) para aprender **harmonia vocal**, **técnica vocal** e
 
 - A pasta [`formacao-ia/`](formacao-ia/README.md) tem **Formação IA Generativa**, a trilha de estudo de IA generativa em micro-lições.
 - A pasta [`financas/`](financas/README.md) tem **Finanças**, o controle de gastos pessoal: entradas, saídas, categorias, metas e contas fixas.
+- A pasta [`fotos/`](fotos/README.md) tem **Limpa Fotos**: as fotos aparecem uma por vez; arraste para a esquerda para apagar e para a direita para manter.
 
 Cada um tem service worker e dados próprios; o service worker do Sexteto ignora essas pastas.
 

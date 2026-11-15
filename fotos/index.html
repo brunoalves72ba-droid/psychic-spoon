@@ -1,0 +1,109 @@
+<!doctype html>
+<!--
+  Limpa Fotos — escolha, uma por uma, as fotos que ficam e as que vão embora.
+  © Bruno Moura. Todos os direitos reservados.
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Limpa Fotos</title>
+<meta name="description" content="Arraste para a esquerda para apagar e para a direita para manter. Tudo acontece no seu aparelho.">
+<meta name="author" content="Bruno Moura">
+<meta name="theme-color" content="#111214">
+<meta name="color-scheme" content="dark light">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Limpa Fotos">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- Início -->
+<section id="inicio" class="tela">
+  <div class="topo-inicio">
+    <img src="assets/icons/icon.svg" alt="" width="72" height="72">
+    <h1>Limpa Fotos</h1>
+    <p class="sub">Uma foto por vez. <b class="txt-apagar">Esquerda</b> apaga, <b class="txt-manter">direita</b> mantém.</p>
+  </div>
+
+  <div class="como">
+    <div><span class="seta seta-apagar">←</span><span>Arraste para a esquerda para <b>apagar</b></span></div>
+    <div><span class="seta seta-manter">→</span><span>Arraste para a direita para <b>manter</b></span></div>
+    <div><span class="seta">↶</span><span>Errou? Toque em <b>Desfazer</b></span></div>
+    <div><span class="seta">✓</span><span>Nada some antes de você <b>revisar e confirmar</b></span></div>
+  </div>
+
+  <div class="acoes-inicio">
+    <button id="btn-pasta" class="btn primario" hidden>Escolher pasta de fotos</button>
+    <button id="btn-fotos" class="btn" hidden>Escolher fotos</button>
+    <label id="lbl-input" class="btn primario" hidden>Escolher fotos
+      <input id="input-fotos" type="file" accept="image/*" multiple hidden>
+    </label>
+  </div>
+  <p id="aviso-suporte" class="aviso" hidden></p>
+  <p class="rodape">As fotos não saem do aparelho. Sem conta e sem internet.</p>
+</section>
+
+<!-- Triagem -->
+<section id="triagem" class="tela" hidden>
+  <header class="barra">
+    <button id="btn-sair" class="btn-icone" aria-label="Voltar ao início">✕</button>
+    <div class="progresso" aria-hidden="true"><div id="barra-progresso"></div></div>
+    <button id="btn-revisar" class="btn-texto">Revisar <span id="cont-apagar" class="pilula">0</span></button>
+  </header>
+  <p id="contador" class="contador"></p>
+
+  <div id="pilha" class="pilha" aria-live="polite">
+    <div id="carta-baixo" class="carta baixo"><img alt=""></div>
+    <div id="carta" class="carta" tabindex="0" aria-describedby="dica-teclado">
+      <img alt="">
+      <span class="selo selo-apagar">APAGAR</span>
+      <span class="selo selo-manter">MANTER</span>
+    </div>
+  </div>
+  <p id="info-foto" class="info-foto"></p>
+  <p id="dica-teclado" class="sr">Use as setas esquerda (apagar) e direita (manter). Ctrl+Z desfaz.</p>
+
+  <div class="botoes">
+    <button id="btn-apagar" class="redondo apagar" aria-label="Apagar">✕</button>
+    <button id="btn-desfazer" class="redondo pequeno" aria-label="Desfazer" disabled>↶</button>
+    <button id="btn-manter" class="redondo manter" aria-label="Manter">♥</button>
+  </div>
+</section>
+
+<!-- Revisão -->
+<section id="revisao" class="tela" hidden>
+  <header class="barra">
+    <button id="btn-voltar" class="btn-icone" aria-label="Voltar para as fotos">←</button>
+    <h2>Revisar</h2>
+    <span></span>
+  </header>
+  <p id="resumo" class="resumo"></p>
+  <p class="dica">Toque numa foto para tirá-la da lista e mantê-la.</p>
+  <div id="grade" class="grade"></div>
+  <div class="rodape-fixo">
+    <button id="btn-continuar" class="btn">Continuar escolhendo</button>
+    <button id="btn-confirmar" class="btn perigo">Apagar</button>
+  </div>
+</section>
+
+<dialog id="dlg">
+  <form method="dialog">
+    <h3 id="dlg-titulo"></h3>
+    <p id="dlg-texto"></p>
+    <div class="dlg-acoes">
+      <button value="nao" class="btn">Cancelar</button>
+      <button value="sim" id="dlg-sim" class="btn perigo">Apagar</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:24px">O Limpa Fotos precisa de JavaScript.</p></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
