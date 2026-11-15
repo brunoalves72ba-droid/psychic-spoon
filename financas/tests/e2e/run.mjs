@@ -28,7 +28,12 @@ try {
     p.on('pageerror', (e) => erros.push(e.message));
     p.on('console', (m) => { if (m.type() === 'error') erros.push(m.text()); });
     await p.goto(`http://localhost:${PORTA}/`);
+    // primeiro uso: de quem é este celular
+    await p.getByText('Este celular é de quem?').waitFor();
+    await p.screenshot({ path: `${shots}quem-${tema}.png` });
+    await p.getByRole('button', { name: /Conta Bruno/ }).click();
     await p.getByText('Comece anotando um gasto').waitFor();
+    if ((await p.locator('.conta-de').first().textContent()) !== 'Conta Bruno') falhar('cabeçalho da conta');
 
     // dados de exemplo: meses anteriores via armazenamento, para o gráfico
     await p.evaluate(() => {
@@ -52,11 +57,11 @@ try {
     await p.locator('#descricao').fill('Salário');
     await p.locator('#repetir').check();
     await p.getByRole('button', { name: 'Salvar', exact: true }).click();
-    await p.getByText('Entrada de R$ 5.200,00 salvo em Salário (todo mês).').waitFor();
+    await p.getByText('Entrada de R$ 5.200,00 salvo em Salário / pró-labore (todo mês).').waitFor();
 
     // gastos
     await p.getByRole('button', { name: 'Gastei' }).click();
-    for (const [v, cat, desc] of [['45890', 'Mercado', 'Feira'], ['3200', 'Transporte', 'Uber'], ['8990', 'Restaurante e delivery', 'Pizza'], ['150000', 'Moradia', 'Aluguel']]) {
+    for (const [v, cat, desc] of [['45890', 'Mercado', 'Feira'], ['3200', 'Deslocamento (Uber, táxi)', 'Uber'], ['8990', 'Restaurante e delivery', 'Pizza'], ['150000', 'Aluguel', 'Aluguel']]) {
       await p.locator('#valor').pressSequentially(v);
       await p.getByRole('button', { name: cat, exact: true }).click();
       await p.locator('#descricao').fill(desc);
@@ -65,11 +70,11 @@ try {
     }
     // lançamento rápido por frase
     await p.locator('#frase').fill('taxi 23,50 ontem no pix');
-    await p.getByText(/Entendi: gasto de R\$ 23,50 · Taxi · em Transporte · ontem · Pix/).waitFor();
-    await p.getByText(/Reconhecido: Transporte/).waitFor();
+    await p.getByText(/Entendi: gasto de R\$ 23,50 · Taxi · em Deslocamento \(Uber, táxi\) · ontem · Pix/).waitFor();
+    await p.getByText(/Reconhecido: Deslocamento/).waitFor();
     await p.screenshot({ path: `${shots}lancar-${tema}.png`, fullPage: true });
     await p.locator('#frase').press('Enter');
-    await p.getByText('Gasto de R$ 23,50 salvo em Transporte.').waitFor();
+    await p.getByText('Gasto de R$ 23,50 salvo em Deslocamento (Uber, táxi).').waitFor();
 
     // resumo
     await p.locator('.abas a[data-aba=resumo]').click();
@@ -93,15 +98,16 @@ try {
     await p.screenshot({ path: `${shots}extrato-${tema}.png`, fullPage: true });
 
     // editar um lançamento
-    await p.getByRole('link', { name: /Uber/ }).click();
+    await p.locator('a.item', { hasText: 'R$ 32,00' }).click();
     await p.locator('#valor').fill('');
     await p.locator('#valor').pressSequentially('4500');
     await p.getByRole('button', { name: 'Salvar alterações' }).click();
     await p.getByText('− R$ 45,00').waitFor();
 
     // metas
-    await p.locator('.abas a[data-aba=orcamento]').click();
-    await p.getByText('Defina suas metas').waitFor();
+    await p.locator('.abas a[data-aba=mais]').click();
+    await p.getByRole('link', { name: /Metas/ }).click();
+    await p.getByText('Defina as metas').waitFor();
     await p.getByLabel('Meta para Mercado').fill('500');
     await p.getByLabel('Meta para Restaurante e delivery').fill('80');
     await p.getByRole('button', { name: 'Salvar metas' }).click();
@@ -110,7 +116,7 @@ try {
     await p.screenshot({ path: `${shots}metas-${tema}.png`, fullPage: true });
 
     // backup e planilha
-    await p.locator('.abas a[data-aba=ajustes]').click();
+    await p.goto(`http://localhost:${PORTA}/#/ajustes`);
     const [dl] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: 'Salvar cópia' }).click()]);
     const caminho = await dl.path();
     const [dl2] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: 'Planilha do mês' }).click()]);
@@ -121,7 +127,7 @@ try {
     await p.getByRole('button', { name: 'Apagar todos os dados' }).click();
     await p.getByRole('button', { name: 'Apagar tudo' }).click();
     await p.getByText('Comece anotando um gasto').waitFor();
-    await p.locator('.abas a[data-aba=ajustes]').click();
+    await p.goto(`http://localhost:${PORTA}/#/ajustes`);
     await p.locator('#arquivo').setInputFiles(caminho);
     await p.getByRole('button', { name: 'Restaurar', exact: true }).click();
     await p.getByText(/Cópia restaurada: 21 lançamentos/).waitFor();
@@ -164,7 +170,7 @@ try {
     await p.locator('.pend', { hasText: 'IFOOD' }).getByRole('button', { name: '✔ Confirmar' }).click();
     await p.getByText('Lançado em Restaurante e delivery.').waitFor();
     await p.getByRole('button', { name: '✔ Confirmar' }).click();
-    await p.getByText('3 parcelas lançadas em Compras.').waitFor();
+    await p.getByText('3 parcelas lançadas em Compras (outros).').waitFor();
     await p.getByText('Nada para confirmar').waitFor();
     if (await p.locator('.abas .contador').count()) falhar('contador deveria sumir');
     await p.goto(base + '#/captura');

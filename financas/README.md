@@ -11,13 +11,22 @@ App web instalável (PWA) para controlar o dinheiro do dia a dia: anote o que en
 
 | Aba | O que faz |
 |---|---|
-| **Resumo** | Quanto entrou, saiu e sobrou no mês; gasto médio por dia e previsão para o fim do mês; comparação com o mês anterior; gastos por categoria (toque para ver no extrato); gráfico dos últimos 6 meses (com tabela). |
+| **Minhas** | As contas de quem usa este celular (Conta Bruno ou Conta Rita), privadas e compartilhadas. Quanto entrou, saiu e sobrou no mês; gasto médio por dia e previsão para o fim do mês; comparação com o mês anterior; gastos por categoria (toque para ver no extrato); gráfico dos últimos 6 meses (com tabela). |
+| **Casal** | Só o que cada um compartilhou, igual nos dois celulares: total, quem pagou, para onde foi, divisão proporcional à renda (definida à mão), acerto do mês com “Marcar como acertado”, metas do casal e o total (sem detalhes) dos gastos pessoais de cada um. |
 | **Importar** | Lê o extrato da conta ou a fatura do cartão em **OFX ou CSV** (Nubank, Itaú, Bradesco, BB, Caixa, Santander, Inter…). Mostra uma prévia: sugere a categoria (iFood → Restaurante, Uber → Transporte… e aprende com as suas escolhas), não duplica o que já foi importado, reconhece o que você já anotou à mão e deixa de fora pagamento de fatura, aplicações e transferências entre contas. Dá para desfazer. |
 | **Extrato** | Lançamentos agrupados por dia, com busca (sem acento, aceita valor), filtro por categoria e por entrada/saída. Toque num item para editar ou apagar. |
 | **Lançar** | **Lançamento rápido**: escreva “uber 23,50 ontem no pix” e o app preenche valor, conta, data e forma de pagamento. A conta é **reconhecida pela descrição** (o que você ensinou → lançamentos anteriores → palavras conhecidas) e o app mostra por quê. Valor estilo caixa eletrônico (só digitar os números), categoria em um toque, descrição com sugestões, data, forma de pagamento e **repetir todo mês** para contas fixas. Dá para desfazer. |
 | **Metas** | Limite mensal por categoria, com aviso perto do limite (80%) e quando passa; quanto ainda dá para gastar por dia; lista das contas fixas do mês. |
 | **Plano de contas** | Contas organizadas em grupos (Moradia, Alimentação, Transporte, Saúde…). **Sugestões de preenchimento** a partir dos seus gastos: criar contas mais específicas (ex.: “Academia”, “Combustível”, “Streaming”) movendo os lançamentos, classificar descrições repetidas que o app não reconhece (e ele aprende), e transformar gastos que se repetem todo mês em conta fixa. Fica em Ajustes › Plano de contas, e o Resumo avisa quando há sugestões. |
 | **Ajustes** | Tema claro/escuro, cópia de segurança (salvar e restaurar `.json`), planilha `.csv` para Excel/Google Planilhas e apagar tudo. |
+
+### Dois celulares (Conta Bruno e Conta Rita)
+
+Em **Mais › Conectar celulares**: no primeiro celular, cole uma chave do GitHub (permissão só de “gist”); no segundo, aponte a câmera para o QR code. Os dados vão **cifrados** (AES-GCM, chave derivada da chave de acesso) para um Gist secreto e são juntados sem perder nada (`js/core/mesclar.js`: a versão mais nova de cada item vence e o que foi apagado deixa uma lápide). A caixa A confirmar é de cada celular e não viaja. `npm run e2e:casal` simula os dois celulares com um GitHub de mentira.
+
+### Plano de contas pessoal
+
+Adaptado da lista de validação do Bruno (`js/core/plano.js`): grupos de moradia, reforma (hidráulica, elétrica, teto…), empregados domésticos (DAE/eSocial), impostos e taxas, financeiro e seguros, patrimônio e transferências. Pagamento de fatura, transferência entre contas e aplicação/resgate ficam **fora dos totais**, para nada ser contado duas vezes.
 
 ### Por que importar arquivo e não Open Finance?
 

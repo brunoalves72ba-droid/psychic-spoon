@@ -1,5 +1,5 @@
 // Ajustes: categorias, cópia de segurança, planilha, tema e apagar tudo.
-import { dados, nomeCategoria, exportar, importar, apagarTudo } from '../core/store.js';
+import { dados, nomeCategoria, exportar, importar, apagarTudo, eu, nomePessoa } from '../core/store.js';
 import { csv, doMes } from '../core/calc.js';
 import { mesAtual, hoje } from '../core/datas.js';
 import { esc, aviso, confirmar, baixar, navegar } from '../core/ui.js';
@@ -17,6 +17,12 @@ export function render(main) {
       <div class="chips" role="group" aria-label="Tema">
         ${[['escuro', 'Escuro'], ['claro', 'Claro'], ['auto', 'Igual ao celular']].map(([v, r]) => `<button type="button" class="chip" data-tema="${v}" aria-pressed="${tema === v}">${r}</button>`).join('')}
       </div>
+    </section>
+
+    <section class="cartao">
+      <h2>Conta deste celular</h2>
+      <p class="sub">Este celular é a <b>Conta ${esc(nomePessoa(eu()))}</b>. Tudo o que for lançado ou capturado aqui entra nela.</p>
+      <div class="btn-linha"><a class="btn" href="#/quem">Trocar</a><a class="btn" href="#/conectar">Conectar celulares</a></div>
     </section>
 
     <section class="cartao">

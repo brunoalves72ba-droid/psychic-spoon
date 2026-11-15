@@ -5,11 +5,16 @@ import { reconhecer, interpretarFrase, chaveDescricao, CONTAS, nomeGrupo, grupoD
 import { reais, digitosParaCentavos } from '../core/dinheiro.js';
 import { hoje, mesDe, somarMeses, nomeDia } from '../core/datas.js';
 import { esc, aviso, confirmar } from '../core/ui.js';
-import { pendentesAtivos, nomeCartao } from '../core/store.js';
+import { pendentesAtivos, nomeCartao, outra, compartilhaPorPadrao } from '../core/store.js';
 import { opcoesAgrupadas } from './plano.js';
 
 export const titulo = 'Lançar';
 const ULTIMO_PAG = 'fin-ultimo-pagamento';
+// atalhos quando ainda não há histórico: as contas do dia a dia, não a ordem do plano
+const FAVORITAS = {
+  despesa: ['mercado', 'restaurante', 'combustivel', 'app-transporte', 'farmacia', 'casa', 'energia', 'compras', 'lazer', 'outros'],
+  receita: ['salario', 'extra', 'rendimentos', 'reembolsos', 'outras-receitas'],
+};
 
 export function render(main, params) {
   const e = dados();
@@ -55,6 +60,7 @@ export function render(main, params) {
       ${existente?.cartao ? `<p class="sub">Cartão: <b>${esc(nomeCartao(existente.cartao))}</b>${existente.origem === 'notificacao' ? ' · lido da notificação do banco' : ''}</p>` : ''}
       ${existente ? (rec ? `<p class="sub">Esta é uma conta fixa, lançada todo dia ${rec.dia}${rec.fim ? ` até ${rec.fim.split('-').reverse().join('/')}` : ''}. Mudanças aqui valem só para este mês.</p>` : '')
         : `<label class="marcar"><input type="checkbox" id="repetir"><span><b>Repetir todo mês</b><small>Para salário, aluguel, internet, assinaturas…</small></span></label>`}
+      <label class="marcar compartilhar"><input type="checkbox" id="compartilhar"><span><b>Compartilhar com ${esc(outra()?.nome || 'o casal')}</b><small>Aparece na aba Casal e entra no acerto do mês. Sem marcar, fica só na sua conta.</small></span></label>
       ${existente && existente.descricao ? `<label class="marcar"><input type="checkbox" id="ensinar"><span><b>Usar esta conta sempre</b><small>Lançamentos e importações com esta descrição vão para a conta escolhida.</small></span></label>` : ''}
       <button class="btn primario cheio" type="submit">${existente ? 'Salvar alterações' : 'Salvar'}</button>
       ${existente ? `<div class="btn-linha" style="margin-top:10px">
@@ -76,7 +82,7 @@ export function render(main, params) {
   const pintarContas = () => {
     const cats = e.categorias.filter((c) => c.tipo === f.tipo);
     if (!cats.some((c) => c.id === f.categoria)) f.categoria = maisUsadas(e, f.tipo)[0] || cats[0]?.id || '';
-    const ids = [...new Set([f.categoria, ...maisUsadas(e, f.tipo), ...cats.filter((c) => CONTAS.find((x) => x.id === c.id)?.padrao).map((c) => c.id)])].filter((id) => cats.some((c) => c.id === id)).slice(0, 8);
+    const ids = [...new Set([f.categoria, ...maisUsadas(e, f.tipo), ...FAVORITAS[f.tipo], ...cats.map((c) => c.id)])].filter((id) => cats.some((c) => c.id === id)).slice(0, 8);
     $('#cats').innerHTML = ids.map((id) => `<button type="button" class="chip" data-cat="${esc(id)}" aria-pressed="${id === f.categoria}">${esc(nomeCategoria(id))}</button>`).join('');
     $('#cat-todas').innerHTML = `<option value="">Outra conta…</option>${opcoesAgrupadas(e, f.tipo, ids.includes(f.categoria) ? '' : f.categoria)}`;
     $('#pagamento').closest('label').hidden = f.tipo === 'receita';
@@ -137,6 +143,13 @@ export function render(main, params) {
   });
   $('#frase')?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); main.querySelector('form').requestSubmit(); } });
 
+  let compMexido = !!existente;
+  const pintarComp = () => { const c = $('#compartilhar'); if (c && !compMexido) c.checked = compartilhaPorPadrao(f.categoria); };
+  $('#compartilhar').checked = existente ? !!existente.compartilhado : compartilhaPorPadrao(f.categoria);
+  $('#compartilhar').addEventListener('change', () => { compMexido = true; });
+  $('#cats').addEventListener('click', (ev) => { if (ev.target.closest('[data-cat]')) pintarComp(); });
+  $('#cat-todas').addEventListener('change', pintarComp);
+  desc.addEventListener('input', pintarComp);
   desc.value = f.descricao || '';
   $('#data').value = f.data;
   $('#pagamento').value = PAGAMENTOS.includes(f.pagamento) ? f.pagamento : 'Pix';
@@ -150,7 +163,7 @@ export function render(main, params) {
     if (!f.valor) { aviso('Digite o valor.'); valor.focus(); return; }
     if (!f.categoria) { aviso('Escolha uma conta.'); return; }
     const data = $('#data').value || hoje();
-    const l = { ...f, data, descricao: desc.value.replace(/\s+/g, ' ').trim(), pagamento: f.tipo === 'despesa' ? $('#pagamento').value : '' };
+    const l = { ...f, data, descricao: desc.value.replace(/\s+/g, ' ').trim(), pagamento: f.tipo === 'despesa' ? $('#pagamento').value : '', compartilhado: $('#compartilhar').checked };
     const repetir = !!$('#repetir')?.checked;
     if ($('#ensinar')?.checked && l.descricao) {
       const iguais = e.lancamentos.filter((x) => x.tipo === l.tipo && chaveDescricao(x.descricao) === chaveDescricao(l.descricao)).map((x) => x.id);
@@ -166,6 +179,7 @@ export function render(main, params) {
     f.valor = 0; f.descricao = ''; catEscolhida = false;
     pintarValor(); desc.value = ''; ajustarAltura(); $('#reconhecido').hidden = true;
     if ($('#repetir')) $('#repetir').checked = false;
+    compMexido = false; pintarComp();
     if ($('#frase')) { $('#frase').value = ''; $('#entendi').textContent = 'Pronto para o próximo.'; $('#frase').focus(); } else valor.focus();
   });
 

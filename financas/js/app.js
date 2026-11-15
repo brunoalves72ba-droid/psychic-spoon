@@ -1,16 +1,22 @@
 // Finanças — © Bruno Moura, único e exclusivo proprietário.
 // Roteador: #/secao?param=valor → js/views/secao.js (export render(main, params)).
-import { carregar, atualizarRecorrentes, pendentesAtivos, aoMudar } from './core/store.js';
+import { carregar, atualizarRecorrentes, pendentesAtivos, aoMudar, eu } from './core/store.js';
+import { iniciar as iniciarNuvem, quandoReceber } from './core/nuvem.js';
 import { aviso } from './core/ui.js';
 
-const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes', 'importar', 'plano', 'caixa', 'receber', 'captura'];
-const ABA_DE = { importar: 'extrato', plano: 'ajustes', caixa: 'lancar', receber: 'lancar', captura: 'ajustes' }; // telas sem aba própria acendem a aba de onde vieram
+const SECOES = ['resumo', 'casal', 'extrato', 'lancar', 'mais', 'orcamento', 'ajustes', 'importar', 'plano', 'caixa', 'receber', 'captura', 'conectar', 'quem'];
+// telas sem aba própria acendem a aba de onde vieram
+const ABA_DE = { importar: 'mais', plano: 'mais', orcamento: 'mais', ajustes: 'mais', captura: 'mais', conectar: 'mais', caixa: 'lancar', receber: 'lancar', quem: 'resumo' };
+// telas que funcionam antes de escolher "Conta Bruno / Conta Rita"
+const SEM_CONTA = ['quem', 'conectar', 'receber'];
 const main = document.getElementById('view');
 let limpar = null;
 
 async function rotear() {
   const [caminho, qs = ''] = (location.hash.replace(/^#\/?/, '') || 'resumo').split('?');
   const secao = SECOES.includes(caminho) ? caminho : 'resumo';
+  // primeiro uso depois da atualização: escolher de quem é este celular
+  if (!eu() && !SEM_CONTA.includes(secao)) { location.replace(`#/quem?depois=${encodeURIComponent(location.hash || '#/resumo')}`); return; }
   const params = Object.fromEntries(new URLSearchParams(qs));
   document.querySelectorAll('.abas a').forEach((a) => {
     if (a.dataset.aba === (ABA_DE[secao] || secao)) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
@@ -45,6 +51,9 @@ if (/[?&](texto|titulo)=/.test(location.search)) {
 
 carregar();
 pintarContador();
+iniciarNuvem();
+// chegou algo do outro celular: redesenha (menos no meio de um lançamento ou da caixa)
+quandoReceber(() => { if (!/^#\/(lancar|caixa|conectar)/.test(location.hash)) rotear(); pintarContador(); });
 aoMudar(pintarContador);
 addEventListener('hashchange', rotear);
 // ao voltar para o app num dia novo, contas fixas que venceram entram sozinhas

@@ -1,5 +1,5 @@
 // Plano de contas: contas agrupadas, sugestões de preenchimento e gestão das contas.
-import { dados, nomeCategoria, salvarCategoria, apagarCategoria, criarContaDoPlano, ensinar, virarContaFixa, dispensarSugestao } from '../core/store.js';
+import { compartilharSempre, compartilhaPorPadrao, outra, dados, nomeCategoria, salvarCategoria, apagarCategoria, criarContaDoPlano, ensinar, virarContaFixa, dispensarSugestao } from '../core/store.js';
 import { GRUPOS, CONTAS, nomeGrupo, grupoDaCategoria, sugestoesPlano } from '../core/plano.js';
 import { doMes } from '../core/calc.js';
 import { reais } from '../core/dinheiro.js';
@@ -57,7 +57,7 @@ export function render(main) {
       <h2><span>${esc(g.nome)}</span><span class="sub">${total ? `${reais(total)} no mês` : ''}</span></h2>
       ${cats.length ? `<ul class="contas">${cats.map((c) => `<li>
         <span class="conta-nome">${esc(c.nome)}<small>${usos[c.id] ? `${usos[c.id]} lançamento${usos[c.id] > 1 ? 's' : ''}` : 'sem lançamentos'}${gastoMes[c.id] ? ` · ${reais(gastoMes[c.id])} no mês` : ''}</small></span>
-        <span class="conta-acoes"><button class="btn mini" type="button" data-renomear="${esc(c.id)}">Renomear</button><button class="btn mini perigo" type="button" data-apagar="${esc(c.id)}" aria-label="Apagar ${esc(c.nome)}">Apagar</button></span>
+        <span class="conta-acoes">${c.tipo === 'despesa' && g.id !== 'transferencias' ? `<button class="btn mini sempre" type="button" data-sempre="${esc(c.id)}" aria-pressed="${compartilhaPorPadrao(c.id)}" title="Lançamentos desta conta já nascem compartilhados com ${esc(outra()?.nome || 'o casal')}">${compartilhaPorPadrao(c.id) ? '👥 Sempre compartilhar' : 'Compartilhar sempre?'}</button>` : ''}<button class="btn mini" type="button" data-renomear="${esc(c.id)}">Renomear</button><button class="btn mini perigo" type="button" data-apagar="${esc(c.id)}" aria-label="Apagar ${esc(c.nome)}">Apagar</button></span>
       </li>`).join('')}</ul>` : '<p class="sub">Nenhuma conta neste grupo.</p>'}
       <details class="add-conta"><summary>Adicionar conta em ${esc(g.nome)}</summary>
         <div class="chips" style="margin:10px 0">${modelos.map((m) => `<button type="button" class="chip" data-modelo="${esc(m.id)}">+ ${esc(m.nome)}</button>`).join('')}</div>
@@ -67,7 +67,7 @@ export function render(main) {
   }).join('');
 
   main.innerHTML = `<h1>Plano de contas</h1>
-    <p class="sub">Suas contas organizadas por grupo. O app reconhece os lançamentos pela descrição e sugere como completar o plano a partir do que você gasta.</p>
+    <p class="sub">Plano de contas pessoal, organizado por grupo. Em cada conta de gasto você escolhe se os lançamentos dela já nascem <b>compartilhados</b> com ${esc(outra()?.nome || 'o casal')} (ex.: Aluguel, Mercado, Energia). O app reconhece os lançamentos pela descrição e sugere como completar o plano a partir do que você gasta.</p>
     <section class="cartao destaque">
       <h2><span>Sugestões para o seu plano</span><span class="sub">${sug.total || ''}</span></h2>
       ${cartaoSug.length ? `<ul class="sugs">${cartaoSug.join('')}</ul>` : `<p class="sub">Nenhuma sugestão agora. Elas aparecem quando o app encontra gastos repetidos que caberiam numa conta própria, descrições que ele ainda não sabe classificar ou gastos que se repetem todo mês.</p>`}
@@ -116,6 +116,12 @@ export function render(main) {
     recarregar();
   }));
 
+  main.querySelectorAll('[data-sempre]').forEach((b) => (b.onclick = () => {
+    const sim = b.getAttribute('aria-pressed') !== 'true';
+    compartilharSempre(b.dataset.sempre, sim);
+    aviso(sim ? `Novos lançamentos de “${nomeCategoria(b.dataset.sempre)}” já nascem compartilhados.` : `“${nomeCategoria(b.dataset.sempre)}” volta a nascer privado.`);
+    recarregar();
+  }));
   main.querySelectorAll('[data-renomear]').forEach((b) => (b.onclick = () => {
     const c = e.categorias.find((x) => x.id === b.dataset.renomear);
     const nome = prompt('Novo nome da conta:', c.nome);

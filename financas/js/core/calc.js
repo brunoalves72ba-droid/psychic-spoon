@@ -22,7 +22,13 @@ export const estadoVazio = () => ({
   categorias: CATEGORIAS_PADRAO.map((c) => ({ ...c })),
   lancamentos: [],
   recorrentes: [],
-  orcamentos: {},
+  orcamentos: {}, // metas por escopo: { bruno: { _t, cats: { mercado: 50000 } }, rita: {...}, casal: {...} }
+  pessoas: [{ id: 'bruno', nome: 'Bruno' }, { id: 'rita', nome: 'Rita' }],
+  divisao: { _t: 0, bruno: 50, rita: 50 }, // % de cada um nas contas compartilhadas (definido à mão)
+  acertos: {}, // mês → { _t, valor, de, para, quando }
+  compartilharSempre: {}, // pessoa → { _t, cats: { casa: true } }
+  aparelhos: {}, // celulares conectados: id → { _t, pessoa, modelo, ult }
+  apagados: {}, // lápides para a sincronização: id → quando foi apagado
   regras: {}, // descrição do banco → categoria escolhida por você
   dispensadas: [], // sugestões do plano de contas que você recusou
   pendentes: [], // caixa "A confirmar": notificações lidas aguardando confirmação
@@ -55,7 +61,16 @@ export function normalizar(bruto) {
   e.notifVistas = Array.isArray(bruto.notifVistas) ? bruto.notifVistas.slice(-300) : [];
   e.dispensadas = Array.isArray(bruto.dispensadas) ? bruto.dispensadas.filter((x) => typeof x === 'string') : [];
   e.regras = bruto.regras && typeof bruto.regras === 'object' ? { ...bruto.regras } : {};
-  e.orcamentos = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? { ...bruto.orcamentos } : {};
+  const orc = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? bruto.orcamentos : {};
+  // formato antigo ({ mercado: 50000 }) vira as metas de quem usava o app: dono definido ao escolher a conta
+  e.orcamentos = Object.values(orc).some((v) => typeof v === 'number') ? { _semDono: { _t: 0, cats: { ...orc } } } : { ...orc };
+  const obj = (x, padrao) => (x && typeof x === 'object' && !Array.isArray(x) ? { ...x } : padrao);
+  if (Array.isArray(bruto.pessoas) && bruto.pessoas.length) e.pessoas = bruto.pessoas;
+  e.divisao = obj(bruto.divisao, e.divisao);
+  e.acertos = obj(bruto.acertos, {});
+  e.compartilharSempre = obj(bruto.compartilharSempre, {});
+  e.aparelhos = obj(bruto.aparelhos, {});
+  e.apagados = obj(bruto.apagados, {});
   return e;
 }
 
@@ -73,7 +88,10 @@ export function gerarRecorrentes(estado, hoje = hojeStr()) {
       if (r.gerados.includes(mes)) continue;
       const data = dataNoMes(mes, r.dia);
       if (data > hoje) continue;
-      estado.lancamentos.push({ id: novoId(), tipo: r.tipo, valor: r.valor, data, categoria: r.categoria, descricao: r.descricao, pagamento: r.pagamento, recorrente: r.id });
+      const id = `rec-${r.id}-${mes}`; // id fixo: os dois celulares geram o mesmo lançamento, sem duplicar
+      if (estado.lancamentos.some((l) => l.id === id) || estado.apagados?.[id]) { r.gerados.push(mes); continue; }
+      estado.lancamentos.push({ id, tipo: r.tipo, valor: r.valor, data, categoria: r.categoria, descricao: r.descricao, pagamento: r.pagamento, recorrente: r.id,
+        ...(r.dono && { dono: r.dono }), ...(r.compartilhado && { compartilhado: true }), _t: 1 });
       r.gerados.push(mes);
       n++;
     }
@@ -141,9 +159,10 @@ export function previsao(estado, mes, hoje = hojeStr()) {
 }
 
 /** Situação de cada orçamento no mês: ok (< 80%), atencao (80–100%), estourou (> 100%). */
-export function orcamentos(estado, mes) {
-  const gastos = Object.fromEntries(porCategoria(doMes(estado, mes)).map((c) => [c.categoria, c.total]));
-  return Object.entries(estado.orcamentos)
+/** Situação de cada meta: ok (< 80%), atencao (80–100%), estourou (> 100%). */
+export function orcamentos(lancsDoMes, limites = {}) {
+  const gastos = Object.fromEntries(porCategoria(lancsDoMes).map((c) => [c.categoria, c.total]));
+  return Object.entries(limites)
     .filter(([, limite]) => limite > 0)
     .map(([categoria, limite]) => {
       const gasto = gastos[categoria] || 0;
@@ -151,6 +170,42 @@ export function orcamentos(estado, mes) {
       return { categoria, limite, gasto, resta: limite - gasto, pct, status: pct > 1 ? 'estourou' : pct >= 0.8 ? 'atencao' : 'ok' };
     })
     .sort((a, b) => b.pct - a.pct);
+}
+
+// ---------- casal ----------
+/** Lançamentos de uma visão: 'eu' (os meus), 'casal' (os compartilhados dos dois). */
+export function daVisao(lancs, visao, eu) {
+  if (visao === 'casal') return lancs.filter((l) => l.compartilhado);
+  return lancs.filter((l) => !l.dono || l.dono === eu);
+}
+
+/** Sugestão de divisão pela renda do mês de cada um (o percentual usado é o definido à mão). */
+export function divisaoPelaRenda(lancsDoMes, pessoas) {
+  const renda = Object.fromEntries(pessoas.map((p) => [p.id, 0]));
+  for (const l of lancsDoMes) if (l.tipo === 'receita' && conta(l) && l.dono in renda) renda[l.dono] += l.valor;
+  const total = Object.values(renda).reduce((a, b) => a + b, 0);
+  if (!total) return null;
+  const pct = Object.fromEntries(pessoas.map((p) => [p.id, Math.round(renda[p.id] / total * 100)]));
+  // fecha em 100%
+  const soma = Object.values(pct).reduce((a, b) => a + b, 0);
+  pct[pessoas[0].id] += 100 - soma;
+  return { renda, pct };
+}
+
+/**
+ * Acerto do mês: quanto cada um pagou das contas compartilhadas, quanto deveria pela divisão
+ * e quem transfere quanto para quem.
+ */
+export function acerto(lancsDoMes, pessoas, divisao) {
+  const comp = lancsDoMes.filter((l) => l.compartilhado && l.tipo === 'despesa' && conta(l));
+  const total = comp.reduce((a, l) => a + l.valor, 0);
+  const pagou = Object.fromEntries(pessoas.map((p) => [p.id, 0]));
+  for (const l of comp) if (l.dono in pagou) pagou[l.dono] += l.valor;
+  const deveria = Object.fromEntries(pessoas.map((p) => [p.id, Math.round(total * (divisao[p.id] ?? 50) / 100)]));
+  const [a, b] = pessoas.map((p) => p.id);
+  const saldoA = pagou[a] - deveria[a]; // positivo: A pagou a mais e deve receber
+  const transf = Math.abs(saldoA) < 100 ? null : saldoA > 0 ? { de: b, para: a, valor: saldoA } : { de: a, para: b, valor: -saldoA };
+  return { total, pagou, deveria, transf };
 }
 
 const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

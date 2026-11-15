@@ -2,6 +2,11 @@
 
 Plano combinado com Bruno e Rita (os dois usam Android, bancos tradicionais e digitais). Cada etapa é testada, mostrada com capturas de tela e só entra no app depois de aprovada em pull request.
 
+## Situação
+- Etapa 1 (captura automática): **entregue** (PR #6).
+- Etapas 2 e 3 (Conta Bruno / Conta Rita, compartilhar, aba Casal, sincronização): **entregues juntas**, com o plano de contas pessoal.
+- Etapa 4 (fechamento do mês): parte já está na aba Casal (acerto e “Marcar como acertado”); falta o relatório de fechamento.
+
 ## Etapas
 
 ### Etapa 1 — Captura automática pelas notificações (Android)
@@ -14,8 +19,9 @@ Plano combinado com Bruno e Rita (os dois usam Android, bancos tradicionais e di
 - Fatura importada depois reconhece o que já entrou pela notificação.
 - Guia de configuração do MacroDroid dentro do app.
 
-### Etapa 2 — Casa e individual
-- Pessoas (Bruno e Rita); cada lançamento é **da casa** ou **individual**, com **quem pagou**.
+### Etapa 2 — Contas de cada um e o que é compartilhado
+- Cada celular é uma conta: **Conta Bruno** e **Conta Rita** (escolhida na primeira abertura).
+- Tudo nasce **privado** na conta de quem lançou; cada um **escolhe o que compartilhar** (no lançamento, na caixa A confirmar, no extrato um a um ou vários de uma vez) e pode marcar contas que já nascem compartilhadas (ex.: Aluguel).
 - Divisão das contas da casa e **acerto do mês** (“Bruno transfere R$ 230 para a Rita”).
 - Seletor **Casa · Bruno · Rita**; metas da casa e individuais.
 
