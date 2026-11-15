@@ -25,12 +25,12 @@ export function render(main, params = {}) {
   if (!params.msg) try { params = { ...params, msg: sessionStorage.getItem('fin-msg-caixa') || '' }; sessionStorage.removeItem('fin-msg-caixa'); } catch {}
   const ativos = pendentesAtivos().sort((a, b) => b.recebidoEm.localeCompare(a.recebidoEm));
   const ignorados = e.pendentes.filter((p) => p.lido.ignorar).sort((a, b) => b.recebidoEm.localeCompare(a.recebidoEm));
-  const porque = (p) => ({ regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `por “${p.reconhecido?.palavra}”`, padrao: 'não reconhecida — confira' }[p.reconhecido?.fonte] || '');
+  const porque = (p) => ({ regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `por “${p.reconhecido?.palavra}”`, padrao: 'a classificar: escolha a conta' }[p.reconhecido?.fonte] || '');
 
   const cartao = (p) => {
     const l = p.lido;
     const partes = l.parcelas > 1 ? dividirParcelas(l) : null;
-    return `<li class="pend" data-id="${esc(p.id)}">
+    return `<li class="pend${p.reconhecido?.fonte === 'padrao' ? ' a-classificar' : ''}" data-id="${esc(p.id)}">
       <div class="pend-cab"><span>${esc(origem(p))}</span><span>${esc(nomeDia(p.recebidoEm.slice(0, 10)))} ${hora(p.recebidoEm)}</span></div>
       <p class="pend-texto">${esc(p.texto)}</p>
       <div class="alternar mini" role="group" aria-label="Tipo">

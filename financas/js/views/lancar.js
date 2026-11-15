@@ -192,7 +192,7 @@ export function render(main, params) {
     if (!f.valor) { aviso('Digite o valor.'); valor.focus(); return; }
     if (!f.categoria) { aviso('Escolha uma conta.'); return; }
     const data = $('#data').value || hoje();
-    const l = { ...f, data, descricao: desc.value.replace(/\s+/g, ' ').trim(), pagamento: f.tipo === 'despesa' ? $('#pagamento').value : '', compartilhado: $('#compartilhar').checked, rateio };
+    const l = { ...f, data, descricao: desc.value.replace(/\s+/g, ' ').trim(), pagamento: f.tipo === 'despesa' ? $('#pagamento').value : '', compartilhado: $('#compartilhar').checked, rateio, ...((f.categoria === 'outros' || f.categoria === 'outras-receitas') && { classificado: true }) };
     const repetir = !!$('#repetir')?.checked;
     if ($('#ensinar')?.checked && l.descricao) {
       const iguais = e.lancamentos.filter((x) => x.tipo === l.tipo && chaveDescricao(x.descricao) === chaveDescricao(l.descricao)).map((x) => x.id);

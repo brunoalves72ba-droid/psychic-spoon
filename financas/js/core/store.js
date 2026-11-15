@@ -87,7 +87,7 @@ export function salvarLancamento(l, { repetir = false } = {}) {
   const e = dados();
   if (l.id) {
     const i = e.lancamentos.findIndex((x) => x.id === l.id);
-    if (i >= 0) { const n = { ...e.lancamentos[i], ...l }; if (!n.compartilhado || n.tipo !== 'despesa' || n.rateio === 'dividir') delete n.rateio; e.lancamentos[i] = tocar(n); }
+    if (i >= 0) { const n = { ...e.lancamentos[i], ...l }; if (!n.compartilhado || n.tipo !== 'despesa' || n.rateio === 'dividir') delete n.rateio; if (n.categoria !== 'outros' && n.categoria !== 'outras-receitas') delete n.classificado; e.lancamentos[i] = tocar(n); }
   } else {
     l = tocar({ dono: eu() || undefined, compartilhado: compartilhaPorPadrao(l.categoria), ...l, id: novoId() });
     if (!l.compartilhado || l.tipo !== 'despesa' || !l.rateio || l.rateio === 'dividir') delete l.rateio;
@@ -220,6 +220,32 @@ export function apagarLancamentos(ids) {
 }
 
 // ---------- plano de contas ----------
+/**
+ * Classifica um lançamento pendente e aprende: os outros pendentes com a mesma descrição vão para a mesma
+ * conta, e as próximas importações e notificações já chegam classificadas. Devolve quantos outros mudaram.
+ */
+export function classificar(id, categoria) {
+  const e = dados();
+  const l = e.lancamentos.find((x) => x.id === id);
+  if (!l) return 0;
+  const generica = categoria === 'outros' || categoria === 'outras-receitas';
+  l.categoria = categoria;
+  if (generica) l.classificado = true; else delete l.classificado;   // escolheu "Outras" de propósito: sai dos pendentes
+  tocar(l);
+  let n = 0;
+  const k = chaveDescricao(l.descricao || '');
+  if (k && !generica) {
+    e.regras[l.tipo + ':' + k] = categoria;
+    for (const o of e.lancamentos) {
+      if (o === l || o.tipo !== l.tipo || o.classificado || (o.categoria !== 'outros' && o.categoria !== 'outras-receitas')) continue;
+      if ((o.dono && o.dono !== eu()) || chaveDescricao(o.descricao || '') !== k) continue;
+      o.categoria = categoria; tocar(o); n++;
+    }
+  }
+  salvar();
+  return n;
+}
+
 export function moverLancamentos(ids, categoria) {
   const alvo = new Set(ids);
   for (const l of dados().lancamentos) if (alvo.has(l.id)) { l.categoria = categoria; tocar(l); }

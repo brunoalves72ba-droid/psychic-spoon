@@ -382,3 +382,16 @@ button.item.rec { text-align: left; min-height: 56px; }
 .saldo .v.saida { color: var(--texto-saida); }
 .etq.ok { background: color-mix(in srgb, var(--bom) 22%, transparent); color: var(--tinta); }
 dialog.rec-editar .form-rec { display: grid; gap: 10px; }
+
+/* pendente de classificação: amarelo; o que foi identificado sai da frente */
+.a-classificar { background: color-mix(in srgb, var(--atencao) 14%, transparent); box-shadow: inset 4px 0 0 var(--atencao); }
+.lista li.a-classificar, .imp.a-classificar { border-radius: 12px; }
+.etq.classificar { background: color-mix(in srgb, var(--atencao) 30%, transparent); color: var(--tinta); }
+.classificar-aqui { display: grid; gap: 4px; padding: 0 14px 12px 14px; font-size: .85rem; color: var(--tinta-2); }
+.resolvido { opacity: .35; transition: opacity .5s; background: color-mix(in srgb, var(--bom) 16%, transparent); }
+.aviso-classificar { display: block; text-decoration: none; color: inherit; background: color-mix(in srgb, var(--atencao) 16%, var(--superficie)); border-left: 4px solid var(--atencao); }
+.aviso-classificar b { display: block; }
+.chip.chip-pend { border-color: var(--atencao); }
+.chip.chip-pend[aria-pressed=true] { background: var(--atencao); color: #1a1a1a; }
+.resumo-ident:empty { display: none; }
+.ok-tudo { color: var(--tinta-2); }

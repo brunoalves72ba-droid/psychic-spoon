@@ -91,7 +91,9 @@ function previa(main, { formato, itens: brutos, cartao, duvidas = 0 }, nome) {
   const itens = prepararImportacao(brutos, e).sort((a, b) => b.data.localeCompare(a.data));
   const datas = itens.map((i) => i.data).sort();
   const br = (d) => d.split('-').reverse().join('/');
-  let filtro = 'todos';
+  // o que o app não reconheceu fica pendente (amarelo); o que ele identificou sai da frente
+  const pendente = (it) => !it.jaImportado && it.marcado && !it.chave && it.reconhecido?.fonte === 'padrao';
+  let filtro = itens.some(pendente) ? 'pendentes' : 'identificados';
 
   main.innerHTML = `<h1>Conferir importação</h1>
     <section class="cartao">
@@ -100,10 +102,12 @@ function previa(main, { formato, itens: brutos, cartao, duvidas = 0 }, nome) {
       <div id="avisos-imp"></div>
     </section>
     <div class="chips" role="group" aria-label="Mostrar" style="margin-bottom:10px">
+      <button type="button" class="chip" data-f="pendentes"></button>
+      <button type="button" class="chip" data-f="identificados"></button>
+      <button type="button" class="chip" data-f="fora"></button>
       <button type="button" class="chip" data-f="todos">Todos</button>
-      <button type="button" class="chip" data-f="marcados">Vão entrar</button>
-      <button type="button" class="chip" data-f="fora">Ficam de fora</button>
     </div>
+    <p class="sub resumo-ident" id="resumo-ident"></p>
     <ul class="lista" id="itens"></ul>
     <div class="barra-importar"><p class="sub" id="soma"></p>
       <div class="btn-linha"><button class="btn" type="button" id="cancelar">Cancelar</button><button class="btn primario" type="button" id="confirmar"></button></div></div>`;
@@ -124,23 +128,29 @@ function previa(main, { formato, itens: brutos, cartao, duvidas = 0 }, nome) {
     if (it.chave) return 'escolhida por você';
     const r = it.reconhecido;
     if (!r) return '';
-    return { regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `reconhecida por “${r.palavra}”`, padrao: 'não reconhecida — confira' }[r.fonte] || '';
+    return { regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `reconhecida por “${r.palavra}”`, padrao: 'a classificar: escolha a conta' }[r.fonte] || '';
   };
   const motivo = (it) => it.jaImportado ? 'Já importado'
     : it.manual ? `Parece “${esc(it.manual.descricao || 'lançamento')}” de ${br(it.manual.data)}`
     : it.transferencia ? 'Fatura, estorno ou transferência' : '';
 
   const pintar = () => {
-    main.querySelectorAll('[data-f]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === filtro)));
-    const vis = itens.map((it, i) => [it, i]).filter(([it]) => filtro === 'todos' || (filtro === 'marcados') === it.marcado);
-    $('#itens').innerHTML = vis.length ? vis.map(([it, i]) => `<li class="imp ${it.marcado ? '' : 'fora'}">
+    const nPend = itens.filter(pendente).length, nIdent = itens.filter((it) => it.marcado && !pendente(it)).length, nFora = itens.filter((it) => !it.marcado).length;
+    const rot = { pendentes: `A classificar (${nPend})`, identificados: `Identificados (${nIdent})`, fora: `Ficam de fora (${nFora})` };
+    main.querySelectorAll('[data-f]').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.f === filtro)); if (rot[b.dataset.f]) b.textContent = rot[b.dataset.f]; });
+    const vis = itens.map((it, i) => [it, i]).filter(([it]) => filtro === 'todos' || (filtro === 'pendentes' ? pendente(it) : filtro === 'identificados' ? it.marcado && !pendente(it) : !it.marcado));
+    const vazio = filtro === 'pendentes'
+      ? `<li class="vazio ok-tudo">✓ Nada a classificar.${nIdent ? ` Os ${nIdent} lançamentos foram identificados e vão entrar como estão.` : ''}</li>`
+      : '<li class="vazio">Nada aqui.</li>';
+    $('#resumo-ident').innerHTML = filtro === 'pendentes' && nPend && nIdent ? `✓ <b>${nIdent}</b> identificado${nIdent > 1 ? 's' : ''} automaticamente: ${nIdent > 1 ? 'vão' : 'vai'} entrar como ${nIdent > 1 ? 'estão' : 'está'}. <button type="button" class="link-btn" data-f2="identificados">Ver</button>` : '';
+    $('#itens').innerHTML = vis.length ? vis.map(([it, i]) => `<li class="imp ${it.marcado ? '' : 'fora'} ${pendente(it) ? 'a-classificar' : ''}">
       <label class="imp-sel"><input type="checkbox" data-i="${i}" ${it.marcado ? 'checked' : ''} ${it.jaImportado ? 'disabled' : ''} aria-label="Importar ${esc(it.descricao)} de ${reais(it.valor)}"></label>
       <div class="imp-txt">
         <div class="imp-l1"><span class="t1">${esc(it.descricao || '(sem descrição)')}</span><span class="val ${it.tipo}">${it.tipo === 'receita' ? '+ ' : '− '}${reais(it.valor)}</span></div>
         <div class="t2">${br(it.data)}${motivo(it) ? ` · <span class="etq">${motivo(it)}</span>` : ''}${it.duvida ? ' · <span class="etq confira">confira: entrada ou saída?</span>' : ''}${formato === 'PDF' && !it.jaImportado ? ` · <button type="button" class="link-btn" data-inv="${i}">trocar entrada/saída</button>` : ''}</div>
         <label class="imp-conta"><span>Conta <small class="muted">${esc(porque(it))}</small></span>
           <select data-cat="${i}" aria-label="Conta de ${esc(it.descricao)}" ${it.jaImportado ? 'disabled' : ''}>${opcoes(it.tipo, it.categoria)}</select></label>
-      </div></li>`).join('') : '<li class="vazio">Nada aqui.</li>';
+      </div></li>`).join('') : vazio;
     const marc = itens.filter((it) => it.marcado);
     const s = marc.reduce((a, it) => (it.tipo === 'receita' ? (a.r += it.valor) : (a.d += it.valor), a), { r: 0, d: 0 });
     $('#soma').textContent = `Entradas ${reais(s.r)} · saídas ${reais(s.d)}`;
@@ -157,9 +167,10 @@ function previa(main, { formato, itens: brutos, cartao, duvidas = 0 }, nome) {
       it.chave = chaveDescricao(it.descricao); // o app aprende para as próximas importações
       // aplica a mesma escolha às outras linhas com a mesma descrição
       let n = 0;
-      for (const o of itens) if (o !== it && !o.chave && !o.jaImportado && o.tipo === it.tipo && chaveDescricao(o.descricao) === it.chave) { o.categoria = t.value; n++; }
+      for (const o of itens) if (o !== it && !o.chave && !o.jaImportado && o.tipo === it.tipo && chaveDescricao(o.descricao) === it.chave) { o.categoria = t.value; o.chave = it.chave; n++; }
       if (n) aviso(`Mudei também ${n} outro${n > 1 ? 's' : ''} com a mesma descrição.`);
-      pintar();
+      // classificado: sai da lista de pendentes (com um instante para ver que deu certo)
+      if (filtro === 'pendentes') { t.closest('li').classList.add('resolvido'); setTimeout(pintar, 600); } else pintar();
     }
   });
   // PDF: trocar entrada ⇄ saída de um lançamento (o sinal nem sempre vem claro no PDF)
@@ -176,6 +187,7 @@ function previa(main, { formato, itens: brutos, cartao, duvidas = 0 }, nome) {
   });
   $('#cancelar').onclick = () => render(main);
   main.querySelectorAll('[data-f]').forEach((b) => (b.onclick = () => { filtro = b.dataset.f; pintar(); }));
+  $('#resumo-ident').addEventListener('click', (ev) => { if (ev.target.closest('[data-f2]')) { filtro = 'identificados'; pintar(); } });
   $('#confirmar').onclick = () => {
     for (const it of itens) it.pagamento = formaDePagamento(it, cartao);
     const ids = importarItens(itens);

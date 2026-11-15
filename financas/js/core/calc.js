@@ -104,6 +104,10 @@ export const doMes = (estado, mes) => estado.lancamentos.filter((l) => l.data.st
 /** Transferências, pagamento de fatura e aplicações movimentam dinheiro, mas não são gasto nem renda. */
 export const conta = (l) => !NEUTRAS.has(l.categoria);
 
+// contas genéricas: o que cai nelas sem a pessoa escolher fica pendente (a classificar), em amarelo
+export const GENERICAS = new Set(['outros', 'outras-receitas']);
+export const aClassificar = (l) => GENERICAS.has(l.categoria) && !l.classificado;
+
 export function resumo(lancs) {
   let receitas = 0, despesas = 0;
   for (const l of lancs) if (conta(l)) l.tipo === 'receita' ? (receitas += l.valor) : (despesas += l.valor);

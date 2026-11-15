@@ -5,13 +5,14 @@ import { reais } from '../core/dinheiro.js';
 import { mesAtual, nomeDia } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
 import { GRUPOS, grupoDaCategoria } from '../core/plano.js';
-import { categoria as catPorId, nomeCartao, eu, nomePessoa, outra, compartilhar, definirRateio } from '../core/store.js';
+import { categoria as catPorId, nomeCartao, eu, nomePessoa, outra, compartilhar, definirRateio, classificar } from '../core/store.js';
 import { aviso, escolher } from '../core/ui.js';
-import { rateioDe, responsavel } from '../core/calc.js';
+import { rateioDe, responsavel, aClassificar } from '../core/calc.js';
+import { opcoesAgrupadas } from './plano.js';
 
 export const titulo = 'Extrato';
 
-export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
+export function render(main, { m, cat = '', tipo = '', ver = 'minhas', pend = '' }) {
   const mes = /^\d{4}-\d{2}$/.test(m || '') && m <= mesAtual() ? m : mesAtual();
   const e = dados();
   const visao = ver === 'casal' ? 'casal' : 'minhas';
@@ -23,7 +24,7 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
   const usadas = [...new Set(doMesTodo.map((l) => l.categoria))].sort((a, b) => nomeCategoria(a).localeCompare(nomeCategoria(b)));
   const grupoDe = (id) => grupoDaCategoria(catPorId(id) || { id });
   const gruposUsados = GRUPOS.filter((g) => usadas.some((c) => grupoDe(c) === g.id));
-  const filtro = { texto: '', tipo, categoria: cat };
+  const filtro = { texto: '', tipo, categoria: cat, pend: pend === '1' };
 
   main.innerHTML = `${navMes('#/extrato', mes)}
     <div class="alternar" role="group" aria-label="Ver">
@@ -39,6 +40,7 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
         <button type="button" class="chip" data-tipo="">Tudo</button>
         <button type="button" class="chip" data-tipo="despesa">Saídas</button>
         <button type="button" class="chip" data-tipo="receita">Entradas</button>
+        ${visao === 'minhas' ? '<button type="button" class="chip chip-pend" id="f-pend"></button>' : ''}
       </div>
     </div>
     <p class="sub" id="total" aria-live="polite"></p>
@@ -54,15 +56,23 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
 
   const pintar = () => {
     // filtros ficam na URL: ao editar um lançamento e voltar, a tela volta igual
-    const qs = new URLSearchParams({ m: mes, ...(visao === 'casal' && { ver: 'casal' }), ...(filtro.categoria && { cat: filtro.categoria }), ...(filtro.tipo && { tipo: filtro.tipo }) });
+    const qs = new URLSearchParams({ m: mes, ...(visao === 'casal' && { ver: 'casal' }), ...(filtro.categoria && { cat: filtro.categoria }), ...(filtro.tipo && { tipo: filtro.tipo }), ...(filtro.pend && { pend: '1' }) });
     history.replaceState(null, '', `#/extrato?${qs}`);
     main.querySelectorAll('[data-tipo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === filtro.tipo)));
     const doGrupo = filtro.categoria.startsWith('g:') ? doMesTodo.filter((l) => 'g:' + grupoDe(l.categoria) === filtro.categoria) : doMesTodo;
-    const lancs = filtrar(doGrupo, { ...filtro, categoria: filtro.categoria.startsWith('g:') ? '' : filtro.categoria }, nomeCategoria);
+    const todos = filtrar(doGrupo, { ...filtro, categoria: filtro.categoria.startsWith('g:') ? '' : filtro.categoria }, nomeCategoria);
+    const lancs = filtro.pend ? todos.filter(aClassificar) : todos;
+    const nPend = doMesTodo.filter((l) => (!l.dono || l.dono === eu()) && aClassificar(l)).length;
+    const fp = $('#f-pend');
+    if (fp) { fp.textContent = `A classificar (${nPend})`; fp.hidden = !nPend && !filtro.pend; fp.setAttribute('aria-pressed', String(filtro.pend)); }
     const r = resumo(lancs);
     $('#total').textContent = lancs.length
       ? `${lancs.length} lançamento${lancs.length > 1 ? 's' : ''} · entrou ${reais(r.receitas)} · saiu ${reais(r.despesas)}`
       : '';
+    if (!lancs.length && filtro.pend) {
+      $('#lista').innerHTML = `<div class="cartao vazio ok-tudo">${icone('ok')}<p><b>Tudo classificado.</b> Nenhum lançamento pendente${filtro.tipo || filtro.texto || filtro.categoria ? ' com esses filtros' : ' neste mês'}.</p></div>`;
+      return;
+    }
     if (!lancs.length) {
       $('#lista').innerHTML = `<div class="cartao vazio">${icone('carteira')}<p>${doMesTodo.length ? 'Nada encontrado com esses filtros.' : 'Nenhum lançamento neste mês.'}</p>${doMesTodo.length ? '' : '<div class="btn-linha"><a class="btn primario" href="#/lancar">Lançar</a><a class="btn" href="#/importar">Importar extrato</a></div>'}</div>`;
       return;
@@ -72,13 +82,14 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
       <ul class="lista">${g.itens.map((l) => {
         const meu = !l.dono || l.dono === eu();
         const tag = meu && !selecionando ? `a class="item" href="#/lancar?id=${encodeURIComponent(l.id)}"` : `div class="item"`;
-        return `<li class="${l.compartilhado ? 'comp' : ''}">${selecionando && meu ? `<label class="sel"><input type="checkbox" data-sel="${esc(l.id)}" ${sel.has(l.id) ? 'checked' : ''} aria-label="Selecionar ${esc(l.descricao || '')}"></label>` : ''}<${tag}>
+        const pendente = meu && visao === 'minhas' && aClassificar(l);
+        return `<li class="${l.compartilhado ? 'comp' : ''} ${pendente ? 'a-classificar' : ''}">${selecionando && meu ? `<label class="sel"><input type="checkbox" data-sel="${esc(l.id)}" ${sel.has(l.id) ? 'checked' : ''} aria-label="Selecionar ${esc(l.descricao || '')}"></label>` : ''}<${tag}>
         <span class="ic ${l.tipo}" aria-hidden="true">${esc(visao === 'casal' ? (nomePessoa(l.dono) || '?').slice(0, 1) : nomeCategoria(l.categoria).slice(0, 1))}</span>
         <span class="txt">
           <span class="linha1"><span class="t1">${esc(l.descricao || nomeCategoria(l.categoria))}</span><span class="val ${l.tipo}">${l.tipo === 'receita' ? '+ ' : '− '}${reais(l.valor)}</span></span>
-          <span class="t2">${esc(nomeCategoria(l.categoria))}${visao === 'casal' ? ` · pago por ${esc(nomePessoa(l.dono) || '—')}${l.tipo === 'despesa' && responsavel(l, dados().pessoas) ? ` <span class="etq ind">só de ${esc(nomePessoa(responsavel(l, dados().pessoas)))}</span>` : ''}` : ''}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.cartao ? ` · ${esc(nomeCartao(l.cartao))}` : ''}${l.origem === 'notificacao' ? ' <span class="etq">notificação</span>' : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}</span>
+          <span class="t2">${esc(nomeCategoria(l.categoria))}${visao === 'casal' ? ` · pago por ${esc(nomePessoa(l.dono) || '—')}${l.tipo === 'despesa' && responsavel(l, dados().pessoas) ? ` <span class="etq ind">só de ${esc(nomePessoa(responsavel(l, dados().pessoas)))}</span>` : ''}` : ''}${l.pagamento ? ` · ${esc(l.pagamento)}` : ''}${l.cartao ? ` · ${esc(nomeCartao(l.cartao))}` : ''}${l.origem === 'notificacao' ? ' <span class="etq">notificação</span>' : ''}${l.recorrente ? ' <span class="etq">fixa</span>' : ''}${l.importId ? ' <span class="etq">banco</span>' : ''}${pendente ? ' <span class="etq classificar">a classificar</span>' : ''}</span>
         </span>
-      </${meu && !selecionando ? 'a' : 'div'}>${visao === 'minhas' && !selecionando ? `<button type="button" class="btn-comp" data-comp="${esc(l.id)}" aria-pressed="${!!l.compartilhado}" aria-label="${esc(rotuloComp(l))}. Tocar para mudar">${esc(rotuloComp(l))}</button>` : ''}</li>`;
+      </${meu && !selecionando ? 'a' : 'div'}>${pendente && filtro.pend && !selecionando ? `<label class="classificar-aqui"><span>Conta</span><select data-classificar="${esc(l.id)}" aria-label="Conta de ${esc(l.descricao || 'lançamento')}">${opcoesAgrupadas(e, l.tipo, l.categoria)}</select></label>` : ''}${visao === 'minhas' && !selecionando ? `<button type="button" class="btn-comp" data-comp="${esc(l.id)}" aria-pressed="${!!l.compartilhado}" aria-label="${esc(rotuloComp(l))}. Tocar para mudar">${esc(rotuloComp(l))}</button>` : ''}</li>`;
       }).join('')}</ul>`).join('');
   };
 
@@ -105,6 +116,14 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
     });
   });
   $('#lista').addEventListener('change', (ev) => {
+    const cl = ev.target.closest('[data-classificar]');
+    if (cl) {
+      const n = classificar(cl.dataset.classificar, cl.value);
+      aviso(`Classificado em ${nomeCategoria(cl.value)}.${n ? ` Mais ${n} com a mesma descrição.` : ''} O app vai lembrar.`);
+      cl.closest('li').classList.add('resolvido');
+      setTimeout(pintar, 600);   // classificado sai da lista de pendentes
+      return;
+    }
     const c = ev.target.closest('[data-sel]');
     if (!c) return;
     c.checked ? sel.add(c.dataset.sel) : sel.delete(c.dataset.sel);
@@ -130,5 +149,6 @@ export function render(main, { m, cat = '', tipo = '', ver = 'minhas' }) {
   $('#busca').addEventListener('input', (ev) => { filtro.texto = ev.target.value; pintar(); });
   $('#cat').addEventListener('change', (ev) => { filtro.categoria = ev.target.value; pintar(); });
   main.querySelectorAll('[data-tipo]').forEach((b) => (b.onclick = () => { filtro.tipo = b.dataset.tipo; pintar(); }));
+  $('#f-pend')?.addEventListener('click', () => { filtro.pend = !filtro.pend; pintar(); });
   pintar();
 }

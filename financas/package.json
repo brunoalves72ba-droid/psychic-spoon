@@ -16,6 +16,7 @@
     "e2e:pdf": "node tests/e2e/pdf.mjs",
     "exemplos-pdf": "node tools/gerar-exemplos-pdf.mjs",
     "e2e:rateio": "node tests/e2e/rateio.mjs",
-    "e2e:recorrencias": "node tests/e2e/recorrencias.mjs"
+    "e2e:recorrencias": "node tests/e2e/recorrencias.mjs",
+    "e2e:pendentes": "node tests/e2e/pendentes.mjs"
   }
 }
