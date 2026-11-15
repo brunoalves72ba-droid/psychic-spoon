@@ -3,7 +3,7 @@
 import { h, top, seg, toast, confirmSheet, toggle } from '../core/ui.js';
 import * as voz from '../core/voz.js';
 import { S, salvar, apagarTudo } from '../core/estado.js';
-import { aplicarTema } from '../app.js';
+import { aplicarTema, procurarAtualizacao, versaoAtual } from '../app.js';
 import { PLANOS } from '../core/plano.js';
 import { L } from '../core/estado.js';
 import { plataforma, escolher } from '../core/plataforma.js';
@@ -11,6 +11,7 @@ import * as nuvem from '../core/nuvem.js';
 
 export default async function (el) {
   const ns = nuvem.status();
+  const versao = h('p.small.muted');
   const qual = h('span.small.dim');
   const pintarQual = () => { qual.textContent = `Agora: ${plataforma() === 'pc' ? 'computador (menu lateral, duas colunas, atalhos de teclado)' : 'celular (abas embaixo, uma coluna, botões grandes)'}.`; };
   pintarQual();
@@ -34,7 +35,15 @@ export default async function (el) {
     h('section.card.flat.col', h('h3', 'Sobre'),
       h('p.small', 'Formação IA Generativa: app pessoal de estudo para a trilha de IA generativa, para quem começa do zero e para quem tem TDAH.'),
       h('p.small.dim', 'App pessoal e não oficial: não é afiliado à escola que oferece o curso nem às empresas citadas nas lições. O conteúdo é formação geral; não é parecer jurídico nem tratamento clínico.'),
-      h('p.small.dim', '© Bruno Moura. Fontes Atkinson Hyperlegible e Bricolage Grotesque (SIL OFL 1.1). MicroPython (licença MIT).')));
+      h('p.small.dim', '© Bruno Moura. Fontes Atkinson Hyperlegible e Bricolage Grotesque (SIL OFL 1.1). MicroPython (licença MIT).'),
+      versao,
+      h('button.btn.block', { type: 'button', onclick: async (e) => {
+        const b = e.currentTarget; b.disabled = true; b.textContent = 'Procurando…';
+        const r = await procurarAtualizacao();
+        toast(r === 'nova' ? 'Versão nova encontrada. Ela baixa em alguns segundos e aparece o botão Atualizar.' : r === 'atual' ? 'Você já está na versão mais nova.' : 'Sem internet agora. Tente de novo depois.');
+        b.disabled = false; b.textContent = 'Procurar atualização';
+      } }, 'Procurar atualização')));
+  versaoAtual().then((v) => { versao.textContent = v ? `Versão ${v}` : ''; });
 }
 
 /** Leitura em voz alta: liga e desliga, leitura automática, voz do aparelho e velocidade. */
