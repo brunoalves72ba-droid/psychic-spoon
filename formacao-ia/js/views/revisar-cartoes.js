@@ -7,6 +7,7 @@ import { ESCADA } from '../core/srs.js';
 import { verificarConquistas } from '../core/conquistas.js';
 import { capturar } from '../core/pensamento.js';
 import { redesenhar } from '../app.js';
+import * as voz from '../core/voz.js';
 
 export default async function (el, [modo]) {
   let fila = filaDeHoje(modo === 'mais' ? 5 : 0).map((id) => ({ id, segunda: false }));
@@ -16,6 +17,7 @@ export default async function (el, [modo]) {
   const barraTopo = h('div.segs', { role: 'progressbar', 'aria-label': 'Cartões da sessão' });
   const corpo = h('div');
   const acoes = h('div');
+  const fimVoz = new AbortController();
   el.append(h('div.ptop', h('a.x', { href: '#/revisar', 'aria-label': 'Sair da revisão' }, icon('fecha')), barraTopo, cont), corpo, h('p.small.muted.so-pc', 'Atalhos: Espaço mostra a resposta; 1 errei, 2 difícil, 3 lembrei.'), h('div.acao-bar', acoes));
 
   if (!total) {
@@ -40,10 +42,14 @@ export default async function (el, [modo]) {
     const est = S.cartoes[item.id];
     const m = c.m != null ? modulo(c.m) : null;
     const verso = h('div.verso.hide', h('b', rich(c.v)), c.w ? h('span', rich(c.w)) : null, c.lid ? h('a.small', { href: `#/licao/${c.lid}`, style: { display: 'inline-block', marginTop: '10px' } }, `Rever a lição ${c.lid}`) : null);
+    const frente = h('div.frente', rich(c.f));
+    const idVoz = `cartao:${item.id}:${feitos}`;
     clear(corpo).append(h('article.cartao', { css: m ? { '--c': m.cor } : null },
+      voz.linhaVoz(() => voz.textoDe(frente) + (verso.classList.contains('hide') ? '' : '\n' + voz.textoDe(verso)), { id: idVoz, sinal: fimVoz.signal }),
       h('div.row.between', h('span.tag' + (m ? '.c' : ''), c.meu ? 'Seu cartão' : `${c.lid} · ${c.licao}`), item.segunda ? h('span.tag', 'de novo') : h('span.small.muted', `degrau de ${ESCADA[est.s]} ${ESCADA[est.s] === 1 ? 'dia' : 'dias'}`)),
-      h('div.frente', rich(c.f)), verso));
-    const mostrar = h('button.btn.primary.big', { type: 'button', onclick: () => { verso.classList.remove('hide'); pintarNotas(item); } }, 'Mostrar a resposta');
+      frente, verso));
+    if (voz.autoLigada()) voz.falar(voz.textoDe(frente), { id: idVoz }); else voz.parar();
+    const mostrar = h('button.btn.primary.big', { type: 'button', onclick: () => { verso.classList.remove('hide'); pintarNotas(item); if (voz.autoLigada()) voz.falar(voz.textoDe(verso), { id: idVoz }); } }, 'Mostrar a resposta');
     put(clear(acoes), h('button.btn.big.pens', { type: 'button', 'aria-label': 'Anotar um pensamento e voltar', onclick: capturar }, icon('nota')), mostrar);
     window.scrollTo(0, 0);
   }
@@ -91,5 +97,5 @@ export default async function (el, [modo]) {
   };
   document.addEventListener('keydown', teclas);
   proximo();
-  return () => document.removeEventListener('keydown', teclas);
+  return () => { document.removeEventListener('keydown', teclas); fimVoz.abort(); voz.parar(); };
 }

@@ -11,6 +11,7 @@ import { capturar } from '../core/pensamento.js';
 import { verificarConquistas } from '../core/conquistas.js';
 import { ehPC } from '../core/plataforma.js';
 import { figura } from '../core/fotos.js';
+import * as voz from '../core/voz.js';
 
 export default async function (el, [id]) {
   const L = licao(id);
@@ -27,6 +28,8 @@ export default async function (el, [id]) {
   const t0 = Date.now();
   let avisado = false, fluxo = false;
   const anterior = ORDEM[ORDEM.indexOf(id) - 1];
+  const fimVoz = new AbortController();     // solta os ouvintes da voz ao sair da lição
+  const chave = () => (p === 4 ? `4.${qi}` : String(p));
 
   // ---- topo: fechar, 7 passos tocáveis, relógio ----
   const segs = h('nav.segs.passos', { 'aria-label': 'Passos da lição', css: { '--c': m.cor } });
@@ -83,17 +86,18 @@ export default async function (el, [id]) {
 
   function montar() {
     const box = h('section.passo', { css: { '--c': m.cor }, tabIndex: -1 });
+    put(box, voz.linhaVoz(() => voz.textoDe(box), { id: `licao:${id}:${chave()}`, sinal: fimVoz.signal }));
     if (p === 0) {
-      box.append(h('div.eyebrow', `Lição ${L.id} · ${m.t}`), h('h1', L.t), figura(L.id, { capa: true }) || null, h('p.gancho', rich(L.gancho)),
+      put(box, h('div.eyebrow', `Lição ${L.id} · ${m.t}`), h('h1', L.t), figura(L.id, { capa: true }) || null, h('p.gancho', rich(L.gancho)),
         h('div.row.wrap', h('span.tag', `${L.min} min`), h('span.tag', '7 passos'), revisita ? h('span.tag.ok', 'Já concluída: revisão livre') : null));
-      if (anterior) box.append(h('a.btn.quiet.small', { href: `#/licao/${anterior}`, style: { alignSelf: 'flex-start' } }, `‹ Lição anterior: ${anterior} ${licao(anterior).t}`));
+      if (anterior) put(box, h('a.btn.quiet.small', { href: `#/licao/${anterior}`, style: { alignSelf: 'flex-start' } }, `‹ Lição anterior: ${anterior} ${licao(anterior).t}`));
     } else if (p === 1) {
-      box.append(rotulo('Ideia'), h('h2', L.t), h('div.callout.analogia', h('span.rot', 'Analogia'), rich(L.analogia)), figura(L.id) || null, blocks(L.ideia, { run: rodarPython }));
+      put(box, rotulo('Ideia'), h('h2', L.t), h('div.callout.analogia', h('span.rot', 'Analogia'), rich(L.analogia)), figura(L.id) || null, blocks(L.ideia, { run: rodarPython }));
     } else if (p === 2) {
-      box.append(rotulo('Exemplo resolvido'), h('h2', 'Veja um exemplo pronto'), blocks(L.exemplo, { run: rodarPython }));
+      put(box, rotulo('Exemplo resolvido'), h('h2', 'Veja um exemplo pronto'), blocks(L.exemplo, { run: rodarPython }));
     } else if (p === 3) {
       const status = h('div.banner.ok.hide', { role: 'status' });
-      box.append(rotulo('Sua vez'), h('div.row.between.wrap', h('h2', 'Exercício'), botaoConsulta()), montarExercicio(L.ex, (r) => {
+      put(box, rotulo('Sua vez'), h('div.row.between.wrap', h('h2', 'Exercício'), botaoConsulta()), montarExercicio(L.ex, (r) => {
         const g = registrarExercicio(id, { dePrimeira: !!r.dePrimeira && !r.ajuda, tent: r.tent, andaime: !!r.andaime });
         ganho += g; exLiberado = true;
         put(clear(status), g ? h('span.xp', `+${g} XP`) : null, h('span', r.ajuda ? 'Feito com ajuda. Tudo certo: é assim que se aprende.' : 'Exercício feito.'));
@@ -102,21 +106,22 @@ export default async function (el, [id]) {
       }, { licao: L }), status);
       if (!exLiberado) {
         const pular = h('button.btn.quiet.small', { type: 'button', style: { alignSelf: 'center' }, onclick: () => { exLiberado = true; pular.remove(); pintarBotao(); toast('Tudo bem. Ele continua aqui se você quiser voltar.'); } }, 'Pular o exercício por agora');
-        box.append(pular);
+        put(box, pular);
       }
     } else if (p === 4) {
       const n = L.quiz.length, i = qi;
-      box.append(h('div.row.between.wrap', h('div.eyebrow', `Passo 5 de 7 · Quiz · pergunta ${i + 1} de ${n}`), botaoConsulta()));
-      box.append(pergunta(L.quiz[i], (ok) => {
+      put(box, h('div.row.between.wrap', h('div.eyebrow', `Passo 5 de 7 · Quiz · pergunta ${i + 1} de ${n}`), botaoConsulta()));
+      put(box, pergunta(L.quiz[i], (ok) => {
         respondida[i] = true;
         const g = registrarQuiz(id, i, ok);
         ganho += g;
-        if (g) box.append(h('div', h('span.xp', `+${g} XP`)));
+        if (g) put(box, h('div', h('span.xp', `+${g} XP`)));
+        if (voz.autoLigada()) voz.falar(voz.textoDe(box.querySelector('.why')), { id: `licao:${id}:${chave()}` });
         if (p === 4 && qi === i) pintarBotao();
       }));
-      if (ehPC()) box.append(h('p.small.muted.atalho', 'Atalho: teclas 1, 2 e 3 escolhem a opção.'));
+      if (ehPC()) put(box, h('p.small.muted.atalho', 'Atalho: teclas 1, 2 e 3 escolhem a opção.'));
     } else if (p === 5) {
-      box.append(rotulo('Erro comum de iniciante'), h('div.callout.erro', h('span.rot', 'Erro comum'), h('h2', { style: { marginBottom: '6px' } }, L.erro.t), h('div.prose', h('p', rich(L.erro.d)))), botaoConsulta());
+      put(box, rotulo('Erro comum de iniciante'), h('div.callout.erro', h('span.rot', 'Erro comum'), h('h2', { style: { marginBottom: '6px' } }, L.erro.t), h('div.prose', h('p', rich(L.erro.d)))), botaoConsulta());
     }
     return box;
   }
@@ -145,6 +150,7 @@ export default async function (el, [id]) {
     if (p < 6) pintarBotao();
     clear(corpo).append(box);
     window.scrollTo(0, 0);
+    if (p < 6 && voz.autoLigada()) voz.falar(voz.textoDe(box), { id: `licao:${id}:${chave()}` }); else voz.parar();
     try { box.focus({ preventScroll: true }); } catch {}
   }
 
@@ -191,7 +197,7 @@ export default async function (el, [id]) {
     const prox = seguinte(id);
     const proxL = prox && licao(prox);
     const pm = progressoModulo(m.n, S.licoes);
-    box.append(h('div.festa',
+    put(box, h('div.festa',
       h('div.selo', icon('check')),
       h('h1', r.primeira ? 'Lição concluída' : 'Revisão concluída'),
       h('div.row.wrap', { style: { justifyContent: 'center' } }, h('span.xp', `+${ganho} XP`), h('span.tag', `${acertos} de ${L.quiz.length} no quiz`)),
@@ -210,22 +216,22 @@ export default async function (el, [id]) {
       bFeito.disabled = feito;
       put(linha, bFeito, feito ? null : h('span.small.muted.grow', noPC && !ehPC() ? 'Ela fica guardada e aparece em destaque quando você abrir o app no computador.' : 'Se não der agora, ela fica guardada em Projeto › Práticas pendentes.'));
       cardMao.append(linha);
-      box.append(cardMao);
+      put(box, cardMao);
     }
 
     const diario = h('input.inp', { type: 'text', placeholder: 'Uma frase sobre esta sessão (opcional)', 'aria-label': 'Diário de bordo: uma frase sobre esta sessão', maxLength: 240 });
     const bDiario = h('button.btn.small', { type: 'button', onclick: () => { const g = escreverDiario(diario.value); if (g) { diario.value = ''; diario.placeholder = 'Guardado no diário de bordo'; bDiario.disabled = true; toast(`Diário atualizado. +${g} XP`); } } }, 'Guardar');
-    box.append(h('div.row', diario, bDiario));
+    put(box, h('div.row', diario, bDiario));
 
-    if (pm.feitas === pm.total) box.append(h('div.banner.ouro', h('div', h('b', `Módulo ${m.n} completo. `), `Agora o projeto ganha: ${m.ganha.toLowerCase()}.`, h('div', { style: { marginTop: '8px' } }, h('a.btn.small', { href: `#/projeto/m/${m.n}` }, 'Ver a missão do projeto')))));
-    if (proxL) box.append(h('a.btn.primary.big.block', { href: `#/licao/${prox}` }, h('span', h('span.small', { style: { display: 'block', fontWeight: '600', opacity: '.85' } }, 'Próxima, já carregada'), `${proxL.id} ${proxL.t} · ${proxL.min} min`)));
-    else box.append(h('div.banner.ok', h('b', 'Você concluiu todas as lições da trilha. '), 'O que falta agora é o projeto final.'));
-    box.append(h('div.row.wrap', h('a.btn.quiet.grow', { href: `#/licao/${id}`, onclick: (e) => { e.preventDefault(); location.hash = '#/trilha'; setTimeout(() => { location.hash = `#/licao/${id}`; }, 0); } }, 'Rever esta lição'), h('a.btn.quiet.grow', { href: '#/hoje' }, 'Parar por hoje')));
+    if (pm.feitas === pm.total) put(box, h('div.banner.ouro', h('div', h('b', `Módulo ${m.n} completo. `), `Agora o projeto ganha: ${m.ganha.toLowerCase()}.`, h('div', { style: { marginTop: '8px' } }, h('a.btn.small', { href: `#/projeto/m/${m.n}` }, 'Ver a missão do projeto')))));
+    if (proxL) put(box, h('a.btn.primary.big.block', { href: `#/licao/${prox}` }, h('span', h('span.small', { style: { display: 'block', fontWeight: '600', opacity: '.85' } }, 'Próxima, já carregada'), `${proxL.id} ${proxL.t} · ${proxL.min} min`)));
+    else put(box, h('div.banner.ok', h('b', 'Você concluiu todas as lições da trilha. '), 'O que falta agora é o projeto final.'));
+    put(box, h('div.row.wrap', h('a.btn.quiet.grow', { href: `#/licao/${id}`, onclick: (e) => { e.preventDefault(); location.hash = '#/trilha'; setTimeout(() => { location.hash = `#/licao/${id}`; }, 0); } }, 'Rever esta lição'), h('a.btn.quiet.grow', { href: '#/hoje' }, 'Parar por hoje')));
     avisarConquistas();
   }
 
   function avisarConquistas() { for (const c of verificarConquistas()) toast(`Conquista: ${c.t}`); }
 
   desenhar();
-  return () => { clearInterval(tick); document.removeEventListener('keydown', teclas); };
+  return () => { clearInterval(tick); document.removeEventListener('keydown', teclas); fimVoz.abort(); voz.parar(); };
 }

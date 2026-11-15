@@ -7,6 +7,7 @@ import * as nuvem from './core/nuvem.js';
 import { aplicarPlataforma } from './core/plataforma.js';
 import './core/instalar.js'; // escuta o convite de instalação desde o início
 import { persistir } from './core/store.js';
+import { parar as pararVoz } from './core/voz.js';
 
 export const OWNER = 'Bruno Moura';
 const APP = 'Formação IA';
@@ -37,6 +38,7 @@ function parse() {
 }
 
 function leave() {
+  pararVoz();
   if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
   document.querySelectorAll('.sheet-bg').forEach((x) => x.remove());
 }
