@@ -2,7 +2,7 @@
 // Service worker: pré-cache de tudo na primeira visita; depois, o app funciona offline.
 // A linha abaixo muda a cada versão publicada (npm run precache). É ela que faz o navegador
 // perceber que existe versão nova: ele compara este arquivo byte a byte.
-// versao: 9e6e9b15d64f
+// versao: 949ad4fe738c
 importScripts('sw-assets.js'); // define self.LF_VERSION e self.LF_ASSETS
 
 const CACHE = 'limpa-fotos-' + self.LF_VERSION;
