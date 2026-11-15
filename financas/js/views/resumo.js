@@ -1,28 +1,30 @@
-// Resumo do mês: quanto entrou, quanto saiu, para onde foi e como está o ritmo.
-import { dados, nomeCategoria, categoria as catPorId, pendentesAtivos } from '../core/store.js';
+// Minhas contas: o mês de quem usa este celular (privadas e compartilhadas que eu paguei).
+import { dados, nomeCategoria, categoria as catPorId, pendentesAtivos, eu, nomePessoa, limites } from '../core/store.js';
 import { GRUPOS, grupoDaCategoria, sugestoesPlano } from '../core/plano.js';
-import { doMes, resumo, porCategoria, historico, previsao, orcamentos } from '../core/calc.js';
+import { doMes, resumo, porCategoria, historico, previsao, orcamentos, daVisao } from '../core/calc.js';
 import { reais, reaisCurto } from '../core/dinheiro.js';
 import { mesAtual, somarMeses, nomeMes, nomeMesCurto } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
 
-export const titulo = 'Resumo';
+export const titulo = 'Minhas contas';
 
 let visao = 'grupos';
 try { visao = localStorage.getItem('fin-visao') || 'grupos'; } catch {}
 
 export function render(main, { m }) {
   const mes = /^\d{4}-\d{2}$/.test(m || '') && m <= mesAtual() ? m : mesAtual();
-  const e = dados();
+  const tudo = dados();
+  // só o que é meu (as contas da outra pessoa ficam na aba Casal, e só as compartilhadas)
+  const e = { ...tudo, lancamentos: daVisao(tudo.lancamentos, 'eu', eu()), recorrentes: tudo.recorrentes.filter((r) => !r.dono || r.dono === eu()) };
   const lancs = doMes(e, mes);
   const r = resumo(lancs);
   const ant = resumo(doMes(e, somarMeses(mes, -1)));
   const cats = porCategoria(lancs);
   const prev = previsao(e, mes);
-  const orc = orcamentos(e, mes).filter((o) => o.status !== 'ok');
+  const orc = orcamentos(lancs, limites(eu())).filter((o) => o.status !== 'ok');
 
   if (!e.lancamentos.length) {
-    main.innerHTML = `${navMes('#/resumo', mes)}
+    main.innerHTML = `<p class="conta-de">Conta ${esc(nomePessoa(eu()))}</p>${navMes('#/resumo', mes)}
       <div class="cartao vazio">${icone('carteira')}
         <h2>Comece anotando um gasto</h2>
         <p>Cada vez que pagar algo, toque em <b>Lançar</b>. Leva uns 5 segundos. Em poucos dias você já vê para onde vai o seu dinheiro.</p>
@@ -50,6 +52,7 @@ export function render(main, { m }) {
   }
 
   const sug = sugestoesPlano(e);
+  const comp = lancs.filter((l) => l.compartilhado && l.tipo === 'despesa').reduce((a, l) => a + l.valor, 0);
   // linhas do gráfico de barras: por grupo (com as contas de cada um) ou por conta
   const grupoDe = (id) => grupoDaCategoria(catPorId(id) || { id });
   const linhas = visao === 'grupos'
@@ -61,7 +64,7 @@ export function render(main, { m }) {
   const maiorLinha = linhas[0]?.total || 1;
   const hist = historico(e, mes, 6);
 
-  main.innerHTML = `${navMes('#/resumo', mes)}
+  main.innerHTML = `<p class="conta-de">Conta ${esc(nomePessoa(eu()))}</p>${navMes('#/resumo', mes)}
     <section class="cartao saldo" aria-label="Saldo do mês">
       <div class="rotulo">${r.saldo >= 0 ? 'Sobrou' : 'Faltou'} ${prev ? 'até agora' : 'no mês'}</div>
       <div class="valor ${r.saldo < 0 ? 'neg' : ''}">${reais(Math.abs(r.saldo))}</div>
@@ -74,6 +77,7 @@ export function render(main, { m }) {
     ${dicas.length ? `<section class="cartao dicas" aria-label="Como está o mês">${dicas.map(([ic, t]) => `<div class="dica">${icone(ic)}<div>${t}</div></div>`).join('')}</section>` : ''}
 
     ${pendentesAtivos().length ? `<a class="cartao aviso-plano aviso-caixa" href="#/caixa"><b>${pendentesAtivos().length} lançamento${pendentesAtivos().length > 1 ? 's' : ''} a confirmar</b><span class="sub">Lidos das notificações do banco. Toque para conferir.</span></a>` : ''}
+    ${comp ? `<a class="cartao aviso-plano aviso-caixa" href="#/casal?m=${mes}"><b>${reais(comp)} compartilhados com o casal</b><span class="sub">Dos seus gastos do mês, estes aparecem também para ${esc(nomePessoa(dados().pessoas.find((p) => p.id !== eu())?.id))}. Veja o acerto na aba Casal.</span></a>` : ''}
     ${sug.total ? `<a class="cartao aviso-plano" href="#/plano"><b>${sug.total} sugest${sug.total > 1 ? 'ões' : 'ão'} para o seu plano de contas</b><span class="sub">Contas novas, gastos para classificar e contas fixas que o app encontrou.</span></a>` : ''}
 
     <section class="cartao">

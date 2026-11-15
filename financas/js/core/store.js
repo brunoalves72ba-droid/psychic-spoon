@@ -5,8 +5,55 @@ import { lerNotificacao, chaveNotificacao, dividirParcelas } from './notificacoe
 import { mesAtual } from './datas.js';
 
 const CHAVE = 'fin-dados';
+const CHAVE_APARELHO = 'fin-aparelho';
 let estado = null;
 const ouvintes = new Set();
+
+/** Marca um item como mexido agora (a sincronização fica com a versão mais nova). */
+export const tocar = (x) => { if (x) x._t = Date.now(); return x; };
+const lapide = (e, id) => { e.apagados[id] = Date.now(); };
+
+// ---------- este celular (não sincroniza) ----------
+let ap = null;
+export function aparelho() {
+  if (ap) return ap;
+  try { ap = JSON.parse(globalThis.localStorage?.getItem(CHAVE_APARELHO) || 'null'); } catch { ap = null; }
+  if (!ap || !ap.id) ap = { id: novoId(), pessoa: '', modelo: '', nuvem: {} };
+  ap.nuvem ||= {};
+  return ap;
+}
+export function salvarAparelho(muda = {}) {
+  ap = { ...aparelho(), ...muda };
+  try { globalThis.localStorage?.setItem(CHAVE_APARELHO, JSON.stringify(ap)); } catch {}
+  return ap;
+}
+/** Quem usa este celular: 'bruno' | 'rita' (ou '' antes de escolher). */
+export const eu = () => aparelho().pessoa;
+export const pessoa = (id) => dados().pessoas.find((p) => p.id === id);
+export const nomePessoa = (id) => pessoa(id)?.nome || '';
+export const outra = () => dados().pessoas.find((p) => p.id !== eu());
+
+/**
+ * Define de quem é este celular. Lançamentos, contas fixas e metas antigas (de antes de
+ * existir "Conta Bruno / Conta Rita") passam a ser dessa pessoa.
+ */
+export function definirPessoa(id) {
+  const e = dados();
+  salvarAparelho({ pessoa: id });
+  for (const l of e.lancamentos) if (!l.dono) { l.dono = id; tocar(l); }
+  for (const r of e.recorrentes) if (!r.dono) { r.dono = id; tocar(r); }
+  if (e.orcamentos._semDono) {
+    if (!e.orcamentos[id]) e.orcamentos[id] = { ...e.orcamentos._semDono, _t: Date.now() };
+    delete e.orcamentos._semDono;
+  }
+  registrarAparelho();
+  salvar();
+}
+export function registrarAparelho(extra = {}) {
+  const e = dados(), a = aparelho();
+  if (!a.pessoa) return;
+  e.aparelhos[a.id] = { ...(e.aparelhos[a.id] || {}), pessoa: a.pessoa, modelo: a.modelo || '', ...extra, _t: Date.now() };
+}
 
 export function carregar(armazem = globalThis.localStorage) {
   try {
@@ -26,9 +73,9 @@ export function atualizarRecorrentes() {
   return n;
 }
 
-export function salvar(armazem = globalThis.localStorage) {
+export function salvar(armazem = globalThis.localStorage, { quieto = false } = {}) {
   try { armazem?.setItem(CHAVE, JSON.stringify(estado)); } catch { /* armazenamento cheio ou bloqueado */ }
-  for (const f of ouvintes) f(estado);
+  if (!quieto) for (const f of ouvintes) f(estado);
 }
 export const aoMudar = (f) => { ouvintes.add(f); return () => ouvintes.delete(f); };
 
@@ -40,11 +87,11 @@ export function salvarLancamento(l, { repetir = false } = {}) {
   const e = dados();
   if (l.id) {
     const i = e.lancamentos.findIndex((x) => x.id === l.id);
-    if (i >= 0) e.lancamentos[i] = { ...e.lancamentos[i], ...l };
+    if (i >= 0) e.lancamentos[i] = tocar({ ...e.lancamentos[i], ...l });
   } else {
-    l = { ...l, id: novoId() };
+    l = tocar({ dono: eu() || undefined, compartilhado: compartilhaPorPadrao(l.categoria), ...l, id: novoId() });
     if (repetir) {
-      const r = { id: novoId(), tipo: l.tipo, valor: l.valor, dia: +l.data.slice(8, 10), categoria: l.categoria, descricao: l.descricao, pagamento: l.pagamento, inicio: l.data.slice(0, 7), fim: null, gerados: [l.data.slice(0, 7)] };
+      const r = tocar({ id: novoId(), tipo: l.tipo, valor: l.valor, dia: +l.data.slice(8, 10), categoria: l.categoria, descricao: l.descricao, pagamento: l.pagamento, inicio: l.data.slice(0, 7), fim: null, gerados: [l.data.slice(0, 7)], dono: l.dono, compartilhado: !!l.compartilhado });
       e.recorrentes.push(r);
       l.recorrente = r.id;
     }
@@ -57,38 +104,45 @@ export function salvarLancamento(l, { repetir = false } = {}) {
 export function apagarLancamento(id) {
   const e = dados();
   e.lancamentos = e.lancamentos.filter((l) => l.id !== id);
+  lapide(e, id);
   salvar();
 }
 
 export function salvarRecorrente(r) {
   const e = dados();
   const i = e.recorrentes.findIndex((x) => x.id === r.id);
-  if (i >= 0) e.recorrentes[i] = { ...e.recorrentes[i], ...r };
+  if (i >= 0) e.recorrentes[i] = tocar({ ...e.recorrentes[i], ...r });
   salvar();
 }
 
 /** Para de repetir a partir do mês seguinte; o que já foi lançado continua no extrato. */
 export function pararRecorrente(id, ultimoMes) {
   const r = dados().recorrentes.find((x) => x.id === id);
-  if (r) { r.fim = ultimoMes; salvar(); }
+  if (r) { r.fim = ultimoMes; tocar(r); salvar(); }
 }
 export function apagarRecorrente(id) {
   const e = dados();
   e.recorrentes = e.recorrentes.filter((r) => r.id !== id);
+  lapide(e, id);
   salvar();
 }
 
-export function definirOrcamento(categoriaId, centavos) {
+/** Metas de um escopo: a pessoa ('bruno', 'rita') ou 'casal'. */
+export const limites = (escopo) => dados().orcamentos[escopo]?.cats || {};
+export function definirOrcamento(escopo, categoriaId, centavos) {
   const e = dados();
-  if (centavos > 0) e.orcamentos[categoriaId] = centavos; else delete e.orcamentos[categoriaId];
+  const o = e.orcamentos[escopo] = { cats: {}, ...(e.orcamentos[escopo] || {}) };
+  o.cats = { ...o.cats };
+  if (centavos > 0) o.cats[categoriaId] = centavos; else delete o.cats[categoriaId];
+  tocar(o);
   salvar();
 }
 
 export function salvarCategoria(c) {
   const e = dados();
   const i = e.categorias.findIndex((x) => x.id === c.id);
-  if (i >= 0) e.categorias[i] = { ...e.categorias[i], ...c };
-  else e.categorias.push({ ...c, id: c.id || novoId() });
+  if (i >= 0) e.categorias[i] = tocar({ ...e.categorias[i], ...c });
+  else e.categorias.push(tocar({ ...c, id: c.id || novoId() }));
   salvar();
 }
 
@@ -97,11 +151,15 @@ export function apagarCategoria(id, moverPara = null) {
   const e = dados();
   const usados = e.lancamentos.filter((l) => l.categoria === id).length + e.recorrentes.filter((r) => r.categoria === id).length;
   if (usados && !moverPara) return false;
-  for (const l of e.lancamentos) if (l.categoria === id) l.categoria = moverPara;
-  for (const r of e.recorrentes) if (r.categoria === id) r.categoria = moverPara;
-  if (e.orcamentos[id] && moverPara) e.orcamentos[moverPara] = (e.orcamentos[moverPara] || 0) + e.orcamentos[id];
-  delete e.orcamentos[id];
+  for (const l of e.lancamentos) if (l.categoria === id) { l.categoria = moverPara; tocar(l); }
+  for (const r of e.recorrentes) if (r.categoria === id) { r.categoria = moverPara; tocar(r); }
+  for (const o of Object.values(e.orcamentos)) {
+    if (!o?.cats?.[id]) continue;
+    if (moverPara) o.cats[moverPara] = (o.cats[moverPara] || 0) + o.cats[id];
+    delete o.cats[id]; tocar(o);
+  }
   e.categorias = e.categorias.filter((c) => c.id !== id);
+  lapide(e, id);
   salvar();
   return true;
 }
@@ -117,7 +175,7 @@ export function importarItens(itens) {
   for (const it of itens) {
     if (!it.marcado || ja.has(it.importId)) continue;
     const id = novoId();
-    e.lancamentos.push({ id, tipo: it.tipo, valor: it.valor, data: it.data, categoria: it.categoria, descricao: it.descricao, pagamento: it.tipo === 'despesa' ? it.pagamento || '' : '', importId: it.importId });
+    e.lancamentos.push(tocar({ id, tipo: it.tipo, valor: it.valor, data: it.data, categoria: it.categoria, descricao: it.descricao, pagamento: it.tipo === 'despesa' ? it.pagamento || '' : '', importId: it.importId, dono: eu() || undefined, compartilhado: compartilhaPorPadrao(it.categoria) }));
     if (it.chave) e.regras[it.tipo + ':' + it.chave] = it.categoria;
     ja.add(it.importId);
     ids.push(id);
@@ -130,13 +188,14 @@ export function apagarLancamentos(ids) {
   const fora = new Set(ids);
   const e = dados();
   e.lancamentos = e.lancamentos.filter((l) => !fora.has(l.id));
+  for (const id of ids) lapide(e, id);
   salvar();
 }
 
 // ---------- plano de contas ----------
 export function moverLancamentos(ids, categoria) {
   const alvo = new Set(ids);
-  for (const l of dados().lancamentos) if (alvo.has(l.id)) l.categoria = categoria;
+  for (const l of dados().lancamentos) if (alvo.has(l.id)) { l.categoria = categoria; tocar(l); }
   salvar();
 }
 
@@ -145,7 +204,7 @@ export function criarContaDoPlano(contaId, ids = []) {
   const e = dados();
   const modelo = CONTAS.find((c) => c.id === contaId);
   if (!modelo) return null;
-  if (!e.categorias.some((c) => c.id === contaId)) e.categorias.push({ id: modelo.id, nome: modelo.nome, tipo: modelo.tipo, grupo: modelo.grupo });
+  if (!e.categorias.some((c) => c.id === contaId)) e.categorias.push(tocar({ id: modelo.id, nome: modelo.nome, tipo: modelo.tipo, grupo: modelo.grupo }));
   moverLancamentos(ids, contaId);
   return contaId;
 }
@@ -162,12 +221,12 @@ export function ensinar(tipo, descricao, categoria, ids = []) {
 export function virarContaFixa(f) {
   const e = dados();
   const mes = mesAtual();
-  const r = { id: novoId(), tipo: 'despesa', valor: f.valor, dia: f.dia, categoria: f.categoria, descricao: f.descricao, pagamento: f.pagamento || '', inicio: mes, fim: null, gerados: f.temNesteMes ? [mes] : [] };
+  const r = tocar({ id: novoId(), tipo: 'despesa', valor: f.valor, dia: f.dia, categoria: f.categoria, descricao: f.descricao, pagamento: f.pagamento || '', inicio: mes, fim: null, gerados: f.temNesteMes ? [mes] : [], dono: eu() || undefined, compartilhado: compartilhaPorPadrao(f.categoria) });
   e.recorrentes.push(r);
   // o lançamento deste mês, se já existe, passa a ser a conta fixa do mês
   const k = chaveDescricao(f.descricao);
   const l = e.lancamentos.find((x) => x.tipo === 'despesa' && !x.recorrente && x.data.startsWith(mes) && chaveDescricao(x.descricao) === k);
-  if (l) l.recorrente = r.id;
+  if (l) { l.recorrente = r.id; tocar(l); }
   gerarRecorrentes(e);
   salvar();
   return r;
@@ -194,7 +253,7 @@ export function receberNotificacao(texto, { app = '', titulo = '', agora = Date.
   e.notifVistas.push({ k, t: agora });
   e.notifVistas = e.notifVistas.slice(-300);
   const r = reconhecer(lido.descricao, lido.tipo, e);
-  if (lido.cartao && !e.cartoes[lido.cartao]) e.cartoes[lido.cartao] = { apelido: '', banco: lido.banco };
+  if (lido.cartao && !e.cartoes[lido.cartao]) e.cartoes[lido.cartao] = { apelido: '', banco: lido.banco, dono: eu() || undefined };
   const pendente = { id: novoId(), recebidoEm: new Date(agora).toISOString(), texto: String(texto).slice(0, 500), titulo: String(titulo).slice(0, 120), app: String(app).slice(0, 60), lido, categoria: r.categoria, reconhecido: r };
   e.pendentes.push(pendente);
   // ignoradas (recusada, estorno…) ficam guardadas por 30 dias, para conferência
@@ -217,11 +276,12 @@ export function confirmarPendente(id, ajustes = {}) {
   const ids = [];
   for (const parte of partes) {
     const id2 = novoId();
-    e.lancamentos.push({
+    e.lancamentos.push(tocar({
       id: id2, tipo: l.tipo, valor: parte.valor, data: parte.data, categoria: l.categoria, descricao: parte.descricao,
       pagamento: l.tipo === 'despesa' ? l.pagamento || '' : '', origem: 'notificacao',
+      dono: eu() || undefined, compartilhado: 'compartilhado' in ajustes ? !!ajustes.compartilhado : compartilhaPorPadrao(l.categoria),
       ...(l.cartao && { cartao: l.cartao }), ...(grupo && { parcelamento: grupo, parcela: parte.parcela }),
-    });
+    }));
     ids.push(id2);
   }
   if (ajustes.categoria && ajustes.categoria !== p.reconhecido?.categoria && l.descricao) {
@@ -246,7 +306,7 @@ export function reconsiderarPendente(id) {
 
 export function apelidarCartao(final, apelido) {
   const e = dados();
-  e.cartoes[final] = { ...(e.cartoes[final] || {}), apelido: String(apelido || '').trim().slice(0, 30) };
+  e.cartoes[final] = { ...(e.cartoes[final] || {}), apelido: String(apelido || '').trim().slice(0, 30), dono: e.cartoes[final]?.dono || eu() || undefined };
   salvar();
 }
 export const nomeCartao = (final) => {
@@ -255,10 +315,47 @@ export const nomeCartao = (final) => {
   return c.apelido || `${c.banco ? c.banco + ' ' : ''}•${final}`;
 };
 
+// ---------- compartilhar com o casal ----------
+/** Se lançamentos desta conta já nascem compartilhados (escolha de cada pessoa). */
+export const compartilhaPorPadrao = (categoria) => !!dados().compartilharSempre[eu()]?.cats?.[categoria];
+export function compartilharSempre(categoria, sim) {
+  const e = dados(), p = eu();
+  const o = e.compartilharSempre[p] = { cats: {}, ...(e.compartilharSempre[p] || {}) };
+  o.cats = { ...o.cats };
+  if (sim) o.cats[categoria] = true; else delete o.cats[categoria];
+  tocar(o);
+  salvar();
+}
+/** Compartilha (ou volta a deixar privado) lançamentos meus. */
+export function compartilhar(ids, sim = true) {
+  const alvo = new Set(ids);
+  for (const l of dados().lancamentos) if (alvo.has(l.id) && (!l.dono || l.dono === eu())) { l.compartilhado = !!sim; tocar(l); }
+  salvar();
+}
+export function definirDivisao(pct) {
+  const e = dados();
+  e.divisao = tocar({ ...e.divisao, ...pct });
+  salvar();
+}
+export function marcarAcertado(mes, transf) {
+  const e = dados();
+  e.acertos[mes] = transf ? tocar({ ...transf, quando: new Date().toISOString(), por: eu() }) : tocar({ desfeito: true });
+  salvar();
+}
+
+/** Troca os dados pelos já juntados com a nuvem, mantendo o que é só deste celular. */
+export function aplicarMesclado(novo) {
+  const e = dados();
+  estado = normalizar({ ...novo, pendentes: e.pendentes, notifVistas: e.notifVistas });
+  gerarRecorrentes(estado);
+  salvar();
+}
+
 export const exportar = () => JSON.stringify({ app: 'financas', exportadoEm: new Date().toISOString(), ...dados() }, null, 1);
 
 export function importar(texto) {
   estado = normalizar(JSON.parse(texto));
+  for (const l of estado.lancamentos) tocar(l);
   gerarRecorrentes(estado);
   salvar();
   return estado;

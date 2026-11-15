@@ -75,9 +75,9 @@ test('previsão do mês corrente separa contas fixas do gasto do dia a dia', () 
 
 test('orçamentos: ok, atenção e estourou', () => {
   const e = estadoVazio();
-  e.orcamentos = { mercado: 100000, lazer: 10000, casa: 50000, saude: 0 };
+  const limites = { mercado: 100000, lazer: 10000, casa: 50000, saude: 0 };
   e.lancamentos.push(L('a', 'despesa', 85000, '2026-11-02', 'mercado'), L('b', 'despesa', 15000, '2026-11-02', 'lazer'), L('c', 'despesa', 1000, '2026-11-02', 'casa'));
-  const o = Object.fromEntries(orcamentos(e, '2026-11').map((x) => [x.categoria, x.status]));
+  const o = Object.fromEntries(orcamentos(doMes(e, '2026-11'), limites).map((x) => [x.categoria, x.status]));
   assert.deepEqual(o, { lazer: 'estourou', mercado: 'atencao', casa: 'ok' });
 });
 

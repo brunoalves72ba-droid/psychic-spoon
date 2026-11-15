@@ -251,6 +251,34 @@ textarea { resize: none; overflow: hidden; line-height: 1.4; }
 .abas a { position: relative; }
 .contador { position: absolute; top: 0; left: calc(50% + 10px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--destaque); color: #fff; font-size: .72rem; font-weight: 800; display: grid; place-items: center; }
 
+/* contas do casal */
+.conta-de { margin: 0 0 2px; text-align: center; font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--marca); }
+.quem { display: grid; gap: 12px; margin: 16px 0; }
+.quem-btn { justify-content: flex-start; gap: 14px; min-height: 72px; font-size: 1.1rem; text-align: left; }
+.quem-btn small { display: block; font-weight: 400; color: var(--tinta-2); font-size: .8rem; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--marca); color: var(--marca-tinta); display: grid; place-items: center; font-weight: 850; flex: none; }
+.acerto { display: flex; gap: 10px; align-items: center; font-size: 1.05rem; background: color-mix(in srgb, var(--marca) 12%, var(--superficie)); border-radius: 12px; padding: 12px; }
+.acerto svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--marca); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sub svg { width: 16px; height: 16px; vertical-align: -3px; fill: none; stroke: var(--marca); stroke-width: 2.4; }
+.divisao { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; margin-top: 10px; }
+.divisao .btn { grid-column: 1 / -1; }
+.qr { background: #fff; border-radius: 16px; padding: 12px; width: min(100%, 280px); margin: 8px auto 12px; }
+.qr svg { display: block; width: 100%; height: auto; }
+.erro { color: var(--critico); font-weight: 600; }
+.lista li { position: relative; }
+.lista li.comp { box-shadow: inset 4px 0 0 var(--destaque); }
+.btn-comp { display: block; margin: -6px 14px 10px auto; border: 1px solid var(--borda); background: var(--superficie-2); color: var(--tinta-2); border-radius: 999px; padding: 4px 12px; font-size: .78rem; font-weight: 650; cursor: pointer; min-height: 32px; }
+.btn-comp[aria-pressed=true] { background: color-mix(in srgb, var(--destaque) 18%, var(--superficie)); color: var(--tinta); border-color: var(--destaque); }
+.lista li:has(.sel) { display: flex; align-items: center; }
+.sel { padding-left: 14px; }
+.sel input { width: 22px; height: 22px; accent-color: var(--marca); }
+.menu .seta { font-size: 1.6rem; color: var(--tinta-3); }
+.alternar a.btn { border: 0; background: transparent; min-height: 44px; color: var(--tinta-2); font-weight: 650; }
+.alternar a.btn.ativo { background: var(--superficie); color: var(--tinta); border: 1px solid var(--borda); }
+.alternar button { text-decoration: none; }
+.lista.sem-borda { border: 0; background: none; }
+.btn.mini.sempre[aria-pressed=true] { border-color: var(--destaque); }
+
 /* formulários */
 label.campo { display: block; margin-bottom: 14px; }
 label.campo > span, .campo-rotulo { display: block; font-size: .88rem; color: var(--tinta-2); margin-bottom: 6px; font-weight: 600; }

@@ -1,5 +1,5 @@
 // Caixa "A confirmar": gastos e entradas lidos das notificações, esperando um ✔.
-import { dados, pendentesAtivos, confirmarPendente, descartarPendente, reconsiderarPendente, receberNotificacao, nomeCategoria, nomeCartao, apagarLancamento } from '../core/store.js';
+import { outra, compartilhaPorPadrao, dados, pendentesAtivos, confirmarPendente, descartarPendente, reconsiderarPendente, receberNotificacao, nomeCategoria, nomeCartao, apagarLancamento } from '../core/store.js';
 import { PAGAMENTOS } from '../core/calc.js';
 import { reconhecer } from '../core/plano.js';
 import { dividirParcelas } from '../core/notificacoes.js';
@@ -44,6 +44,7 @@ export function render(main, params = {}) {
       <label class="campo"><span>Descrição</span><input type="text" data-campo="descricao" maxlength="120" value="${esc(l.descricao)}"></label>
       <label class="campo"><span>Conta <small class="muted">${esc(porque(p))}</small></span><select data-campo="categoria">${opcoesAgrupadas(e, l.tipo, p.categoria)}</select></label>
       ${l.tipo === 'despesa' ? `<label class="campo"><span>Como pagou</span><select data-campo="pagamento">${PAGAMENTOS.map((x) => `<option${x === l.pagamento ? ' selected' : ''}>${x}</option>`).join('')}</select></label>` : ''}
+      <label class="marcar compartilhar"><input type="checkbox" data-campo="compartilhado" ${compartilhaPorPadrao(p.categoria) ? 'checked' : ''}><span><b>Compartilhar com ${esc(outra()?.nome || 'o casal')}</b></span></label>
       ${partes ? `<p class="parcelas">${icone('calendario')}<span>Parcelado em <b>${l.parcelas}x de ${reais(partes[1].valor)}</b>: entra uma parcela por mês, de ${nomeMesCurto(partes[0].data.slice(0, 7))}/${partes[0].data.slice(2, 4)} a ${nomeMesCurto(partes[partes.length - 1].data.slice(0, 7))}/${partes[partes.length - 1].data.slice(2, 4)}.</span></p>` : ''}
       <div class="btn-linha"><button class="btn" type="button" data-descartar>Descartar</button><button class="btn primario" type="button" data-confirmar>✔ Confirmar</button></div>
     </li>`;
@@ -88,6 +89,7 @@ export function render(main, params = {}) {
     li.querySelectorAll('[data-campo]').forEach((c) => {
       const k = c.dataset.campo;
       if (k === 'valor') a.valor = digitosParaCentavos(c.value) || p.lido.valor;
+      else if (k === 'compartilhado') a.compartilhado = c.checked;
       else a[k] = c.value.trim();
     });
     if (a.tipo === 'receita') a.pagamento = '';

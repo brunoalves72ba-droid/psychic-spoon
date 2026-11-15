@@ -1,6 +1,6 @@
 // Metas de gasto por categoria (orçamento mensal) e lista das contas fixas.
-import { dados, nomeCategoria, definirOrcamento } from '../core/store.js';
-import { orcamentos, porCategoria, doMes, recorrentesDoMes } from '../core/calc.js';
+import { dados, nomeCategoria, definirOrcamento, limites, eu, nomePessoa } from '../core/store.js';
+import { orcamentos, porCategoria, doMes, recorrentesDoMes, daVisao } from '../core/calc.js';
 import { reais, lerValor, centavosParaCampo } from '../core/dinheiro.js';
 import { mesAtual, somarMeses, diasNoMes, hoje } from '../core/datas.js';
 import { esc, icone, aviso, navegar } from '../core/ui.js';
@@ -13,17 +13,25 @@ const STATUS = {
   estourou: ['x', 'Passou da meta'],
 };
 
-export function render(main, { editar }) {
-  const e = dados();
-  const mes = mesAtual();
-  if (editar !== undefined || !Object.keys(e.orcamentos).length) return renderEditar(main, !Object.keys(e.orcamentos).length && editar === undefined);
+/** Lançamentos que contam para as metas de um escopo: os meus, ou os compartilhados do casal. */
+const lancsDo = (e, escopo) => daVisao(e.lancamentos, escopo === 'casal' ? 'casal' : 'eu', eu());
+const abas = (escopo) => `<div class="alternar" role="group" aria-label="Metas de quem">
+    <a class="btn ${escopo !== 'casal' ? 'ativo' : ''}" href="#/orcamento" aria-current="${escopo !== 'casal'}">Minhas metas</a>
+    <a class="btn ${escopo === 'casal' ? 'ativo' : ''}" href="#/orcamento?escopo=casal" aria-current="${escopo === 'casal'}">Metas do casal</a></div>`;
 
-  const lista = orcamentos(e, mes);
+export function render(main, { editar, escopo: esc0 }) {
+  const e0 = dados();
+  const escopo = esc0 === 'casal' ? 'casal' : eu();
+  const e = { ...e0, lancamentos: lancsDo(e0, escopo), recorrentes: e0.recorrentes.filter((r) => escopo === 'casal' ? r.compartilhado : (!r.dono || r.dono === eu())) };
+  const mes = mesAtual();
+  if (editar !== undefined || !Object.keys(limites(escopo)).length) return renderEditar(main, e, escopo, !Object.keys(limites(escopo)).length && editar === undefined);
+
+  const lista = orcamentos(doMes(e, mes), limites(escopo));
   const diasRest = diasNoMes(mes) - +hoje().slice(8, 10) + 1;
   const tot = lista.reduce((a, o) => ({ limite: a.limite + o.limite, gasto: a.gasto + o.gasto }), { limite: 0, gasto: 0 });
   const fixas = recorrentesDoMes(e, mes).sort((a, b) => a.dia - b.dia);
 
-  main.innerHTML = `<h1>Metas do mês</h1>
+  main.innerHTML = `<h1>Metas do mês</h1>${abas(escopo === 'casal' ? 'casal' : '')}
     <section class="cartao">
       <h2><span>Gasto × meta</span><span class="sub">${reais(tot.gasto)} de ${reais(tot.limite)}</span></h2>
       ${lista.map((o) => {
@@ -35,7 +43,7 @@ export function render(main, { editar }) {
             <span>${o.resta >= 0 ? `Restam ${reais(o.resta)}${diasRest > 1 ? ` · ${reais(Math.floor(o.resta / diasRest))}/dia` : ''}` : `${reais(-o.resta)} acima`}</span></div>
         </div>`;
       }).join('')}
-      <a class="btn cheio" href="#/orcamento?editar" style="margin-top:12px">Ajustar metas</a>
+      <a class="btn cheio" href="#/orcamento?editar${escopo === 'casal' ? '&escopo=casal' : ''}" style="margin-top:12px">Ajustar metas</a>
     </section>
     <section class="cartao">
       <h2><span>Contas fixas</span><span class="sub">gastos fixos: ${reais(fixas.filter((r) => r.tipo === 'despesa').reduce((s, r) => s + r.valor, 0))}/mês</span></h2>
@@ -50,20 +58,20 @@ export function render(main, { editar }) {
     </section>`;
 }
 
-function renderEditar(main, primeiraVez) {
-  const e = dados();
+function renderEditar(main, e, escopo, primeiraVez) {
+  const atuais = limites(escopo);
   const cats = e.categorias.filter((c) => c.tipo === 'despesa');
   // sugestão: média dos últimos 3 meses fechados, arredondada para cima em R$ 10
   const media = {};
   for (let i = 1; i <= 3; i++) for (const c of porCategoria(doMes(e, somarMeses(mesAtual(), -i)))) media[c.categoria] = (media[c.categoria] || 0) + c.total / 3;
 
-  main.innerHTML = `<h1>${primeiraVez ? 'Defina suas metas' : 'Ajustar metas'}</h1>
-    <p class="sub">Quanto você quer gastar, no máximo, em cada categoria por mês? Deixe em branco o que não quer acompanhar.${Object.keys(media).length ? ' A sugestão em cinza é a sua média dos últimos 3 meses.' : ''}</p>
+  main.innerHTML = `<h1>${primeiraVez ? 'Defina as metas' : 'Ajustar metas'}</h1>${abas(escopo === 'casal' ? 'casal' : '')}
+    <p class="sub">${escopo === 'casal' ? 'Metas para os gastos <b>compartilhados</b> do casal (valem nos dois celulares).' : `Metas da <b>Conta ${esc(nomePessoa(eu()))}</b> (os seus gastos).`} Quanto gastar, no máximo, em cada conta por mês? Deixe em branco o que não quer acompanhar.${Object.keys(media).length ? ' A sugestão em cinza é a sua média dos últimos 3 meses.' : ''}</p>
     <form class="cartao">
       ${cats.map((c) => {
         const sug = media[c.id] ? Math.ceil(media[c.id] / 1000) * 1000 : 0;
         return `<label class="orc-editar"><span>${esc(c.nome)}</span>
-          <input type="text" inputmode="decimal" name="${esc(c.id)}" value="${e.orcamentos[c.id] ? centavosParaCampo(e.orcamentos[c.id]) : ''}" placeholder="${sug ? centavosParaCampo(sug) : 'R$'}" aria-label="Meta para ${esc(c.nome)}"></label>`;
+          <input type="text" inputmode="decimal" name="${esc(c.id)}" value="${atuais[c.id] ? centavosParaCampo(atuais[c.id]) : ''}" placeholder="${sug ? centavosParaCampo(sug) : 'R$'}" aria-label="Meta para ${esc(c.nome)}"></label>`;
       }).join('')}
       <button class="btn primario cheio" type="submit" style="margin-top:14px">Salvar metas</button>
     </form>`;
@@ -74,10 +82,10 @@ function renderEditar(main, primeiraVez) {
     for (const inp of ev.target.querySelectorAll('input')) {
       const v = inp.value.trim() ? lerValor(inp.value) : 0;
       if (v === null || v < 0) { erro = inp; break; }
-      definirOrcamento(inp.name, v);
+      if (v !== (atuais[inp.name] || 0)) definirOrcamento(escopo, inp.name, v);
     }
     if (erro) { aviso('Valor inválido. Use números, como 450 ou 450,00.'); erro.focus(); return; }
     aviso('Metas salvas.');
-    navegar('#/orcamento');
+    navegar(escopo === 'casal' ? '#/orcamento?escopo=casal' : '#/orcamento');
   });
 }

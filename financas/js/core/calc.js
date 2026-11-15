@@ -1,32 +1,34 @@
 // Cálculos puros sobre o estado do app (sem tela, sem armazenamento) — testados em tests/calc.test.mjs.
-import { GRUPO_PADRAO, grupoDaCategoria } from './plano.js';
+import { GRUPO_PADRAO, grupoDaCategoria, CONTAS, NEUTRAS } from './plano.js';
 import { mesDe, mesesEntre, somarMeses, dataNoMes, diasNoMes, hoje as hojeStr } from './datas.js';
 
 export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Dinheiro', 'Boleto', 'Transferência'];
 
-export const CATEGORIAS_PADRAO = [
-  { id: 'mercado', nome: 'Mercado', tipo: 'despesa' },
-  { id: 'casa', nome: 'Moradia', tipo: 'despesa' },
-  { id: 'contas', nome: 'Contas (luz, água, internet)', tipo: 'despesa' },
-  { id: 'transporte', nome: 'Transporte', tipo: 'despesa' },
-  { id: 'restaurante', nome: 'Restaurante e delivery', tipo: 'despesa' },
-  { id: 'saude', nome: 'Saúde', tipo: 'despesa' },
-  { id: 'educacao', nome: 'Educação', tipo: 'despesa' },
-  { id: 'lazer', nome: 'Lazer', tipo: 'despesa' },
-  { id: 'compras', nome: 'Compras', tipo: 'despesa' },
-  { id: 'assinaturas', nome: 'Assinaturas', tipo: 'despesa' },
-  { id: 'outros', nome: 'Outros gastos', tipo: 'despesa' },
-  { id: 'salario', nome: 'Salário', tipo: 'receita' },
-  { id: 'extra', nome: 'Renda extra', tipo: 'receita' },
-  { id: 'outras-receitas', nome: 'Outras entradas', tipo: 'receita' },
-];
+/** Contas que já vêm no app: as do plano de contas pessoal marcadas como padrão. */
+export const CATEGORIAS_PADRAO = CONTAS.filter((c) => c.padrao).map(({ id, nome, tipo, grupo }) => ({ id, nome, tipo, grupo }));
+export const VERSAO_PLANO = 2;
+
+// nomes que as contas tinham antes do plano pessoal: só são trocados se você não os renomeou
+const NOMES_ANTIGOS = {
+  casa: 'Moradia', salario: 'Salário', transporte: 'Transporte', saude: 'Saúde', lazer: 'Lazer', compras: 'Compras',
+  assinaturas: 'Assinaturas', outros: 'Outros gastos', educacao: 'Educação', impostos: 'Impostos', internet: 'Internet e celular',
+  consultas: 'Consultas e exames', carro: 'Carro (manutenção, IPVA, seguro)', 'app-transporte': 'Uber e táxi', reembolsos: 'Reembolsos e cashback',
+  cursos: 'Cursos', vestuario: 'Roupas e calçados', eletronicos: 'Eletrônicos', apps: 'Apps e nuvem', emprestimos: 'Empréstimos e parcelas',
+};
 
 export const estadoVazio = () => ({
   versao: 1,
-  categorias: CATEGORIAS_PADRAO.map((c) => ({ ...c, grupo: GRUPO_PADRAO[c.id] })),
+  planoVersao: VERSAO_PLANO,
+  categorias: CATEGORIAS_PADRAO.map((c) => ({ ...c })),
   lancamentos: [],
   recorrentes: [],
-  orcamentos: {},
+  orcamentos: {}, // metas por escopo: { bruno: { _t, cats: { mercado: 50000 } }, rita: {...}, casal: {...} }
+  pessoas: [{ id: 'bruno', nome: 'Bruno' }, { id: 'rita', nome: 'Rita' }],
+  divisao: { _t: 0, bruno: 50, rita: 50 }, // % de cada um nas contas compartilhadas (definido à mão)
+  acertos: {}, // mês → { _t, valor, de, para, quando }
+  compartilharSempre: {}, // pessoa → { _t, cats: { casa: true } }
+  aparelhos: {}, // celulares conectados: id → { _t, pessoa, modelo, ult }
+  apagados: {}, // lápides para a sincronização: id → quando foi apagado
   regras: {}, // descrição do banco → categoria escolhida por você
   dispensadas: [], // sugestões do plano de contas que você recusou
   pendentes: [], // caixa "A confirmar": notificações lidas aguardando confirmação
@@ -41,7 +43,17 @@ export function normalizar(bruto) {
   if (!bruto || typeof bruto !== 'object' || !Array.isArray(bruto.lancamentos)) throw new Error('Arquivo não é um backup do Finanças.');
   const e = estadoVazio();
   if (Array.isArray(bruto.categorias) && bruto.categorias.length) e.categorias = bruto.categorias.filter((c) => c && c.id && c.nome && (c.tipo === 'despesa' || c.tipo === 'receita'));
-  e.categorias = e.categorias.map((c) => ({ ...c, grupo: grupoDaCategoria(c) }));
+  if ((bruto.planoVersao || 1) < VERSAO_PLANO && Array.isArray(bruto.categorias) && bruto.categorias.length) {
+    // atualização para o plano de contas pessoal: entram as contas novas, os nomes antigos
+    // não renomeados ganham o nome novo e cada conta vai para o grupo do plano
+    const modelo = Object.fromEntries(CONTAS.map((c) => [c.id, c]));
+    e.categorias = e.categorias.map((c) => modelo[c.id]
+      ? { ...c, grupo: modelo[c.id].grupo, nome: c.nome === NOMES_ANTIGOS[c.id] ? modelo[c.id].nome : c.nome }
+      : c);
+    for (const c of CATEGORIAS_PADRAO) if (!e.categorias.some((x) => x.id === c.id)) e.categorias.push({ ...c });
+  }
+  e.planoVersao = VERSAO_PLANO;
+  e.categorias = e.categorias.map((c) => ({ ...c, grupo: c.grupo || grupoDaCategoria(c) }));
   e.lancamentos = bruto.lancamentos.filter((l) => l && l.id && Number.isInteger(l.valor) && l.valor > 0 && /^\d{4}-\d{2}-\d{2}$/.test(l.data) && (l.tipo === 'despesa' || l.tipo === 'receita'));
   e.recorrentes = (bruto.recorrentes || []).filter((r) => r && r.id && Number.isInteger(r.valor) && /^\d{4}-\d{2}$/.test(r.inicio)).map((r) => ({ gerados: [], fim: null, ...r }));
   e.pendentes = Array.isArray(bruto.pendentes) ? bruto.pendentes.filter((p) => p && p.id && p.lido) : [];
@@ -49,7 +61,16 @@ export function normalizar(bruto) {
   e.notifVistas = Array.isArray(bruto.notifVistas) ? bruto.notifVistas.slice(-300) : [];
   e.dispensadas = Array.isArray(bruto.dispensadas) ? bruto.dispensadas.filter((x) => typeof x === 'string') : [];
   e.regras = bruto.regras && typeof bruto.regras === 'object' ? { ...bruto.regras } : {};
-  e.orcamentos = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? { ...bruto.orcamentos } : {};
+  const orc = bruto.orcamentos && typeof bruto.orcamentos === 'object' ? bruto.orcamentos : {};
+  // formato antigo ({ mercado: 50000 }) vira as metas de quem usava o app: dono definido ao escolher a conta
+  e.orcamentos = Object.values(orc).some((v) => typeof v === 'number') ? { _semDono: { _t: 0, cats: { ...orc } } } : { ...orc };
+  const obj = (x, padrao) => (x && typeof x === 'object' && !Array.isArray(x) ? { ...x } : padrao);
+  if (Array.isArray(bruto.pessoas) && bruto.pessoas.length) e.pessoas = bruto.pessoas;
+  e.divisao = obj(bruto.divisao, e.divisao);
+  e.acertos = obj(bruto.acertos, {});
+  e.compartilharSempre = obj(bruto.compartilharSempre, {});
+  e.aparelhos = obj(bruto.aparelhos, {});
+  e.apagados = obj(bruto.apagados, {});
   return e;
 }
 
@@ -67,7 +88,10 @@ export function gerarRecorrentes(estado, hoje = hojeStr()) {
       if (r.gerados.includes(mes)) continue;
       const data = dataNoMes(mes, r.dia);
       if (data > hoje) continue;
-      estado.lancamentos.push({ id: novoId(), tipo: r.tipo, valor: r.valor, data, categoria: r.categoria, descricao: r.descricao, pagamento: r.pagamento, recorrente: r.id });
+      const id = `rec-${r.id}-${mes}`; // id fixo: os dois celulares geram o mesmo lançamento, sem duplicar
+      if (estado.lancamentos.some((l) => l.id === id) || estado.apagados?.[id]) { r.gerados.push(mes); continue; }
+      estado.lancamentos.push({ id, tipo: r.tipo, valor: r.valor, data, categoria: r.categoria, descricao: r.descricao, pagamento: r.pagamento, recorrente: r.id,
+        ...(r.dono && { dono: r.dono }), ...(r.compartilhado && { compartilhado: true }), _t: 1 });
       r.gerados.push(mes);
       n++;
     }
@@ -77,9 +101,12 @@ export function gerarRecorrentes(estado, hoje = hojeStr()) {
 
 export const doMes = (estado, mes) => estado.lancamentos.filter((l) => l.data.startsWith(mes));
 
+/** Transferências, pagamento de fatura e aplicações movimentam dinheiro, mas não são gasto nem renda. */
+export const conta = (l) => !NEUTRAS.has(l.categoria);
+
 export function resumo(lancs) {
   let receitas = 0, despesas = 0;
-  for (const l of lancs) l.tipo === 'receita' ? (receitas += l.valor) : (despesas += l.valor);
+  for (const l of lancs) if (conta(l)) l.tipo === 'receita' ? (receitas += l.valor) : (despesas += l.valor);
   return { receitas, despesas, saldo: receitas - despesas };
 }
 
@@ -87,7 +114,7 @@ export function resumo(lancs) {
 export function porCategoria(lancs, tipo = 'despesa') {
   const m = new Map();
   for (const l of lancs) {
-    if (l.tipo !== tipo) continue;
+    if (l.tipo !== tipo || !conta(l)) continue;
     const c = m.get(l.categoria) || { categoria: l.categoria, total: 0, qtd: 0 };
     c.total += l.valor; c.qtd++;
     m.set(l.categoria, c);
@@ -100,6 +127,7 @@ export function historico(estado, mesFinal, n = 6) {
   const meses = mesesEntre(somarMeses(mesFinal, -(n - 1)), mesFinal);
   const acc = Object.fromEntries(meses.map((m) => [m, { mes: m, receitas: 0, despesas: 0 }]));
   for (const l of estado.lancamentos) {
+    if (!conta(l)) continue;
     const a = acc[mesDe(l.data)];
     if (a) l.tipo === 'receita' ? (a.receitas += l.valor) : (a.despesas += l.valor);
   }
@@ -117,7 +145,7 @@ export function previsao(estado, mes, hoje = hojeStr()) {
   if (mesDe(hoje) !== mes) return null;
   const dia = +hoje.slice(8, 10);
   const total = diasNoMes(mes);
-  const lancs = doMes(estado, mes).filter((l) => l.tipo === 'despesa');
+  const lancs = doMes(estado, mes).filter((l) => l.tipo === 'despesa' && conta(l));
   const variaveis = lancs.filter((l) => !l.recorrente).reduce((s, l) => s + l.valor, 0);
   const fixas = recorrentesDoMes(estado, mes).filter((r) => r.tipo === 'despesa').reduce((s, r) => s + r.valor, 0);
   const fixasPagas = lancs.filter((l) => l.recorrente).reduce((s, l) => s + l.valor, 0);
@@ -131,9 +159,10 @@ export function previsao(estado, mes, hoje = hojeStr()) {
 }
 
 /** Situação de cada orçamento no mês: ok (< 80%), atencao (80–100%), estourou (> 100%). */
-export function orcamentos(estado, mes) {
-  const gastos = Object.fromEntries(porCategoria(doMes(estado, mes)).map((c) => [c.categoria, c.total]));
-  return Object.entries(estado.orcamentos)
+/** Situação de cada meta: ok (< 80%), atencao (80–100%), estourou (> 100%). */
+export function orcamentos(lancsDoMes, limites = {}) {
+  const gastos = Object.fromEntries(porCategoria(lancsDoMes).map((c) => [c.categoria, c.total]));
+  return Object.entries(limites)
     .filter(([, limite]) => limite > 0)
     .map(([categoria, limite]) => {
       const gasto = gastos[categoria] || 0;
@@ -141,6 +170,42 @@ export function orcamentos(estado, mes) {
       return { categoria, limite, gasto, resta: limite - gasto, pct, status: pct > 1 ? 'estourou' : pct >= 0.8 ? 'atencao' : 'ok' };
     })
     .sort((a, b) => b.pct - a.pct);
+}
+
+// ---------- casal ----------
+/** Lançamentos de uma visão: 'eu' (os meus), 'casal' (os compartilhados dos dois). */
+export function daVisao(lancs, visao, eu) {
+  if (visao === 'casal') return lancs.filter((l) => l.compartilhado);
+  return lancs.filter((l) => !l.dono || l.dono === eu);
+}
+
+/** Sugestão de divisão pela renda do mês de cada um (o percentual usado é o definido à mão). */
+export function divisaoPelaRenda(lancsDoMes, pessoas) {
+  const renda = Object.fromEntries(pessoas.map((p) => [p.id, 0]));
+  for (const l of lancsDoMes) if (l.tipo === 'receita' && conta(l) && l.dono in renda) renda[l.dono] += l.valor;
+  const total = Object.values(renda).reduce((a, b) => a + b, 0);
+  if (!total) return null;
+  const pct = Object.fromEntries(pessoas.map((p) => [p.id, Math.round(renda[p.id] / total * 100)]));
+  // fecha em 100%
+  const soma = Object.values(pct).reduce((a, b) => a + b, 0);
+  pct[pessoas[0].id] += 100 - soma;
+  return { renda, pct };
+}
+
+/**
+ * Acerto do mês: quanto cada um pagou das contas compartilhadas, quanto deveria pela divisão
+ * e quem transfere quanto para quem.
+ */
+export function acerto(lancsDoMes, pessoas, divisao) {
+  const comp = lancsDoMes.filter((l) => l.compartilhado && l.tipo === 'despesa' && conta(l));
+  const total = comp.reduce((a, l) => a + l.valor, 0);
+  const pagou = Object.fromEntries(pessoas.map((p) => [p.id, 0]));
+  for (const l of comp) if (l.dono in pagou) pagou[l.dono] += l.valor;
+  const deveria = Object.fromEntries(pessoas.map((p) => [p.id, Math.round(total * (divisao[p.id] ?? 50) / 100)]));
+  const [a, b] = pessoas.map((p) => p.id);
+  const saldoA = pagou[a] - deveria[a]; // positivo: A pagou a mais e deve receber
+  const transf = Math.abs(saldoA) < 100 ? null : saldoA > 0 ? { de: b, para: a, valor: saldoA } : { de: a, para: b, valor: -saldoA };
+  return { total, pagou, deveria, transf };
 }
 
 const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
