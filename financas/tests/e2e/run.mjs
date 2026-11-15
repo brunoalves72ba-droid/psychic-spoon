@@ -57,7 +57,7 @@ try {
     await p.locator('#descricao').fill('Salário');
     await p.locator('#repetir').check();
     await p.getByRole('button', { name: 'Salvar', exact: true }).click();
-    await p.getByText('Entrada de R$ 5.200,00 salvo em Salário / pró-labore (todo mês).').waitFor();
+    await p.getByText('Entrada de R$ 5.200,00 salvo em Salário / pró-labore (entrada recorrente).').waitFor();
 
     // gastos
     await p.getByRole('button', { name: 'Gastei' }).click();

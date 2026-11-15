@@ -6,13 +6,13 @@ export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Dinheiro', 'Boleto', '
 
 /** Contas que já vêm no app: as do plano de contas pessoal marcadas como padrão. */
 export const CATEGORIAS_PADRAO = CONTAS.filter((c) => c.padrao).map(({ id, nome, tipo, grupo }) => ({ id, nome, tipo, grupo }));
-export const VERSAO_PLANO = 2;
+export const VERSAO_PLANO = 3; // 3: Devoluções e Complemento de receita
 
 // nomes que as contas tinham antes do plano pessoal: só são trocados se você não os renomeou
 const NOMES_ANTIGOS = {
   casa: 'Moradia', salario: 'Salário', transporte: 'Transporte', saude: 'Saúde', lazer: 'Lazer', compras: 'Compras',
   assinaturas: 'Assinaturas', outros: 'Outros gastos', educacao: 'Educação', impostos: 'Impostos', internet: 'Internet e celular',
-  consultas: 'Consultas e exames', carro: 'Carro (manutenção, IPVA, seguro)', 'app-transporte': 'Uber e táxi', reembolsos: 'Reembolsos e cashback',
+  consultas: 'Consultas e exames', carro: 'Carro (manutenção, IPVA, seguro)', 'app-transporte': 'Uber e táxi', reembolsos: ['Reembolsos e cashback', 'Reembolsos e devoluções'],
   cursos: 'Cursos', vestuario: 'Roupas e calçados', eletronicos: 'Eletrônicos', apps: 'Apps e nuvem', emprestimos: 'Empréstimos e parcelas',
 };
 
@@ -48,7 +48,7 @@ export function normalizar(bruto) {
     // não renomeados ganham o nome novo e cada conta vai para o grupo do plano
     const modelo = Object.fromEntries(CONTAS.map((c) => [c.id, c]));
     e.categorias = e.categorias.map((c) => modelo[c.id]
-      ? { ...c, grupo: modelo[c.id].grupo, nome: c.nome === NOMES_ANTIGOS[c.id] ? modelo[c.id].nome : c.nome }
+      ? { ...c, grupo: modelo[c.id].grupo, nome: [].concat(NOMES_ANTIGOS[c.id] || []).includes(c.nome) ? modelo[c.id].nome : c.nome }
       : c);
     for (const c of CATEGORIAS_PADRAO) if (!e.categorias.some((x) => x.id === c.id)) e.categorias.push({ ...c });
   }
@@ -136,6 +136,28 @@ export function historico(estado, mesFinal, n = 6) {
 
 /** Recorrentes ativos num mês (já gerados ou ainda por vencer). */
 export const recorrentesDoMes = (estado, mes) => estado.recorrentes.filter((r) => r.inicio <= mes && (!r.fim || r.fim >= mes));
+
+/**
+ * Recorrências de um mês, separadas em entradas e despesas: o que já entrou ou saiu (lançamento gerado
+ * neste mês), o que ainda vence, os totais e a sobra fixa (entradas fixas − despesas fixas).
+ * `encerradas`: as que já terminaram antes deste mês.
+ */
+export function recorrencias(estado, mes) {
+  const ativas = recorrentesDoMes(estado, mes).map((r) => {
+    const lanc = estado.lancamentos.find((l) => l.recorrente === r.id && l.data.startsWith(mes)) || null;
+    return { ...r, lanc, feito: !!lanc };
+  }).sort((a, b) => a.dia - b.dia || (a.descricao || '').localeCompare(b.descricao || ''));
+  const entradas = ativas.filter((r) => r.tipo === 'receita');
+  const despesas = ativas.filter((r) => r.tipo === 'despesa');
+  const soma = (xs) => xs.reduce((s, r) => s + r.valor, 0);
+  const totalEntradas = soma(entradas.filter((r) => conta(r)));
+  const totalDespesas = soma(despesas.filter((r) => conta(r)));
+  return {
+    entradas, despesas, totalEntradas, totalDespesas, sobra: totalEntradas - totalDespesas,
+    aReceber: soma(entradas.filter((r) => !r.feito && conta(r))), aPagar: soma(despesas.filter((r) => !r.feito && conta(r))),
+    encerradas: estado.recorrentes.filter((r) => r.fim && r.fim < mes).sort((a, b) => b.fim.localeCompare(a.fim)),
+  };
+}
 
 /**
  * Para o mês corrente: ritmo de gasto e previsão de quanto vai ter saído no fim do mês.

@@ -4,9 +4,9 @@ import { carregar, atualizarRecorrentes, pendentesAtivos, aoMudar, eu } from './
 import { iniciar as iniciarNuvem, quandoReceber } from './core/nuvem.js';
 import { aviso } from './core/ui.js';
 
-const SECOES = ['resumo', 'casal', 'extrato', 'lancar', 'mais', 'orcamento', 'ajustes', 'importar', 'plano', 'caixa', 'receber', 'captura', 'conectar', 'quem'];
+const SECOES = ['resumo', 'casal', 'extrato', 'lancar', 'mais', 'orcamento', 'recorrentes', 'ajustes', 'importar', 'plano', 'caixa', 'receber', 'captura', 'conectar', 'quem'];
 // telas sem aba própria acendem a aba de onde vieram
-const ABA_DE = { importar: 'mais', plano: 'mais', orcamento: 'mais', ajustes: 'mais', captura: 'mais', conectar: 'mais', caixa: 'lancar', receber: 'lancar', quem: 'resumo' };
+const ABA_DE = { importar: 'mais', plano: 'mais', orcamento: 'mais', recorrentes: 'mais', ajustes: 'mais', captura: 'mais', conectar: 'mais', caixa: 'lancar', receber: 'lancar', quem: 'resumo' };
 // telas que funcionam antes de escolher "Conta Bruno / Conta Rita"
 const SEM_CONTA = ['quem', 'conectar', 'receber'];
 const main = document.getElementById('view');

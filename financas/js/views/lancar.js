@@ -59,7 +59,7 @@ export function render(main, params) {
       </div>
       ${existente?.cartao ? `<p class="sub">Cartão: <b>${esc(nomeCartao(existente.cartao))}</b>${existente.origem === 'notificacao' ? ' · lido da notificação do banco' : ''}</p>` : ''}
       ${existente ? (rec ? `<p class="sub">Esta é uma conta fixa, lançada todo dia ${rec.dia}${rec.fim ? ` até ${rec.fim.split('-').reverse().join('/')}` : ''}. Mudanças aqui valem só para este mês.</p>` : '')
-        : `<label class="marcar"><input type="checkbox" id="repetir"><span><b>Repetir todo mês</b><small>Para salário, aluguel, internet, assinaturas…</small></span></label>`}
+        : `<label class="marcar"><input type="checkbox" id="repetir"${params.repetir ? ' checked' : ''}><span><b>Repetir todo mês</b><small id="repetir-dica">Para salário, aluguel, internet, assinaturas…</small></span></label>`}
       <label class="marcar compartilhar"><input type="checkbox" id="compartilhar"><span><b>Compartilhar com ${esc(outra()?.nome || 'o casal')}</b><small>Aparece na aba Casal. Sem marcar, fica só na sua conta.</small></span></label>
       <fieldset class="rateio" id="rateio" hidden><legend>De quem é este gasto? <small class="muted" id="rateio-porque"></small></legend>
         <div class="alternar tres" role="group" aria-label="De quem é este gasto">
@@ -99,6 +99,8 @@ export function render(main, params) {
     main.querySelectorAll('[data-tipo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === f.tipo)));
     pintarContas();
     pintarRateio();
+    const dica = $('#repetir-dica');
+    if (dica) dica.textContent = f.tipo === 'receita' ? 'Entrada recorrente: salário, pró-labore, aluguel recebido, complemento de receita…' : 'Despesa recorrente: aluguel, condomínio, internet, assinaturas…';
   };
 
   // de quem é o gasto compartilhado: dos dois (dividido), só meu ou só do outro
@@ -199,7 +201,7 @@ export function render(main, params) {
     const salvo = salvarLancamento(l, { repetir });
     if (l.tipo === 'despesa') try { localStorage.setItem(ULTIMO_PAG, l.pagamento); } catch {}
     if (existente) { aviso(catOriginal !== l.categoria && $('#ensinar')?.checked ? 'Salvo. O app vai lembrar desta conta.' : 'Alterações salvas.'); history.back(); return; }
-    aviso(`${l.tipo === 'receita' ? 'Entrada' : 'Gasto'} de ${reais(l.valor)} salvo em ${nomeCategoria(l.categoria)}${repetir ? ' (todo mês)' : ''}.`, {
+    aviso(`${l.tipo === 'receita' ? 'Entrada' : 'Gasto'} de ${reais(l.valor)} salvo em ${nomeCategoria(l.categoria)}${repetir ? (l.tipo === 'receita' ? ' (entrada recorrente)' : ' (despesa recorrente)') : ''}.`, {
       rotulo: 'Desfazer', fazer: () => { apagarLancamento(salvo.id); if (salvo.recorrente) apagarRecorrente(salvo.recorrente); aviso('Lançamento desfeito.'); },
     });
     // fica na tela, pronto para o próximo

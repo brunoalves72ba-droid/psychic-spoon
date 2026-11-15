@@ -80,7 +80,7 @@ test('backup antigo é atualizado para o plano pessoal sem perder o que a pessoa
   assert.deepEqual([c('saude').nome, c('saude').grupo], ['Saúde da família', 'saude']);
   assert.deepEqual([c('zz').grupo, c('yy').grupo], ['outros', 'receitas']);
   for (const id of ['iptu', 'dae', 'ref-teto', 'fatura-cartao', 'invest-auto']) assert.ok(c(id), id);
-  assert.equal(e.planoVersao, 2);
+  assert.equal(e.planoVersao, 3);
   assert.equal(grupoDaCategoria({ id: 'farmacia' }), 'saude');
 });
 
@@ -93,4 +93,39 @@ test('transferências e aplicações não entram nos totais', () => {
     L('e', 'receita', 500000, '2026-11-05', 'salario', 'Salário'),
   ]);
   assert.deepEqual(r, { receitas: 500000, despesas: 10000, saldo: 490000 });
+});
+
+test('plano 3: Devoluções e Complemento de receita entram, e “Reembolsos e devoluções” vira “Reembolsos e cashback”', () => {
+  const e = normalizar({ planoVersao: 2, lancamentos: [], categorias: [
+    { id: 'reembolsos', nome: 'Reembolsos e devoluções', tipo: 'receita' },
+    { id: 'salario', nome: 'Meu salário', tipo: 'receita' },
+  ] });
+  const c = (id) => e.categorias.find((x) => x.id === id);
+  assert.equal(c('reembolsos').nome, 'Reembolsos e cashback');
+  assert.equal(c('salario').nome, 'Meu salário');                 // renomeada pela pessoa: fica
+  assert.deepEqual([c('devolucoes').nome, c('devolucoes').tipo, c('devolucoes').grupo], ['Devoluções', 'receita', 'receitas']);
+  assert.deepEqual([c('complemento').nome, c('complemento').tipo, c('complemento').grupo], ['Complemento de receita', 'receita', 'receitas']);
+  const est = { ...estadoVazio(), lancamentos: [], regras: {} };
+  assert.equal(reconhecer('DEVOLUCAO COMPRA LOJA X', 'receita', est).categoria, 'devolucoes');
+  assert.equal(reconhecer('Estorno Mercado Livre', 'receita', est).categoria, 'devolucoes');
+  assert.equal(reconhecer('Complemento de renda', 'receita', est).categoria, 'complemento');
+  assert.equal(reconhecer('Cashback Méliuz', 'receita', est).categoria, 'reembolsos');
+  assert.equal(interpretarFrase('devolução 120 da loja ontem').tipo, 'receita');
+  assert.equal(interpretarFrase('complemento 800').tipo, 'receita');
+});
+
+test('sugestões encontram entradas recorrentes, além dos gastos', () => {
+  const ls = [];
+  for (const [m, i] of [['2026-09', 1], ['2026-10', 2], ['2026-11', 3]]) {
+    ls.push(L('s' + i, 'receita', 520000, m + '-05', 'salario', 'Salário Empresa X'));
+    ls.push(L('n' + i, 'despesa', 4490, m + '-10', 'outros', 'Netflix'));
+  }
+  const sug = sugestoesPlano({ ...estadoVazio(), lancamentos: ls, recorrentes: [], regras: {} }, '2026-11-20').fixas;
+  const porTipo = Object.fromEntries(sug.map((f) => [f.tipo, f]));
+  assert.equal(porTipo.receita.descricao, 'Salário Empresa X');
+  assert.equal(porTipo.receita.dia, 5);
+  assert.equal(porTipo.despesa.descricao, 'Netflix');
+  // já recorrente: não sugere de novo
+  const comRec = sugestoesPlano({ ...estadoVazio(), lancamentos: ls, recorrentes: [{ id: 'r', tipo: 'receita', descricao: 'Salário Empresa X', valor: 520000, dia: 5, inicio: '2026-11', fim: null, gerados: [] }], regras: {} }, '2026-11-20').fixas;
+  assert.deepEqual(comRec.map((f) => f.tipo), ['despesa']);
 });

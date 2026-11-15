@@ -55,6 +55,7 @@ export function render(main, { editar, escopo: esc0 }) {
           <span class="val ${r.tipo}">${r.tipo === 'receita' ? '+ ' : '− '}${reais(r.valor)}</span>
         </${lanc ? 'a' : 'div'}></li>`;
       }).join('')}</ul>` : '<p class="sub">Nenhuma ainda. Ao lançar salário, aluguel ou internet, marque “Repetir todo mês”.</p>'}
+      ${escopo !== 'casal' ? '<a class="btn cheio" href="#/recorrentes" style="margin-top:10px">Ver e editar as recorrências</a>' : ''}
     </section>`;
 }
 

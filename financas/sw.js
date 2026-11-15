@@ -2,7 +2,7 @@
 // Service worker: pré-cache de tudo na primeira visita; depois, o app funciona offline.
 // A linha abaixo muda a cada versão publicada (npm run precache). É ela que faz o navegador
 // perceber que existe versão nova: ele compara este arquivo byte a byte.
-// versao: 942fce96c576
+// versao: 941e1c2f8dcd
 importScripts('sw-assets.js'); // define self.FIN_VERSION e self.FIN_ASSETS
 
 const CACHE = 'financas-' + self.FIN_VERSION;

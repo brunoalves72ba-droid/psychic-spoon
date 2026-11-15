@@ -121,6 +121,32 @@ export function pararRecorrente(id, ultimoMes) {
   const r = dados().recorrentes.find((x) => x.id === id);
   if (r) { r.fim = ultimoMes; tocar(r); salvar(); }
 }
+/**
+ * Muda uma recorrência (valor, dia, descrição, conta, forma de pagamento). Vale dos próximos meses em diante;
+ * o lançamento deste mês também muda se ainda não tiver sido mexido à mão (mesmo valor e descrição de antes).
+ */
+export function editarRecorrente(id, campos) {
+  const e = dados();
+  const r = e.recorrentes.find((x) => x.id === id);
+  if (!r) return false;
+  const antes = { valor: r.valor, descricao: r.descricao };
+  const ok = {};
+  if (Number.isInteger(campos.valor) && campos.valor > 0) ok.valor = campos.valor;
+  if (Number.isInteger(campos.dia) && campos.dia >= 1 && campos.dia <= 31) ok.dia = campos.dia;
+  if (typeof campos.descricao === 'string') ok.descricao = campos.descricao.replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (campos.categoria) ok.categoria = campos.categoria;
+  if (typeof campos.pagamento === 'string') ok.pagamento = r.tipo === 'despesa' ? campos.pagamento : '';
+  Object.assign(r, ok); tocar(r);
+  const mes = mesAtual();
+  const l = e.lancamentos.find((x) => x.recorrente === id && x.data.startsWith(mes));
+  if (l && l.valor === antes.valor && (l.descricao || '') === (antes.descricao || '')) {
+    Object.assign(l, { valor: r.valor, descricao: r.descricao, categoria: r.categoria, ...(r.tipo === 'despesa' && { pagamento: r.pagamento }) });
+    if (ok.dia) { const d = String(Math.min(r.dia, new Date(+mes.slice(0, 4), +mes.slice(5, 7), 0).getDate())).padStart(2, '0'); l.data = `${mes}-${d}`; }
+    tocar(l);
+  }
+  salvar();
+  return true;
+}
 export function apagarRecorrente(id) {
   const e = dados();
   e.recorrentes = e.recorrentes.filter((r) => r.id !== id);
@@ -222,11 +248,11 @@ export function ensinar(tipo, descricao, categoria, ids = []) {
 export function virarContaFixa(f) {
   const e = dados();
   const mes = mesAtual();
-  const r = tocar({ id: novoId(), tipo: 'despesa', valor: f.valor, dia: f.dia, categoria: f.categoria, descricao: f.descricao, pagamento: f.pagamento || '', inicio: mes, fim: null, gerados: f.temNesteMes ? [mes] : [], dono: eu() || undefined, compartilhado: compartilhaPorPadrao(f.categoria) });
+  const r = tocar({ id: novoId(), tipo: f.tipo === 'receita' ? 'receita' : 'despesa', valor: f.valor, dia: f.dia, categoria: f.categoria, descricao: f.descricao, pagamento: f.pagamento || '', inicio: mes, fim: null, gerados: f.temNesteMes ? [mes] : [], dono: eu() || undefined, compartilhado: compartilhaPorPadrao(f.categoria) });
   e.recorrentes.push(r);
   // o lançamento deste mês, se já existe, passa a ser a conta fixa do mês
   const k = chaveDescricao(f.descricao);
-  const l = e.lancamentos.find((x) => x.tipo === 'despesa' && !x.recorrente && x.data.startsWith(mes) && chaveDescricao(x.descricao) === k);
+  const l = e.lancamentos.find((x) => x.tipo === r.tipo && !x.recorrente && x.data.startsWith(mes) && chaveDescricao(x.descricao) === k);
   if (l) { l.recorrente = r.id; tocar(l); }
   gerarRecorrentes(e);
   salvar();

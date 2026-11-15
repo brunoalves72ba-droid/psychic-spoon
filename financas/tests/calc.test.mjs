@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lerValor, digitosParaCentavos, reais, centavosParaCampo } from '../js/core/dinheiro.js';
 import { somarMeses, dataNoMes, mesesEntre, nomeDia } from '../js/core/datas.js';
-import { estadoVazio, normalizar, gerarRecorrentes, doMes, resumo, porCategoria, historico, previsao, orcamentos, filtrar, agruparPorDia, csv } from '../js/core/calc.js';
+import { estadoVazio, normalizar, gerarRecorrentes, doMes, resumo, porCategoria, historico, previsao, orcamentos, filtrar, agruparPorDia, csv, recorrencias } from '../js/core/calc.js';
 
 const L = (id, tipo, valor, data, categoria, extra = {}) => ({ id, tipo, valor, data, categoria, descricao: '', pagamento: 'Pix', ...extra });
 
@@ -101,4 +101,26 @@ test('normalizar recusa arquivo estranho e limpa itens inválidos', () => {
   const e = normalizar({ lancamentos: [L('a', 'despesa', 100, '2026-11-01', 'x'), { id: 'b', valor: -3 }] });
   assert.equal(e.lancamentos.length, 1);
   assert.ok(e.categorias.length > 5);
+});
+
+test('recorrências do mês: entradas e despesas separadas, o que já entrou e a sobra fixa', () => {
+  const e = { recorrentes: [
+    { id: 'sal', tipo: 'receita', valor: 600000, dia: 5, categoria: 'salario', descricao: 'Salário', inicio: '2026-01', fim: null },
+    { id: 'comp', tipo: 'receita', valor: 80000, dia: 20, categoria: 'complemento', descricao: 'Complemento', inicio: '2026-01', fim: null },
+    { id: 'alu', tipo: 'despesa', valor: 200000, dia: 10, categoria: 'casa', descricao: 'Aluguel', inicio: '2026-01', fim: null },
+    { id: 'apl', tipo: 'despesa', valor: 50000, dia: 6, categoria: 'invest-auto', descricao: 'Aplicação', inicio: '2026-01', fim: null }, // fora dos totais
+    { id: 'velha', tipo: 'despesa', valor: 3000, dia: 1, categoria: 'assinaturas', descricao: 'Revista', inicio: '2025-01', fim: '2026-08' },
+  ], lancamentos: [
+    { id: 'rec-sal-2026-11', tipo: 'receita', valor: 600000, data: '2026-11-05', categoria: 'salario', recorrente: 'sal' },
+    { id: 'rec-alu-2026-11', tipo: 'despesa', valor: 200000, data: '2026-11-10', categoria: 'casa', recorrente: 'alu' },
+  ] };
+  const r = recorrencias(e, '2026-11');
+  assert.deepEqual(r.entradas.map((x) => [x.id, x.feito]), [['sal', true], ['comp', false]]);
+  assert.deepEqual(r.despesas.map((x) => x.id), ['apl', 'alu']);
+  assert.equal(r.totalEntradas, 680000);
+  assert.equal(r.totalDespesas, 200000);
+  assert.equal(r.sobra, 480000);
+  assert.equal(r.aReceber, 80000);
+  assert.equal(r.aPagar, 0);
+  assert.deepEqual(r.encerradas.map((x) => x.id), ['velha']);
 });

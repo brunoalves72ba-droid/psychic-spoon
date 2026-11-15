@@ -17,6 +17,7 @@ App web instalável (PWA) para controlar o dinheiro do dia a dia: anote o que en
 | **Extrato** | Lançamentos agrupados por dia, com busca (sem acento, aceita valor), filtro por categoria e por entrada/saída. Toque num item para editar ou apagar. |
 | **Lançar** | **Lançamento rápido**: escreva “uber 23,50 ontem no pix” e o app preenche valor, conta, data e forma de pagamento. A conta é **reconhecida pela descrição** (o que você ensinou → lançamentos anteriores → palavras conhecidas) e o app mostra por quê. Valor estilo caixa eletrônico (só digitar os números), categoria em um toque, descrição com sugestões, data, forma de pagamento e **repetir todo mês** para contas fixas. Dá para desfazer. |
 | **Metas** | Limite mensal por categoria, com aviso perto do limite (80%) e quando passa; quanto ainda dá para gastar por dia; lista das contas fixas do mês. |
+| **Recorrências** | Em Mais › Recorrências: **entradas recorrentes** (salário, pró-labore, aluguel recebido, complemento de receita…) e **despesas recorrentes** (aluguel, internet, assinaturas…) separadas, com o total de cada lado, a **sobra fixa** do mês, o que já entrou ou saiu neste mês e o que ainda falta. Toque numa recorrência para mudar valor, dia, descrição, conta e forma de pagamento (vale dos próximos meses em diante e, se você não mexeu, também no lançamento deste mês), encerrar ou apagar. O app sugere tornar recorrente o que se repete há 3 meses com o mesmo valor, seja gasto ou entrada. |
 | **Plano de contas** | Contas organizadas em grupos (Moradia, Alimentação, Transporte, Saúde…). **Sugestões de preenchimento** a partir dos seus gastos: criar contas mais específicas (ex.: “Academia”, “Combustível”, “Streaming”) movendo os lançamentos, classificar descrições repetidas que o app não reconhece (e ele aprende), e transformar gastos que se repetem todo mês em conta fixa. Fica em Ajustes › Plano de contas, e o Resumo avisa quando há sugestões. |
 | **Ajustes** | Tema claro/escuro, cópia de segurança (salvar e restaurar `.json`), planilha `.csv` para Excel/Google Planilhas e apagar tudo. |
 
@@ -26,7 +27,7 @@ Em **Mais › Conectar celulares**: no primeiro celular, cole uma chave do GitHu
 
 ### Plano de contas pessoal
 
-Adaptado da lista de validação do Bruno (`js/core/plano.js`): grupos de moradia, reforma (hidráulica, elétrica, teto…), empregados domésticos (DAE/eSocial), impostos e taxas, financeiro e seguros, patrimônio e transferências. Pagamento de fatura, transferência entre contas e aplicação/resgate ficam **fora dos totais**, para nada ser contado duas vezes.
+Adaptado da lista de validação do Bruno (`js/core/plano.js`): grupos de moradia, reforma (hidráulica, elétrica, teto…), empregados domésticos (DAE/eSocial), impostos e taxas, financeiro e seguros, patrimônio e transferências. Pagamento de fatura, transferência entre contas e aplicação/resgate ficam **fora dos totais**, para nada ser contado duas vezes. Nas entradas, **Devoluções** (devolução, estorno, compra cancelada) fica separada de **Reembolsos e cashback**, e há **Complemento de receita** (complemento, ajuda de custo, auxílio). Quem já usava o app recebe essas contas sozinho (plano de contas versão 3).
 
 ### Extratos em PDF
 

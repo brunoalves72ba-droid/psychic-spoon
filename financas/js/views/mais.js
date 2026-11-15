@@ -10,10 +10,11 @@ export function render(main) {
   const n = pendentesAtivos().length;
   const itens = [
     ['#/orcamento', 'Metas', 'Minhas metas e metas do casal'],
+    ['#/recorrentes', 'Recorrências', 'Entradas e despesas que se repetem todo mês'],
     ['#/plano', 'Plano de contas', 'Grupos, contas, o que nasce compartilhado e sugestões'],
     ['#/caixa', 'A confirmar', n ? `${n} lançamento${n > 1 ? 's' : ''} lido${n > 1 ? 's' : ''} das notificações` : 'Gastos lidos das notificações do banco'],
     ['#/captura', 'Captura automática', 'MacroDroid, Compartilhar e apelidos dos cartões'],
-    ['#/importar', 'Importar extrato', 'Arquivos OFX ou CSV do banco'],
+    ['#/importar', 'Importar extrato', 'Arquivos OFX, CSV ou PDF do banco'],
     ['#/conectar', 'Conectar celulares', s.ligado ? (s.erro ? `Atenção: ${s.erro}` : 'Sincronização ligada') : 'Juntar a Conta Bruno e a Conta Rita'],
     ['#/ajustes', 'Ajustes', 'Tema, cópia de segurança, planilha e conta deste celular'],
   ];

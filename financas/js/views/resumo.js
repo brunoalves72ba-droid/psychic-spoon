@@ -1,7 +1,7 @@
 // Minhas contas: o mês de quem usa este celular (privadas e compartilhadas que eu paguei).
 import { dados, nomeCategoria, categoria as catPorId, pendentesAtivos, eu, nomePessoa, limites } from '../core/store.js';
 import { GRUPOS, grupoDaCategoria, sugestoesPlano } from '../core/plano.js';
-import { doMes, resumo, porCategoria, historico, previsao, orcamentos, daVisao } from '../core/calc.js';
+import { recorrencias, doMes, resumo, porCategoria, historico, previsao, orcamentos, daVisao } from '../core/calc.js';
 import { reais, reaisCurto } from '../core/dinheiro.js';
 import { mesAtual, somarMeses, nomeMes, nomeMesCurto } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
@@ -39,6 +39,8 @@ export function render(main, { m }) {
     dicas.push([`ritmo`, `Você está gastando em média <b>${reais(prev.mediaDia)}</b> por dia (fora as contas fixas).`]);
     if (prev.diasRestantes > 0) dicas.push(['calendario', `Nesse ritmo, o mês fecha com uns <b>${reais(prev.gastoPrevisto)}</b> de gastos${r.receitas ? ` — ${prev.gastoPrevisto > r.receitas ? `<b>${reais(prev.gastoPrevisto - r.receitas)} a mais</b> do que entrou` : `sobrando cerca de <b>${reais(r.receitas - prev.gastoPrevisto)}</b>`}` : ''}.`]);
     if (prev.fixasAVencer) dicas.push(['repetir', `Ainda vencem <b>${reais(prev.fixasAVencer)}</b> em contas fixas este mês.`]);
+    const aReceber = recorrencias(e, mes).aReceber;
+    if (aReceber) dicas.push(['repetir', `Ainda vão entrar <b>${reais(aReceber)}</b> em entradas recorrentes este mês. <a href="#/recorrentes">Ver recorrências</a>`]);
   }
   if (ant.despesas && r.despesas) {
     const dif = r.despesas - ant.despesas;
