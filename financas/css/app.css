@@ -1,56 +1,66 @@
 /* Finanças — © Bruno Moura, único e exclusivo proprietário. */
+/* Cores inspiradas no material da Formação IA Generativa:
+   preto, verde neon (#00D284) e um toque de magenta (#C00066). Escuro é o padrão. */
 :root {
-  color-scheme: light;
-  --plano: #f6f5f1;
-  --superficie: #fcfcfb;
-  --superficie-2: #f0efea;
-  --tinta: #0b0b0b;
-  --tinta-2: #52514e;
-  --tinta-3: #6f6e69;
-  --linha: #e1e0d9;
-  --eixo: #c3c2b7;
-  --borda: rgba(11, 11, 11, 0.10);
-  --marca: #1c5cab;
-  --marca-tinta: #ffffff;
-  --entrada: #2a78d6;     /* série 1 */
-  --saida: #eb6834;       /* série 2 */
-  --texto-entrada: #006300;
-  --texto-saida: #b3261e;
-  --bom: #0ca30c;
+  color-scheme: dark;
+  --plano: #101010;
+  --superficie: #1b1b1b;
+  --superficie-2: #262626;
+  --tinta: #f8f8f8;
+  --tinta-2: #c4c4c4;
+  --tinta-3: #8f8f8f;
+  --linha: #2c2c2c;
+  --eixo: #3a3a3a;
+  --borda: rgba(255, 255, 255, 0.10);
+  --grade: rgba(255, 255, 255, 0.028);
+  --marca: #00d284;        /* verde neon */
+  --marca-tinta: #0b0b0b;  /* texto sobre o verde */
+  --destaque: #e0287f;     /* magenta (#C00066 clareado para ler no preto) */
+  --entrada: #00d284;      /* série 1: entrou */
+  --saida: #e0287f;        /* série 2: saiu */
+  --texto-entrada: #2ee39b;
+  --texto-saida: #ff5fa8;
+  --bom: #00d284;
   --atencao: #fab219;
-  --critico: #d03b3b;
-  --barra: #2a78d6;
-  --sombra: 0 1px 2px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .05);
+  --critico: #ff4d6d;
+  --barra: #00d284;
+  --sombra: none;
   --raio: 16px;
   --fonte: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="claro"]) {
-    color-scheme: dark;
-    --plano: #0d0d0d; --superficie: #1a1a19; --superficie-2: #252523;
-    --tinta: #f0efec; --tinta-2: #c3c2b7; --tinta-3: #9a998f;
-    --linha: #2c2c2a; --eixo: #383835; --borda: rgba(255, 255, 255, 0.10);
-    --marca: #5598e7; --marca-tinta: #0b0b0b;
-    --entrada: #3987e5; --saida: #d95926;
-    --texto-entrada: #3fbf3f; --texto-saida: #ff8a80; --barra: #3987e5;
-    --sombra: none;
-  }
+:root[data-theme="claro"] {
+  color-scheme: light;
+  --plano: #f4f4f1; --superficie: #ffffff; --superficie-2: #ecece8;
+  --tinta: #101010; --tinta-2: #4a4a4a; --tinta-3: #6b6b6b;
+  --linha: #e2e2dc; --eixo: #c4c4bc; --borda: rgba(16, 16, 16, 0.12); --grade: rgba(16, 16, 16, 0.035);
+  --marca: #00875a; --marca-tinta: #ffffff; --destaque: #c00066;
+  --entrada: #00a06a; --saida: #c00066;
+  --texto-entrada: #007a4d; --texto-saida: #b0005d;
+  --bom: #00a06a; --critico: #d03b3b; --barra: #00a06a;
+  --sombra: 0 1px 2px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .05);
 }
-:root[data-theme="escuro"] {
-  color-scheme: dark;
-  --plano: #0d0d0d; --superficie: #1a1a19; --superficie-2: #252523;
-  --tinta: #f0efec; --tinta-2: #c3c2b7; --tinta-3: #9a998f;
-  --linha: #2c2c2a; --eixo: #383835; --borda: rgba(255, 255, 255, 0.10);
-  --marca: #5598e7; --marca-tinta: #0b0b0b;
-  --entrada: #3987e5; --saida: #d95926;
-  --texto-entrada: #3fbf3f; --texto-saida: #ff8a80; --barra: #3987e5;
-  --sombra: none;
+@media (prefers-color-scheme: light) {
+  :root[data-theme="auto"] {
+    color-scheme: light;
+    --plano: #f4f4f1; --superficie: #ffffff; --superficie-2: #ecece8;
+    --tinta: #101010; --tinta-2: #4a4a4a; --tinta-3: #6b6b6b;
+    --linha: #e2e2dc; --eixo: #c4c4bc; --borda: rgba(16, 16, 16, 0.12); --grade: rgba(16, 16, 16, 0.035);
+    --marca: #00875a; --marca-tinta: #ffffff; --destaque: #c00066;
+    --entrada: #00a06a; --saida: #c00066;
+    --texto-entrada: #007a4d; --texto-saida: #b0005d;
+    --bom: #00a06a; --critico: #d03b3b; --barra: #00a06a;
+    --sombra: 0 1px 2px rgba(0, 0, 0, .06), 0 4px 16px rgba(0, 0, 0, .05);
+  }
 }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  margin: 0; background: var(--plano); color: var(--tinta);
+  margin: 0; color: var(--tinta);
+  background-color: var(--plano);
+  background-image: linear-gradient(var(--grade) 1px, transparent 1px), linear-gradient(90deg, var(--grade) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-attachment: fixed;
   font: 16px/1.45 var(--fonte); font-variant-numeric: tabular-nums;
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
 }
@@ -62,7 +72,10 @@ a { color: var(--marca); }
 .oculto { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 main { max-width: 720px; margin: 0 auto; padding: calc(12px + env(safe-area-inset-top)) 16px 24px; outline: none; }
-h1 { font-size: 1.5rem; margin: 8px 0 16px; letter-spacing: -.01em; }
+h1 { font-size: 1.55rem; margin: 8px 0 16px; letter-spacing: -.01em; text-transform: uppercase; font-weight: 850; line-height: 1.1; }
+/* títulos dos cartões com a seta verde do material */
+.cartao > h2:first-child:not(:has(span)) { justify-content: flex-start; gap: .3em; }
+.cartao > h2:first-child > span:first-child::before, .cartao > h2:first-child:not(:has(span))::before { content: '› '; color: var(--marca); font-weight: 800; }
 h2 { font-size: 1.05rem; margin: 0 0 12px; }
 p { margin: 0 0 12px; }
 .sub { color: var(--tinta-2); font-size: .9rem; }
@@ -73,7 +86,7 @@ p { margin: 0 0 12px; }
 
 /* cabeçalho com troca de mês */
 .mes-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 14px; }
-.mes-nav h1 { margin: 0; font-size: 1.3rem; text-align: center; flex: 1; }
+.mes-nav h1 { margin: 0; font-size: 1.35rem; text-align: center; flex: 1; }
 .mes-nav h1::first-letter { text-transform: uppercase; }
 .btn-icone { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--borda); background: var(--superficie); display: grid; place-items: center; cursor: pointer; flex: none; }
 .btn-icone svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -84,6 +97,8 @@ p { margin: 0 0 12px; }
 .saldo .rotulo { color: var(--tinta-2); font-size: .9rem; }
 .saldo .valor { font-size: 2.3rem; font-weight: 750; letter-spacing: -.02em; line-height: 1.15; margin: 2px 0 14px; }
 .saldo .valor.neg { color: var(--texto-saida); }
+.saldo .valor { color: var(--tinta); }
+.saldo { border-top: 3px solid var(--marca); }
 .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .duo > div { background: var(--superficie-2); border-radius: 12px; padding: 10px 12px; text-align: left; }
 .duo .r { font-size: .82rem; color: var(--tinta-2); display: flex; align-items: center; gap: 6px; }
@@ -182,13 +197,13 @@ th { color: var(--tinta-2); font-weight: 600; }
 body:has(.barra-importar) #avisos { bottom: calc(196px + env(safe-area-inset-bottom)); }
 
 /* lançamento rápido e reconhecimento */
-.rapido { border-color: color-mix(in srgb, var(--marca) 40%, var(--borda)); }
+.rapido { border: 2px solid var(--marca); }
 .rapido input { font-size: 1.05rem; }
 .reconhecido { margin: -6px 0 14px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--marca) 10%, var(--superficie)); font-size: .9rem; }
 textarea { resize: none; overflow: hidden; line-height: 1.4; }
 
 /* plano de contas */
-.destaque { border-color: color-mix(in srgb, var(--marca) 40%, var(--borda)); }
+.destaque { border: 2px solid var(--marca); }
 .sugs { list-style: none; margin: 0; padding: 0; }
 .sug { padding: 12px 0; }
 .sug + .sug { border-top: 1px solid var(--linha); }
@@ -204,7 +219,8 @@ textarea { resize: none; overflow: hidden; line-height: 1.4; }
 .add-conta summary { cursor: pointer; color: var(--marca); font-weight: 600; margin-top: 10px; }
 .linha-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .aviso-plano { display: block; text-decoration: none; color: var(--tinta); border-color: color-mix(in srgb, var(--marca) 45%, var(--borda)); }
-.aviso-plano b { display: block; color: var(--marca); }
+.aviso-plano { border-left: 4px solid var(--destaque); }
+.aviso-plano b { display: block; color: var(--tinta); }
 .barras .nome { white-space: normal; }
 
 /* formulários */
