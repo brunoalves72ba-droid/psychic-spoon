@@ -101,7 +101,8 @@ try {
   // ---- Bruno compartilha depois, pelo extrato; acerto marcado vale para os dois
   await bruno.goto(BASE + '#/extrato');
   await bruno.locator('li', { hasText: 'Drogasil' }).getByRole('button', { name: /Privado/ }).click();
-  await bruno.getByText('Compartilhado com Rita.').waitFor();
+  await bruno.locator('dialog.escolha .opcao', { hasText: 'Dos dois' }).click();
+  await bruno.getByText('Compartilhado e dividido com Rita.').waitFor();
   await bruno.screenshot({ path: `${shots}extrato-compartilhar.png`, fullPage: true });
   await bruno.goto(BASE + '#/casal');
   await bruno.getByText('Rita transfere R$ 625,00 para Bruno').waitFor();
@@ -109,6 +110,16 @@ try {
   await sync(bruno); await sync(rita);
   await rita.goto(BASE + '#/casal');
   await rita.getByText(/Acertado em .* por Bruno/).waitFor();
+
+  // ---- de quem é: Bruno marca a Drogasil como só da Rita, e o celular dela mostra igual
+  await bruno.goto(BASE + '#/extrato');
+  await bruno.locator('li', { hasText: 'Drogasil' }).getByRole('button', { name: /Dividido/ }).click();
+  await bruno.locator('dialog.escolha .opcao', { hasText: 'Só de Rita' }).click();
+  await bruno.getByText('Marcado como de Rita: volta para você no acerto.').waitFor();
+  await sync(bruno); await sync(rita);
+  await rita.goto(BASE + '#/casal');
+  await rita.locator('li', { hasText: 'Drogasil' }).locator('.etq.ind', { hasText: 'só de Rita' }).waitFor();
+  await rita.getByText(/Só de Rita/).first().waitFor();
 
   // ---- aparelhos conectados
   await rita.goto(BASE + '#/conectar');

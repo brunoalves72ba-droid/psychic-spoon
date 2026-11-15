@@ -73,3 +73,15 @@ test('parcelas viram um lançamento por mês, com os centavos na primeira', () =
   assert.equal(dividirParcelas({ valor: 30000, parcelas: 2, valorParcela: 15000, data: '2027-01-31', descricao: 'X' })[1].data, '2027-02-28');
   assert.deepEqual(dividirParcelas({ valor: 500, parcelas: 1, data: H, descricao: 'Y' }).map((x) => x.valor), [500]);
 });
+
+test('cartão-benefício: compra no Ticket Refeição/Alimentação e crédito do benefício', () => {
+  const a = lerNotificacao('Compra aprovada de R$ 38,90 em RESTAURANTE BOM PRATO com seu Alelo Refeição.', { app: 'Alelo', hoje: H });
+  assert.deepEqual([a.tipo, a.valor, a.pagamento, a.banco], ['despesa', 3890, 'Ticket Refeição', 'Alelo']);
+  const b = lerNotificacao('Você fez uma compra de R$ 152,30 em SUPERMERCADO DIA no cartão Ticket Alimentação.', { app: 'Ticket', hoje: H });
+  assert.deepEqual([b.tipo, b.valor, b.pagamento], ['despesa', 15230, 'Ticket Alimentação']);
+  const c = lerNotificacao('O crédito do seu benefício foi realizado: R$ 800,00 disponível no seu Pluxee Alimentação.', { app: 'Pluxee', hoje: H });
+  assert.deepEqual([c.tipo, c.valor, c.descricao], ['receita', 80000, 'Crédito Ticket Alimentação']);
+  // banco comum continua igual
+  const d = lerNotificacao('Compra aprovada no cartão final 1234 de R$ 89,90 em DROGASIL', { app: 'Nubank', hoje: H });
+  assert.equal(d.pagamento, 'Crédito');
+});

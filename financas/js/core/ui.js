@@ -55,6 +55,20 @@ export function confirmar(titulo, texto, { sim = 'Confirmar', nao = 'Cancelar', 
   });
 }
 
+/** Escolha entre opções num <dialog>: [{ v, t, d }]. Devolve a Promise do valor escolhido (null = cancelou). */
+export function escolher(titulo, opcoes, atual) {
+  return new Promise((ok) => {
+    const d = document.createElement('dialog');
+    d.className = 'escolha';
+    d.innerHTML = `<h2>${esc(titulo)}</h2><div class="opcoes">${opcoes.map((o) => `<button class="opcao" type="button" value="${esc(o.v)}" aria-pressed="${o.v === atual}"><b>${esc(o.t)}</b>${o.d ? `<small>${esc(o.d)}</small>` : ''}</button>`).join('')}</div>
+      <div class="btn-linha"><button class="btn" type="button" value="">Cancelar</button></div>`;
+    d.querySelectorAll('button').forEach((b) => (b.onclick = () => d.close(b.value)));
+    d.addEventListener('close', () => { ok(d.returnValue || null); d.remove(); });
+    document.body.append(d);
+    d.showModal();
+  });
+}
+
 /** Baixa um arquivo gerado no aparelho. */
 export function baixar(nome, conteudo, tipo) {
   const url = URL.createObjectURL(new Blob([conteudo], { type: tipo }));

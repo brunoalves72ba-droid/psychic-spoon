@@ -36,7 +36,7 @@ try {
     }
     await p.locator('#arq').setInputFiles(ex + arq);
   };
-  const previa = async () => { await p.getByText('Conferir importação').waitFor({ timeout: 20000 }); return p.locator('#itens li').allInnerTexts(); };
+  const previa = async () => { await p.getByText('Conferir importação').waitFor({ timeout: 20000 }); await p.locator('[data-f=todos]').click(); return p.locator('#itens li').allInnerTexts(); };
 
   // 1. extrato com colunas
   await importar('extrato-colunas.pdf');

@@ -1,5 +1,5 @@
 // Caixa "A confirmar": gastos e entradas lidos das notificações, esperando um ✔.
-import { outra, compartilhaPorPadrao, dados, pendentesAtivos, confirmarPendente, descartarPendente, reconsiderarPendente, receberNotificacao, nomeCategoria, nomeCartao, apagarLancamento } from '../core/store.js';
+import { outra, compartilhaPorPadrao, rateioPadrao, dados, pendentesAtivos, confirmarPendente, descartarPendente, reconsiderarPendente, receberNotificacao, nomeCategoria, nomeCartao, apagarLancamento } from '../core/store.js';
 import { PAGAMENTOS } from '../core/calc.js';
 import { reconhecer } from '../core/plano.js';
 import { dividirParcelas } from '../core/notificacoes.js';
@@ -25,12 +25,12 @@ export function render(main, params = {}) {
   if (!params.msg) try { params = { ...params, msg: sessionStorage.getItem('fin-msg-caixa') || '' }; sessionStorage.removeItem('fin-msg-caixa'); } catch {}
   const ativos = pendentesAtivos().sort((a, b) => b.recebidoEm.localeCompare(a.recebidoEm));
   const ignorados = e.pendentes.filter((p) => p.lido.ignorar).sort((a, b) => b.recebidoEm.localeCompare(a.recebidoEm));
-  const porque = (p) => ({ regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `por “${p.reconhecido?.palavra}”`, padrao: 'não reconhecida — confira' }[p.reconhecido?.fonte] || '');
+  const porque = (p) => ({ regra: 'você ensinou', historico: 'como da última vez', nome: 'pelo nome da conta', palavra: `por “${p.reconhecido?.palavra}”`, padrao: 'a classificar: escolha a conta' }[p.reconhecido?.fonte] || '');
 
   const cartao = (p) => {
     const l = p.lido;
     const partes = l.parcelas > 1 ? dividirParcelas(l) : null;
-    return `<li class="pend" data-id="${esc(p.id)}">
+    return `<li class="pend${p.reconhecido?.fonte === 'padrao' ? ' a-classificar' : ''}" data-id="${esc(p.id)}">
       <div class="pend-cab"><span>${esc(origem(p))}</span><span>${esc(nomeDia(p.recebidoEm.slice(0, 10)))} ${hora(p.recebidoEm)}</span></div>
       <p class="pend-texto">${esc(p.texto)}</p>
       <div class="alternar mini" role="group" aria-label="Tipo">
@@ -45,6 +45,10 @@ export function render(main, params = {}) {
       <label class="campo"><span>Conta <small class="muted">${esc(porque(p))}</small></span><select data-campo="categoria">${opcoesAgrupadas(e, l.tipo, p.categoria)}</select></label>
       ${l.tipo === 'despesa' ? `<label class="campo"><span>Como pagou</span><select data-campo="pagamento">${PAGAMENTOS.map((x) => `<option${x === l.pagamento ? ' selected' : ''}>${x}</option>`).join('')}</select></label>` : ''}
       <label class="marcar compartilhar"><input type="checkbox" data-campo="compartilhado" ${compartilhaPorPadrao(p.categoria) ? 'checked' : ''}><span><b>Compartilhar com ${esc(outra()?.nome || 'o casal')}</b></span></label>
+      ${l.tipo === 'despesa' ? (() => { const r = rateioPadrao(l.descricao).rateio; return `<label class="campo rateio-caixa"><span>De quem é</span><select data-campo="rateio">
+        <option value="dividir"${r === 'dividir' ? ' selected' : ''}>Dos dois (dividir no acerto)</option>
+        <option value="meu"${r === 'meu' ? ' selected' : ''}>Só meu (fora do acerto)</option>
+        <option value="outro"${r === 'outro' ? ' selected' : ''}>Só de ${esc(outra()?.nome || 'quem divide comigo')} (volta para mim)</option></select></label>`; })() : ''}
       ${partes ? `<p class="parcelas">${icone('calendario')}<span>Parcelado em <b>${l.parcelas}x de ${reais(partes[1].valor)}</b>: entra uma parcela por mês, de ${nomeMesCurto(partes[0].data.slice(0, 7))}/${partes[0].data.slice(2, 4)} a ${nomeMesCurto(partes[partes.length - 1].data.slice(0, 7))}/${partes[partes.length - 1].data.slice(2, 4)}.</span></p>` : ''}
       <div class="btn-linha"><button class="btn" type="button" data-descartar>Descartar</button><button class="btn primario" type="button" data-confirmar>✔ Confirmar</button></div>
     </li>`;

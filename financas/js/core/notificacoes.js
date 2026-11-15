@@ -8,6 +8,7 @@ import { semAcento } from './plano.js';
 import { hoje as hojeStr } from './datas.js';
 
 const BANCOS = [
+  [/alelo/, 'Alelo'], [/pluxee|sodexo/, 'Pluxee'], [/\bvr\b|vr beneficios|br\.com\.vr/, 'VR'], [/ticket/, 'Ticket'], [/flash beneficios|br\.com\.flash|flashapp/, 'Flash'], [/\bcaju\b/, 'Caju'], [/swile/, 'Swile'],
   [/nubank|\bnu\b|com\.nu\./, 'Nubank'], [/itau|itaú/, 'Itaú'], [/bradesco|bradescard/, 'Bradesco'],
   [/banco do brasil|\bbb\b|ourocard|br\.com\.bb/, 'Banco do Brasil'], [/caixa|cef\b/, 'Caixa'],
   [/santander/, 'Santander'], [/\binter\b|bancointer|br\.com\.intermedium/, 'Inter'], [/\bc6\b|c6 ?bank|c6bank/, 'C6'],
@@ -94,7 +95,7 @@ export function lerNotificacao(texto, { app = '', titulo = '', hoje = hojeStr() 
 
   const banco = (BANCOS.find(([re]) => re.test(semAcento(app))) || BANCOS.find(([re]) => re.test(n)) || [, ''])[1];
   const motivo = IGNORAR.find(([re]) => re.test(n))?.[1] || '';
-  const receita = RECEITA.test(n) && !/compra|pagamento (de|do|efetuado|realizado)|voce pagou|pix enviado|transferencia enviada/.test(n);
+  let receita = RECEITA.test(n) && !/compra|pagamento (de|do|efetuado|realizado)|voce pagou|pix enviado|transferencia enviada/.test(n);
 
   // parcelas: "em 3x de R$ 50,00", "3x R$ 50,00", "parcelado em 3 vezes", "(3 parcelas)"
   let parcelas = 1, valorParcela = null;
@@ -122,9 +123,14 @@ export function lerNotificacao(texto, { app = '', titulo = '', hoje = hojeStr() 
   else if (/credito|cartao|compra aprovada|compra de r\$|compra no valor/.test(n)) pagamento = 'Crédito';
   else if (/\bted\b|\bdoc\b|transferencia/.test(n)) pagamento = 'Transferência';
   if (/debito automatico/.test(n)) pagamento = 'Débito';
+  // cartão-benefício (Alelo, Ticket, Pluxee/Sodexo, VR, Flash, Caju, Swile): refeição ou alimentação
+  const beneficio = /alelo|ticket|pluxee|sodexo|\bvr\b|vale[- ]?(refeicao|alimentacao)|flash beneficio|\bcaju\b|swile|cartao (refeicao|alimentacao)|saldo (refeicao|alimentacao)/.test(n + ' ' + semAcento(app));
+  if (beneficio) pagamento = /refeicao|\bvr\b/.test(n + ' ' + semAcento(app)) ? 'Ticket Refeição' : 'Ticket Alimentação';
+  const creditoBeneficio = beneficio && /credito (do |de )?(seu )?beneficio|beneficio (foi )?creditado|recarga|creditad|disponivel (no|em) seu/.test(n) && !/compra/.test(n);
 
   const cartao = (bruto.match(/\bfinal\s*(?:do cart[aã]o\s*)?(?:n[ºo°.]?\s*)?[*•.]*\s*(\d{4})\b/i) || bruto.match(/[*•]{2,}\s?(\d{4})\b/) || [])[1] || '';
-  const descricao = lerLoja(bruto, receita) || (receita ? 'Entrada' : pagamento === 'Pix' ? 'Pix enviado' : 'Compra');
+  if (creditoBeneficio) receita = true;
+  const descricao = creditoBeneficio ? `Crédito ${pagamento}` : lerLoja(bruto, receita) || (receita ? 'Entrada' : pagamento === 'Pix' ? 'Pix enviado' : 'Compra');
 
   return {
     tipo: receita ? 'receita' : 'despesa',

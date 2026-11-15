@@ -2,17 +2,31 @@
 import { GRUPO_PADRAO, grupoDaCategoria, CONTAS, NEUTRAS } from './plano.js';
 import { mesDe, mesesEntre, somarMeses, dataNoMes, diasNoMes, hoje as hojeStr } from './datas.js';
 
-export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Dinheiro', 'Boleto', 'Transferência'];
+export const PAGAMENTOS = ['Pix', 'Débito', 'Crédito', 'Ticket Alimentação', 'Ticket Refeição', 'Dinheiro', 'Boleto', 'Transferência'];
+
+/** Benefícios (vale-alimentação e vale-refeição): a conta de entrada e a forma de pagamento de cada um. */
+export const TICKETS = [
+  { id: 'ticket-alimentacao', nome: 'Ticket Alimentação', pagamento: 'Ticket Alimentação' },
+  { id: 'ticket-refeicao', nome: 'Ticket Refeição', pagamento: 'Ticket Refeição' },
+];
+/** Saldo de cada ticket no mês: o que entrou (crédito do benefício), o que foi pago com ele e o que sobra. */
+export function saldoTickets(lancsDoMes) {
+  return TICKETS.map((t) => {
+    const recebido = lancsDoMes.filter((l) => l.tipo === 'receita' && l.categoria === t.id).reduce((s, l) => s + l.valor, 0);
+    const gasto = lancsDoMes.filter((l) => l.tipo === 'despesa' && l.pagamento === t.pagamento).reduce((s, l) => s + l.valor, 0);
+    return { ...t, recebido, gasto, saldo: recebido - gasto };
+  }).filter((t) => t.recebido || t.gasto);
+}
 
 /** Contas que já vêm no app: as do plano de contas pessoal marcadas como padrão. */
 export const CATEGORIAS_PADRAO = CONTAS.filter((c) => c.padrao).map(({ id, nome, tipo, grupo }) => ({ id, nome, tipo, grupo }));
-export const VERSAO_PLANO = 2;
+export const VERSAO_PLANO = 4; // 3: Devoluções e Complemento de receita · 4: Ticket Alimentação e Ticket Refeição
 
 // nomes que as contas tinham antes do plano pessoal: só são trocados se você não os renomeou
 const NOMES_ANTIGOS = {
   casa: 'Moradia', salario: 'Salário', transporte: 'Transporte', saude: 'Saúde', lazer: 'Lazer', compras: 'Compras',
   assinaturas: 'Assinaturas', outros: 'Outros gastos', educacao: 'Educação', impostos: 'Impostos', internet: 'Internet e celular',
-  consultas: 'Consultas e exames', carro: 'Carro (manutenção, IPVA, seguro)', 'app-transporte': 'Uber e táxi', reembolsos: 'Reembolsos e cashback',
+  consultas: 'Consultas e exames', carro: 'Carro (manutenção, IPVA, seguro)', 'app-transporte': 'Uber e táxi', reembolsos: ['Reembolsos e cashback', 'Reembolsos e devoluções'],
   cursos: 'Cursos', vestuario: 'Roupas e calçados', eletronicos: 'Eletrônicos', apps: 'Apps e nuvem', emprestimos: 'Empréstimos e parcelas',
 };
 
@@ -48,7 +62,7 @@ export function normalizar(bruto) {
     // não renomeados ganham o nome novo e cada conta vai para o grupo do plano
     const modelo = Object.fromEntries(CONTAS.map((c) => [c.id, c]));
     e.categorias = e.categorias.map((c) => modelo[c.id]
-      ? { ...c, grupo: modelo[c.id].grupo, nome: c.nome === NOMES_ANTIGOS[c.id] ? modelo[c.id].nome : c.nome }
+      ? { ...c, grupo: modelo[c.id].grupo, nome: [].concat(NOMES_ANTIGOS[c.id] || []).includes(c.nome) ? modelo[c.id].nome : c.nome }
       : c);
     for (const c of CATEGORIAS_PADRAO) if (!e.categorias.some((x) => x.id === c.id)) e.categorias.push({ ...c });
   }
@@ -91,7 +105,7 @@ export function gerarRecorrentes(estado, hoje = hojeStr()) {
       const id = `rec-${r.id}-${mes}`; // id fixo: os dois celulares geram o mesmo lançamento, sem duplicar
       if (estado.lancamentos.some((l) => l.id === id) || estado.apagados?.[id]) { r.gerados.push(mes); continue; }
       estado.lancamentos.push({ id, tipo: r.tipo, valor: r.valor, data, categoria: r.categoria, descricao: r.descricao, pagamento: r.pagamento, recorrente: r.id,
-        ...(r.dono && { dono: r.dono }), ...(r.compartilhado && { compartilhado: true }), _t: 1 });
+        ...(r.dono && { dono: r.dono }), ...(r.compartilhado && { compartilhado: true }), ...(r.compartilhado && r.rateio && r.rateio !== 'dividir' && { rateio: r.rateio }), _t: 1 });
       r.gerados.push(mes);
       n++;
     }
@@ -103,6 +117,10 @@ export const doMes = (estado, mes) => estado.lancamentos.filter((l) => l.data.st
 
 /** Transferências, pagamento de fatura e aplicações movimentam dinheiro, mas não são gasto nem renda. */
 export const conta = (l) => !NEUTRAS.has(l.categoria);
+
+// contas genéricas: o que cai nelas sem a pessoa escolher fica pendente (a classificar), em amarelo
+export const GENERICAS = new Set(['outros', 'outras-receitas']);
+export const aClassificar = (l) => GENERICAS.has(l.categoria) && !l.classificado;
 
 export function resumo(lancs) {
   let receitas = 0, despesas = 0;
@@ -136,6 +154,28 @@ export function historico(estado, mesFinal, n = 6) {
 
 /** Recorrentes ativos num mês (já gerados ou ainda por vencer). */
 export const recorrentesDoMes = (estado, mes) => estado.recorrentes.filter((r) => r.inicio <= mes && (!r.fim || r.fim >= mes));
+
+/**
+ * Recorrências de um mês, separadas em entradas e despesas: o que já entrou ou saiu (lançamento gerado
+ * neste mês), o que ainda vence, os totais e a sobra fixa (entradas fixas − despesas fixas).
+ * `encerradas`: as que já terminaram antes deste mês.
+ */
+export function recorrencias(estado, mes) {
+  const ativas = recorrentesDoMes(estado, mes).map((r) => {
+    const lanc = estado.lancamentos.find((l) => l.recorrente === r.id && l.data.startsWith(mes)) || null;
+    return { ...r, lanc, feito: !!lanc };
+  }).sort((a, b) => a.dia - b.dia || (a.descricao || '').localeCompare(b.descricao || ''));
+  const entradas = ativas.filter((r) => r.tipo === 'receita');
+  const despesas = ativas.filter((r) => r.tipo === 'despesa');
+  const soma = (xs) => xs.reduce((s, r) => s + r.valor, 0);
+  const totalEntradas = soma(entradas.filter((r) => conta(r)));
+  const totalDespesas = soma(despesas.filter((r) => conta(r)));
+  return {
+    entradas, despesas, totalEntradas, totalDespesas, sobra: totalEntradas - totalDespesas,
+    aReceber: soma(entradas.filter((r) => !r.feito && conta(r))), aPagar: soma(despesas.filter((r) => !r.feito && conta(r))),
+    encerradas: estado.recorrentes.filter((r) => r.fim && r.fim < mes).sort((a, b) => b.fim.localeCompare(a.fim)),
+  };
+}
 
 /**
  * Para o mês corrente: ritmo de gasto e previsão de quanto vai ter saído no fim do mês.
@@ -192,20 +232,52 @@ export function divisaoPelaRenda(lancsDoMes, pessoas) {
   return { renda, pct };
 }
 
+// De quem é um gasto compartilhado (compartilhar diz quem vê; o rateio diz quem paga):
+//   'dividir' — dos dois, pela divisão combinada (padrão)
+//   'meu'     — só de quem lançou: o outro vê, mas não entra no acerto
+//   'outro'   — só do outro: quem pagou recebe tudo de volta no acerto
+export const RATEIOS = ['dividir', 'meu', 'outro'];
+export const rateioDe = (l) => (l.rateio === 'meu' || l.rateio === 'outro' ? l.rateio : 'dividir');
+/** Quem é o responsável por um gasto individual (null quando é dividido). */
+export function responsavel(l, pessoas) {
+  const r = rateioDe(l);
+  if (r === 'dividir') return null;
+  if (r === 'meu') return l.dono || null;
+  return pessoas.find((p) => p.id !== l.dono)?.id || null;
+}
+
 /**
- * Acerto do mês: quanto cada um pagou das contas compartilhadas, quanto deveria pela divisão
- * e quem transfere quanto para quem.
+ * Acerto do mês. Os gastos compartilhados “dividir” são rateados pela divisão combinada; os
+ * individuais pagos por quem não é o responsável voltam inteiros para quem pagou; os individuais
+ * pagos pelo próprio responsável ficam fora. Devolve também os totais de cada tipo.
  */
 export function acerto(lancsDoMes, pessoas, divisao) {
+  const ids = pessoas.map((p) => p.id);
+  const zero = () => Object.fromEntries(ids.map((id) => [id, 0]));
   const comp = lancsDoMes.filter((l) => l.compartilhado && l.tipo === 'despesa' && conta(l));
-  const total = comp.reduce((a, l) => a + l.valor, 0);
-  const pagou = Object.fromEntries(pessoas.map((p) => [p.id, 0]));
-  for (const l of comp) if (l.dono in pagou) pagou[l.dono] += l.valor;
-  const deveria = Object.fromEntries(pessoas.map((p) => [p.id, Math.round(total * (divisao[p.id] ?? 50) / 100)]));
-  const [a, b] = pessoas.map((p) => p.id);
-  const saldoA = pagou[a] - deveria[a]; // positivo: A pagou a mais e deve receber
+  const divididos = comp.filter((l) => rateioDe(l) === 'dividir');
+  const total = divididos.reduce((a, l) => a + l.valor, 0);
+  const pagou = zero(), individual = zero();
+  for (const l of divididos) if (l.dono in pagou) pagou[l.dono] += l.valor;
+  const deveria = Object.fromEntries(ids.map((id) => [id, Math.round(total * (divisao[id] ?? 50) / 100)]));
+  // individuais: reembolsos[devedor][credor] — o que um pagou e era do outro
+  const reembolsos = [];
+  for (const l of comp) {
+    const resp = responsavel(l, pessoas);
+    if (!resp) continue;
+    if (resp in individual) individual[resp] += l.valor;
+    if (resp !== l.dono && l.dono in pagou) {
+      const r = reembolsos.find((x) => x.de === resp && x.para === l.dono);
+      if (r) r.valor += l.valor; else reembolsos.push({ de: resp, para: l.dono, valor: l.valor });
+    }
+  }
+  const [a, b] = ids;
+  // positivo: A pagou a mais e deve receber
+  let saldoA = pagou[a] - deveria[a];
+  for (const r of reembolsos) saldoA += r.para === a ? r.valor : -r.valor;
   const transf = Math.abs(saldoA) < 100 ? null : saldoA > 0 ? { de: b, para: a, valor: saldoA } : { de: a, para: b, valor: -saldoA };
-  return { total, pagou, deveria, transf };
+  const totalCompartilhado = comp.reduce((s, l) => s + l.valor, 0);
+  return { total, pagou, deveria, transf, individual, reembolsos, totalCompartilhado };
 }
 
 const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

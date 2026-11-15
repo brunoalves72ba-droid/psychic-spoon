@@ -5,7 +5,7 @@ import { reconhecer, interpretarFrase, chaveDescricao, CONTAS, nomeGrupo, grupoD
 import { reais, digitosParaCentavos } from '../core/dinheiro.js';
 import { hoje, mesDe, somarMeses, nomeDia } from '../core/datas.js';
 import { esc, aviso, confirmar } from '../core/ui.js';
-import { pendentesAtivos, nomeCartao, outra, compartilhaPorPadrao } from '../core/store.js';
+import { pendentesAtivos, nomeCartao, outra, compartilhaPorPadrao, rateioPadrao } from '../core/store.js';
 import { opcoesAgrupadas } from './plano.js';
 
 export const titulo = 'Lançar';
@@ -59,8 +59,16 @@ export function render(main, params) {
       </div>
       ${existente?.cartao ? `<p class="sub">Cartão: <b>${esc(nomeCartao(existente.cartao))}</b>${existente.origem === 'notificacao' ? ' · lido da notificação do banco' : ''}</p>` : ''}
       ${existente ? (rec ? `<p class="sub">Esta é uma conta fixa, lançada todo dia ${rec.dia}${rec.fim ? ` até ${rec.fim.split('-').reverse().join('/')}` : ''}. Mudanças aqui valem só para este mês.</p>` : '')
-        : `<label class="marcar"><input type="checkbox" id="repetir"><span><b>Repetir todo mês</b><small>Para salário, aluguel, internet, assinaturas…</small></span></label>`}
-      <label class="marcar compartilhar"><input type="checkbox" id="compartilhar"><span><b>Compartilhar com ${esc(outra()?.nome || 'o casal')}</b><small>Aparece na aba Casal e entra no acerto do mês. Sem marcar, fica só na sua conta.</small></span></label>
+        : `<label class="marcar"><input type="checkbox" id="repetir"${params.repetir ? ' checked' : ''}><span><b>Repetir todo mês</b><small id="repetir-dica">Para salário, aluguel, internet, assinaturas…</small></span></label>`}
+      <label class="marcar compartilhar"><input type="checkbox" id="compartilhar"><span><b>Compartilhar com ${esc(outra()?.nome || 'o casal')}</b><small>Aparece na aba Casal. Sem marcar, fica só na sua conta.</small></span></label>
+      <fieldset class="rateio" id="rateio" hidden><legend>De quem é este gasto? <small class="muted" id="rateio-porque"></small></legend>
+        <div class="alternar tres" role="group" aria-label="De quem é este gasto">
+          <button type="button" data-rateio="dividir">Dos dois</button>
+          <button type="button" data-rateio="meu">Só meu</button>
+          <button type="button" data-rateio="outro">Só de ${esc(outra()?.nome || 'quem divide comigo')}</button>
+        </div>
+        <p class="sub" id="rateio-exp"></p>
+      </fieldset>
       ${existente && existente.descricao ? `<label class="marcar"><input type="checkbox" id="ensinar"><span><b>Usar esta conta sempre</b><small>Lançamentos e importações com esta descrição vão para a conta escolhida.</small></span></label>` : ''}
       <button class="btn primario cheio" type="submit">${existente ? 'Salvar alterações' : 'Salvar'}</button>
       ${existente ? `<div class="btn-linha" style="margin-top:10px">
@@ -90,7 +98,26 @@ export function render(main, params) {
   const pintarTipo = () => {
     main.querySelectorAll('[data-tipo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tipo === f.tipo)));
     pintarContas();
+    pintarRateio();
+    const dica = $('#repetir-dica');
+    if (dica) dica.textContent = f.tipo === 'receita' ? 'Entrada recorrente: salário, ticket alimentação ou refeição, aluguel recebido, complemento de receita…' : 'Despesa recorrente: aluguel, condomínio, internet, assinaturas…';
   };
+
+  // de quem é o gasto compartilhado: dos dois (dividido), só meu ou só do outro
+  let rateio = existente?.rateio || 'dividir', rateioMexido = !!existente, rateioFonte = '';
+  function pintarRateio() {
+    const box = $('#rateio'), comp = $('#compartilhar');
+    if (!box || !comp) return;
+    box.hidden = !(comp.checked && f.tipo === 'despesa');
+    if (!rateioMexido && !existente) { const r = rateioPadrao(desc.value); rateio = r.rateio; rateioFonte = r.fonte; }
+    box.querySelectorAll('[data-rateio]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.rateio === rateio)));
+    const nome = outra()?.nome || 'a outra pessoa';
+    const pct = dados().divisao;
+    $('#rateio-exp').textContent = rateio === 'meu' ? `${nome} vê, mas não entra no acerto: é um gasto seu.`
+      : rateio === 'outro' ? `É de ${nome}: no acerto do mês, ${nome} devolve ${f.valor ? reais(f.valor) : 'o valor'} para você.`
+      : `Entra no acerto, dividido pela divisão combinada (${dados().pessoas.map((p) => `${p.nome} ${pct[p.id] ?? 50}%`).join(' · ')}).`;
+    $('#rateio-porque').textContent = rateioFonte === 'historico' && !rateioMexido ? '· como da última vez' : '';
+  }
 
   /** Reconhece a conta pela descrição e explica o porquê. */
   const reconhecerDescricao = () => {
@@ -144,9 +171,10 @@ export function render(main, params) {
   $('#frase')?.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); main.querySelector('form').requestSubmit(); } });
 
   let compMexido = !!existente;
-  const pintarComp = () => { const c = $('#compartilhar'); if (c && !compMexido) c.checked = compartilhaPorPadrao(f.categoria); };
+  const pintarComp = () => { const c = $('#compartilhar'); if (c && !compMexido) c.checked = compartilhaPorPadrao(f.categoria); pintarRateio(); };
   $('#compartilhar').checked = existente ? !!existente.compartilhado : compartilhaPorPadrao(f.categoria);
-  $('#compartilhar').addEventListener('change', () => { compMexido = true; });
+  $('#compartilhar').addEventListener('change', () => { compMexido = true; pintarRateio(); });
+  $('#rateio').addEventListener('click', (ev) => { const b = ev.target.closest('[data-rateio]'); if (!b) return; rateio = b.dataset.rateio; rateioMexido = true; pintarRateio(); });
   $('#cats').addEventListener('click', (ev) => { if (ev.target.closest('[data-cat]')) pintarComp(); });
   $('#cat-todas').addEventListener('change', pintarComp);
   desc.addEventListener('input', pintarComp);
@@ -154,6 +182,7 @@ export function render(main, params) {
   $('#data').value = f.data;
   $('#pagamento').value = PAGAMENTOS.includes(f.pagamento) ? f.pagamento : 'Pix';
   pintarValor(); pintarTipo();
+  valor.addEventListener('input', () => setTimeout(pintarRateio));
   requestAnimationFrame(ajustarAltura);
   // cursor no lançamento rápido, mas sem roubar o foco de quem já começou a digitar noutro campo
   if (!existente) setTimeout(() => { const a = document.activeElement; if (!a || a === document.body || a === main) $('#frase')?.focus(); }, 50);
@@ -163,7 +192,7 @@ export function render(main, params) {
     if (!f.valor) { aviso('Digite o valor.'); valor.focus(); return; }
     if (!f.categoria) { aviso('Escolha uma conta.'); return; }
     const data = $('#data').value || hoje();
-    const l = { ...f, data, descricao: desc.value.replace(/\s+/g, ' ').trim(), pagamento: f.tipo === 'despesa' ? $('#pagamento').value : '', compartilhado: $('#compartilhar').checked };
+    const l = { ...f, data, descricao: desc.value.replace(/\s+/g, ' ').trim(), pagamento: f.tipo === 'despesa' ? $('#pagamento').value : '', compartilhado: $('#compartilhar').checked, rateio, ...((f.categoria === 'outros' || f.categoria === 'outras-receitas') && { classificado: true }) };
     const repetir = !!$('#repetir')?.checked;
     if ($('#ensinar')?.checked && l.descricao) {
       const iguais = e.lancamentos.filter((x) => x.tipo === l.tipo && chaveDescricao(x.descricao) === chaveDescricao(l.descricao)).map((x) => x.id);
@@ -172,7 +201,7 @@ export function render(main, params) {
     const salvo = salvarLancamento(l, { repetir });
     if (l.tipo === 'despesa') try { localStorage.setItem(ULTIMO_PAG, l.pagamento); } catch {}
     if (existente) { aviso(catOriginal !== l.categoria && $('#ensinar')?.checked ? 'Salvo. O app vai lembrar desta conta.' : 'Alterações salvas.'); history.back(); return; }
-    aviso(`${l.tipo === 'receita' ? 'Entrada' : 'Gasto'} de ${reais(l.valor)} salvo em ${nomeCategoria(l.categoria)}${repetir ? ' (todo mês)' : ''}.`, {
+    aviso(`${l.tipo === 'receita' ? 'Entrada' : 'Gasto'} de ${reais(l.valor)} salvo em ${nomeCategoria(l.categoria)}${repetir ? (l.tipo === 'receita' ? ' (entrada recorrente)' : ' (despesa recorrente)') : ''}.`, {
       rotulo: 'Desfazer', fazer: () => { apagarLancamento(salvo.id); if (salvo.recorrente) apagarRecorrente(salvo.recorrente); aviso('Lançamento desfeito.'); },
     });
     // fica na tela, pronto para o próximo

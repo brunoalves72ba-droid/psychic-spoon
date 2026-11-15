@@ -43,9 +43,9 @@ export function render(main) {
   }
   for (const f of sug.fixas) {
     cartaoSug.push(`<li class="sug" data-chave="fixa:${esc(f.chave)}">
-      <p class="sug-tit"><b>${esc(f.descricao)}</b> parece uma conta fixa</p>
-      <p class="sub">${reais(f.valor)} todo mês há ${f.meses} meses, por volta do dia ${f.dia}. Como conta fixa, ela entra sozinha e aparece na previsão do mês.</p>
-      <div class="btn-linha"><button class="btn" type="button" data-dispensar>Agora não</button><button class="btn primario" type="button" data-fixa="${esc(f.chave)}">Virar conta fixa</button></div>
+      <p class="sug-tit"><b>${esc(f.descricao)}</b> parece ${f.tipo === 'receita' ? 'uma entrada recorrente' : 'uma despesa recorrente'}</p>
+      <p class="sub">${f.tipo === 'receita' ? '+ ' : ''}${reais(f.valor)} todo mês há ${f.meses} meses, por volta do dia ${f.dia}. Como recorrência, ${f.tipo === 'receita' ? 'ela entra' : 'ela é lançada'} sozinha e aparece na previsão do mês.</p>
+      <div class="btn-linha"><button class="btn" type="button" data-dispensar>Agora não</button><button class="btn primario" type="button" data-fixa="${esc(f.chave)}">Tornar recorrente</button></div>
     </li>`);
   }
 
@@ -94,7 +94,7 @@ export function render(main) {
   main.querySelectorAll('[data-fixa]').forEach((b) => (b.onclick = () => {
     const f = sug.fixas.find((x) => x.chave === b.dataset.fixa);
     virarContaFixa(f);
-    aviso(`${f.descricao} virou conta fixa.`);
+    aviso(`${f.descricao} agora é ${f.tipo === 'receita' ? 'uma entrada recorrente' : 'uma despesa recorrente'}.`);
     recarregar();
   }));
 

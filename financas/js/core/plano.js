@@ -51,7 +51,11 @@ export const CONTAS = [
   { id: 'bonus', nome: 'Bonificações e premiações', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'extra', kw: /bonus|bonifica|premia|\bplr\b|participacao nos lucros/ },
   { id: 'lucros', nome: 'Distribuição de lucros', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'extra', kw: /distribuicao de lucros|lucros distribuidos/ },
   { id: 'rendimentos', nome: 'Rendimentos', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'extra', kw: /rendimento|dividendo|\bjcp\b|juros sobre capital|remuneracao (da )?conta|rend pago/ },
-  { id: 'reembolsos', nome: 'Reembolsos e devoluções', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'outras-receitas', kw: /reembolso|cashback|estorno|devolucao/ },
+  { id: 'reembolsos', nome: 'Reembolsos e cashback', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'outras-receitas', kw: /reembolso|cashback/ },
+  { id: 'devolucoes', nome: 'Devoluções', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'outras-receitas', kw: /devolu|estorno|valor devolvido|compra cancelada|cancelamento de compra/ },
+  { id: 'ticket-alimentacao', nome: 'Ticket Alimentação', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'salario', kw: /(ticket|vale|alelo|sodexo|pluxee|flash|caju|swile|cartao|beneficio|credito)[a-z ]{0,12}alimentacao|\bva\b|ticket alim/ },
+  { id: 'ticket-refeicao', nome: 'Ticket Refeição', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'salario', kw: /(ticket|vale|alelo|sodexo|pluxee|flash|caju|swile|cartao|beneficio|credito)[a-z ]{0,12}refeicao|\bvr\b|ticket ref/ },
+  { id: 'complemento', nome: 'Complemento de receita', grupo: 'receitas', tipo: 'receita', padrao: true, pai: 'salario', kw: /complemento|complementacao|ajuda de custo|auxilio/ },
   { id: 'vendas', nome: 'Vendas', grupo: 'receitas', tipo: 'receita', pai: 'extra', kw: /venda|olx|enjoei/ },
   { id: 'extra', nome: 'Renda extra', grupo: 'receitas', tipo: 'receita', padrao: true, kw: /freela|bico|comissao|honorario/ },
   { id: 'outras-receitas', nome: 'Outras entradas', grupo: 'receitas', tipo: 'receita', padrao: true },
@@ -207,9 +211,9 @@ export function reconhecer(descricao, tipo, estado) {
 
 // ---------- lançamento rápido: "uber 23,50 ontem no pix" ----------
 const SEMANA = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
-const PAGS = [[/\bpix\b/, 'Pix'], [/\bdebito\b/, 'Débito'], [/\b(credito|cartao)\b/, 'Crédito'], [/\b(dinheiro|especie)\b/, 'Dinheiro'], [/\bboleto\b/, 'Boleto'], [/\b(transferencia|ted|doc)\b/, 'Transferência']];
-const VERBOS_RECEITA = /\b(recebi|ganhei|entrou|entrada|caiu|salario|reembolso|rendimento|vendi)\b/;
-const VAZIAS = /\b(gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|com|no|na|nos|nas|de|do|da|em|pelo|pela|para|pra|por|um|uma|o|a|e|reais|real|conto|contos|pila|r\$|hoje|ontem|anteontem|dia|via|cartao|pix|debito|credito|dinheiro|boleto|transferencia|ted|doc|especie|passado|passada)\b/g;
+const PAGS = [[/\b(ticket|vale|alelo|sodexo|pluxee|flash|caju|swile|cartao|beneficio)\b[a-z ]{0,12}\brefeicao\b|\bvr\b/, 'Ticket Refeição'], [/\b(ticket|vale|alelo|sodexo|pluxee|flash|caju|swile|cartao|beneficio)\b[a-z ]{0,12}\balimentacao\b|\bva\b/, 'Ticket Alimentação'], [/\b(ticket|alelo|sodexo|pluxee|caju|swile)\b/, 'Ticket'], [/\bpix\b/, 'Pix'], [/\bdebito\b/, 'Débito'], [/\b(credito|cartao)\b/, 'Crédito'], [/\b(dinheiro|especie)\b/, 'Dinheiro'], [/\bboleto\b/, 'Boleto'], [/\b(transferencia|ted|doc)\b/, 'Transferência']];
+const VERBOS_RECEITA = /\b(recebi|ganhei|entrou|entrada|caiu|salario|reembolso|rendimento|vendi|devolucao|devolveram|devolvido|complemento)\b/;
+const VAZIAS = /\b(gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|com|no|na|nos|nas|de|do|da|em|pelo|pela|para|pra|por|um|uma|o|a|e|reais|real|conto|contos|pila|r\$|hoje|ontem|anteontem|dia|via|cartao|pix|debito|credito|dinheiro|boleto|transferencia|ted|doc|especie|passado|passada|ticket|vale|alelo|sodexo|pluxee|caju|swile|vr|va|refeicao|alimentacao)\b/g;
 
 function dataDe(t, hoje) {
   const [a, m, d] = hoje.split('-').map(Number);
@@ -272,6 +276,10 @@ export function interpretarFrase(texto, hoje = hojeStr()) {
   });
   const desc = palavras.join(' ').replace(/\s+/g, ' ').trim();
   if (desc) r.descricao = desc.charAt(0).toUpperCase() + desc.slice(1);
+  // "no ticket" sem dizer qual: refeição para comida pronta, alimentação para o resto (mercado, feira…)
+  if (r.pagamento === 'Ticket') r.pagamento = /restaurante|lanche|lanchonete|almoco|jantar|ifood|pizza|burger|marmita|padaria|cafe|refeicao/.test(t) ? 'Ticket Refeição' : 'Ticket Alimentação';
+  // "caiu o VR 600": é o crédito do benefício, uma entrada
+  if (r.tipo === 'receita' && /^Ticket /.test(r.pagamento || '')) { r.descricao = r.pagamento; delete r.pagamento; }
   return r;
 }
 
@@ -322,12 +330,13 @@ export function sugestoesPlano(estado, hoje = hojeStr()) {
   // 3) gastos que parecem conta fixa
   const porChave = new Map();
   for (const l of recentes) {
-    if (l.tipo !== 'despesa' || l.recorrente || !l.descricao) continue;
-    const k = chaveDescricao(l.descricao);
-    if (!k) continue;
+    if (l.recorrente || !l.descricao || NEUTRAS.has(l.categoria)) continue;
+    const k0 = chaveDescricao(l.descricao);
+    if (!k0) continue;
+    const k = l.tipo === 'receita' ? 'receita:' + k0 : k0;   // gastos mantêm a chave antiga (o que foi dispensado continua dispensado)
     (porChave.get(k) || porChave.set(k, []).get(k)).push(l);
   }
-  const jaFixas = new Set(estado.recorrentes.filter((r) => !r.fim).map((r) => chaveDescricao(r.descricao)));
+  const jaFixas = new Set(estado.recorrentes.filter((r) => !r.fim).map((r) => (r.tipo === 'receita' ? 'receita:' : '') + chaveDescricao(r.descricao)));
   const fixas = [];
   const mesHoje = mesDe(hoje);
   for (const [k, ls] of porChave) {
@@ -345,7 +354,7 @@ export function sugestoesPlano(estado, hoje = hojeStr()) {
     const media = valores.reduce((a, b) => a + b, 0) / valores.length;
     if (valores.some((v) => Math.abs(v - media) > media * 0.1)) continue; // valor muda demais: não é fixa
     const ultimo = porMes.get(ult);
-    fixas.push({ chave: k, descricao: ultimo.descricao, valor: ultimo.valor, dia: +ultimo.data.slice(8, 10), categoria: ultimo.categoria, pagamento: ultimo.pagamento || '', meses: meses.length, temNesteMes: porMes.has(mesHoje) });
+    fixas.push({ chave: k, tipo: ultimo.tipo, descricao: ultimo.descricao, valor: ultimo.valor, dia: +ultimo.data.slice(8, 10), categoria: ultimo.categoria, pagamento: ultimo.pagamento || '', meses: meses.length, temNesteMes: porMes.has(mesHoje) });
   }
   fixas.sort((a, b) => b.valor - a.valor);
 

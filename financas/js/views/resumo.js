@@ -1,7 +1,7 @@
 // Minhas contas: o mês de quem usa este celular (privadas e compartilhadas que eu paguei).
 import { dados, nomeCategoria, categoria as catPorId, pendentesAtivos, eu, nomePessoa, limites } from '../core/store.js';
 import { GRUPOS, grupoDaCategoria, sugestoesPlano } from '../core/plano.js';
-import { doMes, resumo, porCategoria, historico, previsao, orcamentos, daVisao } from '../core/calc.js';
+import { saldoTickets, aClassificar, recorrencias, doMes, resumo, porCategoria, historico, previsao, orcamentos, daVisao } from '../core/calc.js';
 import { reais, reaisCurto } from '../core/dinheiro.js';
 import { mesAtual, somarMeses, nomeMes, nomeMesCurto } from '../core/datas.js';
 import { esc, navMes, icone } from '../core/ui.js';
@@ -22,6 +22,8 @@ export function render(main, { m }) {
   const cats = porCategoria(lancs);
   const prev = previsao(e, mes);
   const orc = orcamentos(lancs, limites(eu())).filter((o) => o.status !== 'ok');
+  const nPend = lancs.filter(aClassificar).length;
+  const tickets = saldoTickets(lancs);
 
   if (!e.lancamentos.length) {
     main.innerHTML = `<p class="conta-de">Conta ${esc(nomePessoa(eu()))}</p>${navMes('#/resumo', mes)}
@@ -39,6 +41,8 @@ export function render(main, { m }) {
     dicas.push([`ritmo`, `Você está gastando em média <b>${reais(prev.mediaDia)}</b> por dia (fora as contas fixas).`]);
     if (prev.diasRestantes > 0) dicas.push(['calendario', `Nesse ritmo, o mês fecha com uns <b>${reais(prev.gastoPrevisto)}</b> de gastos${r.receitas ? ` — ${prev.gastoPrevisto > r.receitas ? `<b>${reais(prev.gastoPrevisto - r.receitas)} a mais</b> do que entrou` : `sobrando cerca de <b>${reais(r.receitas - prev.gastoPrevisto)}</b>`}` : ''}.`]);
     if (prev.fixasAVencer) dicas.push(['repetir', `Ainda vencem <b>${reais(prev.fixasAVencer)}</b> em contas fixas este mês.`]);
+    const aReceber = recorrencias(e, mes).aReceber;
+    if (aReceber) dicas.push(['repetir', `Ainda vão entrar <b>${reais(aReceber)}</b> em entradas recorrentes este mês. <a href="#/recorrentes">Ver recorrências</a>`]);
   }
   if (ant.despesas && r.despesas) {
     const dif = r.despesas - ant.despesas;
@@ -78,6 +82,11 @@ export function render(main, { m }) {
 
     ${pendentesAtivos().length ? `<a class="cartao aviso-plano aviso-caixa" href="#/caixa"><b>${pendentesAtivos().length} lançamento${pendentesAtivos().length > 1 ? 's' : ''} a confirmar</b><span class="sub">Lidos das notificações do banco. Toque para conferir.</span></a>` : ''}
     ${comp ? `<a class="cartao aviso-plano aviso-caixa" href="#/casal?m=${mes}"><b>${reais(comp)} compartilhados com o casal</b><span class="sub">Dos seus gastos do mês, estes aparecem também para ${esc(nomePessoa(dados().pessoas.find((p) => p.id !== eu())?.id))}. Veja o acerto na aba Casal.</span></a>` : ''}
+    ${tickets.length ? `<section class="cartao tickets"><h2><span>Tickets do mês</span></h2>${tickets.map((t) => `<div class="ticket-linha"><b>${esc(t.nome)}</b>
+        <span class="sub">entrou ${reais(t.recebido)} · gasto ${reais(t.gasto)}</span>
+        <span class="ticket-saldo ${t.saldo < 0 ? 'neg' : ''}">${t.saldo < 0 ? 'passou ' + reais(-t.saldo) : 'sobra ' + reais(t.saldo)}</span></div>`).join('')}
+        <p class="sub">Conta o crédito do benefício lançado como entrada (Ticket Alimentação ou Ticket Refeição) e os gastos pagos com ele.</p></section>` : ''}
+    ${nPend ? `<a class="cartao aviso-classificar" href="#/extrato?m=${mes}&pend=1"><b>${nPend} lançamento${nPend > 1 ? 's' : ''} a classificar</b><span class="sub">O app não reconheceu a conta. Toque para classificar: o que você classificar sai da lista, e o app aprende.</span></a>` : ''}
     ${sug.total ? `<a class="cartao aviso-plano" href="#/plano"><b>${sug.total} sugest${sug.total > 1 ? 'ões' : 'ão'} para o seu plano de contas</b><span class="sub">Contas novas, gastos para classificar e contas fixas que o app encontrou.</span></a>` : ''}
 
     <section class="cartao">
