@@ -51,7 +51,6 @@ export default async function (el) {
       h('a.item', { href: '#/mais/pensamentos' }, h('span.n', '✎'), h('span.t', h('b', 'Pensamentos guardados'), h('span', `${plural(S.pensamentos.filter((x) => !x.ok).length, 'em aberto', 'em aberto')}.`)), h('span.chev', '›')),
       h('a.item', { href: '#/mais/ficha' }, h('span.n', '↻'), h('span.t', h('b', 'Ficha viva'), h('span', 'Modelos, cotas e regras que mudam rápido, com a data da última conferência.')), h('span.chev', '›')),
       h('a.item', { href: '#/mais/lembretes' }, h('span.n', '⏰'), h('span.t', h('b', 'Lembretes'), h('span', 'Horários de estudo no calendário do seu celular.')), h('span.chev', '›')),
-      h('a.item', { href: '#/mais/porque' }, h('span.n', '?'), h('span.t', h('b', 'Por que o app é assim'), h('span', 'A ciência por trás de cada escolha, com o grau de evidência.')), h('span.chev', '›')),
-      h('a.item', { href: '#/mais/ajustes' }, h('span.n', '⚙'), h('span.t', h('b', 'Ajustes e backup'), h('span', 'Tema, meta de minutos e cópia dos seus dados.')), h('span.chev', '›'))),
+      h('a.item', { href: '#/mais/porque' }, h('span.n', '?'), h('span.t', h('b', 'Por que o app é assim'), h('span', 'A ciência por trás de cada escolha, com o grau de evidência.')), h('span.chev', '›'))),
   );
 }

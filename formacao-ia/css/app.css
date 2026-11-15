@@ -430,3 +430,8 @@ body.pc .ilhas-grade .ilha{background:var(--bg2);border:1px solid var(--line);bo
 .voz-linha .btn.mudo{padding:4px 10px}
 .voz-linha .ouvir[aria-pressed=true]{background:var(--acao);border-color:var(--acao);color:var(--acao-ink)}
 .cartao .voz-linha{margin-bottom:8px}
+
+/* seis abas: rótulos sem quebrar em telas estreitas; no PC, Ajustes vai para o pé do menu */
+.tabs a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (max-width:360px){.tabs a{font-size:.66rem}}
+body.pc .tabs a[data-tab=ajustes]{margin-top:auto}

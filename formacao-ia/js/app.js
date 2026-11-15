@@ -24,6 +24,8 @@ const VIEWS = new Set([
   'foco',
 ]);
 const ABA = { hoje: 'hoje', foco: 'hoje', trilha: 'trilha', licao: 'trilha', labs: 'trilha', revisar: 'revisar', projeto: 'projeto', progresso: 'progresso', mais: 'progresso' };
+// telas de configuração ficam na aba Ajustes
+const ABA_AJUSTES = new Set(['mais-ajustes', 'mais-sync', 'mais-instalar', 'mais-backup']);
 const IMERSIVO = new Set(['licao', 'revisar-cartoes', 'revisar-mistura', 'foco']);
 
 const view = document.getElementById('view');
@@ -48,7 +50,7 @@ async function render() {
   const r = parse();
   leave();
   document.body.classList.toggle('imersivo', IMERSIVO.has(r.name));
-  document.querySelectorAll('.tabs a').forEach((a) => { if (a.dataset.tab === ABA[r.sec]) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('.tabs a').forEach((a) => { if (a.dataset.tab === (ABA_AJUSTES.has(r.name) ? 'ajustes' : ABA[r.sec])) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   let mod;
   try { mod = await import(`./views/${r.name}.js`); }
   catch (e) {
@@ -101,7 +103,7 @@ async function paginaErrada() {
     const n = +(sessionStorage.getItem('fia-cura') || 0);
     if (n >= 2 || !('serviceWorker' in navigator)) throw new Error('sem conserto automático');
     sessionStorage.setItem('fia-cura', String(n + 1));
-    const reg = await navigator.serviceWorker.register('sw.js');
+    const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
     await ativo(reg, 30000);
     location.reload();
   } catch (e) { console.error(e); aviso('Não deu para abrir o app agora. Confira a internet e recarregue a página.'); }
@@ -127,10 +129,32 @@ async function boot() {
   nuvem.iniciar();
 }
 
+let registro = null;
+
+/** Procura uma versão nova agora. Devolve 'nova' (baixando ou pronta), 'atual' ou 'sem-rede'. */
+export async function procurarAtualizacao() {
+  const reg = registro || (navigator.serviceWorker && await navigator.serviceWorker.getRegistration());
+  if (!reg) return 'sem-rede';
+  try { await reg.update(); } catch { return 'sem-rede'; }
+  const w = reg.installing || reg.waiting;
+  if (reg.waiting && navigator.serviceWorker.controller) toast('Nova versão do app pronta.', { label: 'Atualizar', fn: () => reg.waiting && reg.waiting.postMessage('skipWaiting') });
+  return w ? 'nova' : 'atual';
+}
+
+/** Versão em uso (o nome do cache do app). */
+export async function versaoAtual() {
+  try { const k = (await caches.keys()).find((x) => x.startsWith('formacao-ia-')); return k ? k.slice('formacao-ia-'.length, 'formacao-ia-'.length + 7) : null; } catch { return null; }
+}
+
 function registerSW() {
   if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
-  navigator.serviceWorker.register('sw.js').then((reg) => {
+  // updateViaCache 'none': a lista de arquivos (sw-assets.js) é sempre buscada na rede, sem o cache de 10 min do GitHub Pages
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+    registro = reg;
     const offer = (w) => toast('Nova versão do app pronta.', { label: 'Atualizar', fn: () => w.postMessage('skipWaiting') });
+    // o app instalado fica dias aberto em segundo plano: procura versão nova ao voltar para a tela e a cada 30 min
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
     if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
     reg.addEventListener('updatefound', () => {
       const w = reg.installing; if (!w) return;

@@ -4,6 +4,7 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 
 ## Como continuar (leia primeiro)
 
+- Seis abas: Hoje, Trilha, Revisar, Projeto, Progresso e Ajustes (sincronização, instalação, voz, aparência, sessão, dados e backup).
 - Sem build. `npm start` serve em http://localhost:8090. `npm test` roda os testes unitários. `npm run e2e` percorre o app no Chromium.
 - **Sempre que criar, apagar ou editar arquivo do app, rode `npm run precache`.**
 - Cada lição é um objeto em `js/data/m*.js`. Convenção: em quiz e casos de escolha, **a primeira opção é a correta** (a tela embaralha). O teste `tests/conteudo.test.mjs` valida formato, tamanho e marcações de todas as lições; `tests/python.test.mjs` roda a solução de cada exercício de Python no mesmo MicroPython do app.
