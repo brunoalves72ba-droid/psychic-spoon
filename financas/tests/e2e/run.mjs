@@ -149,6 +149,28 @@ try {
     await p.locator('.etq', { hasText: 'banco' }).first().waitFor();
     await p.screenshot({ path: `${shots}extrato-importado-${tema}.png`, fullPage: true });
 
+    // captura automática: o MacroDroid abre /receber com o texto da notificação
+    const base = `http://localhost:${PORTA}/`;
+    await p.goto(base + '#/receber?app=Nubank&titulo=Compra aprovada&texto=Compra de R$ 45,90 APROVADA em IFOOD *RESTAURANTE para o cartão com final 1234.');
+    await p.getByText('Nova notificação: gasto de R$ 45,90 em IFOOD RESTAURANTE.').waitFor();
+    await p.goto(base + '#/receber?app=Itaú&texto=Compra aprovada no cartão final 5678: R$ 600,00 em 3x de R$ 200,00 em MAGAZINE LUIZA.');
+    await p.getByText(/Nova notificação: gasto de R\$ 600,00 em MAGAZINE LUIZA/).waitFor();
+    // "Compartilhar com o Finanças" (share target) chega por ?texto=
+    await p.goto(base + 'index.html?titulo=SMS&texto=' + encodeURIComponent('Compra de R$ 300,00 RECUSADA em LOJA X.'));
+    await p.getByText('Notificação ignorada: Compra recusada.').waitFor();
+    if ((await p.locator('.abas .contador').textContent()) !== '2') falhar('contador da caixa');
+    await p.getByText('Parcelado em 3x de R$ 200,00').waitFor();
+    await p.screenshot({ path: `${shots}caixa-${tema}.png`, fullPage: true });
+    await p.locator('.pend', { hasText: 'IFOOD' }).getByRole('button', { name: '✔ Confirmar' }).click();
+    await p.getByText('Lançado em Restaurante e delivery.').waitFor();
+    await p.getByRole('button', { name: '✔ Confirmar' }).click();
+    await p.getByText('3 parcelas lançadas em Compras.').waitFor();
+    await p.getByText('Nada para confirmar').waitFor();
+    if (await p.locator('.abas .contador').count()) falhar('contador deveria sumir');
+    await p.goto(base + '#/captura');
+    await p.getByText('Endereço para o MacroDroid').waitFor();
+    await p.screenshot({ path: `${shots}captura-${tema}.png`, fullPage: true });
+
     // plano de contas: sugestão de criar conta a partir dos gastos
     await p.goto(`http://localhost:${PORTA}/#/plano`);
     await p.getByText('Sugestões para o seu plano').waitFor();

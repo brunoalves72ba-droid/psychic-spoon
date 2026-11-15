@@ -1,10 +1,10 @@
 // Finanças — © Bruno Moura, único e exclusivo proprietário.
 // Roteador: #/secao?param=valor → js/views/secao.js (export render(main, params)).
-import { carregar, atualizarRecorrentes } from './core/store.js';
+import { carregar, atualizarRecorrentes, pendentesAtivos, aoMudar } from './core/store.js';
 import { aviso } from './core/ui.js';
 
-const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes', 'importar', 'plano'];
-const ABA_DE = { importar: 'extrato', plano: 'ajustes' }; // telas sem aba própria acendem a aba de onde vieram
+const SECOES = ['resumo', 'extrato', 'lancar', 'orcamento', 'ajustes', 'importar', 'plano', 'caixa', 'receber', 'captura'];
+const ABA_DE = { importar: 'extrato', plano: 'ajustes', caixa: 'lancar', receber: 'lancar', captura: 'ajustes' }; // telas sem aba própria acendem a aba de onde vieram
 const main = document.getElementById('view');
 let limpar = null;
 
@@ -25,7 +25,27 @@ async function rotear() {
   rotear.jaFoi = true;
 }
 
+/** Número de itens na caixa "A confirmar", no ícone da aba Lançar. */
+function pintarContador() {
+  const n = pendentesAtivos().length;
+  const aba = document.querySelector('.abas a[data-aba=lancar]');
+  let b = aba.querySelector('.contador');
+  if (!n) { b?.remove(); aba.setAttribute('aria-label', 'Lançar'); return; }
+  if (!b) { b = document.createElement('span'); b.className = 'contador'; b.setAttribute('aria-hidden', 'true'); aba.append(b); }
+  b.textContent = n > 99 ? '99+' : n;
+  aba.setAttribute('aria-label', `Lançar, ${n} a confirmar`);
+}
+
+// "Compartilhar com o Finanças" (Android) chega como ?titulo=...&texto=... no endereço:
+// vira a mesma entrada que o MacroDroid usa.
+if (/[?&](texto|titulo)=/.test(location.search)) {
+  const q = location.search.slice(1);
+  history.replaceState(null, '', location.pathname + '#/receber?' + q.replace(/(^|&)(link=[^&]*)/, ''));
+}
+
 carregar();
+pintarContador();
+aoMudar(pintarContador);
 addEventListener('hashchange', rotear);
 // ao voltar para o app num dia novo, contas fixas que venceram entram sozinhas
 document.addEventListener('visibilitychange', () => { if (!document.hidden && atualizarRecorrentes() && !location.hash.startsWith('#/lancar')) rotear(); });

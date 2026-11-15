@@ -20,6 +20,12 @@ export function render(main) {
     </section>
 
     <section class="cartao">
+      <h2>Captura automática</h2>
+      <p class="sub">Compras, Pix e boletos lidos das notificações do banco (MacroDroid) ou pelo botão Compartilhar, direto para a caixa A confirmar. Aqui também ficam os apelidos dos cartões.</p>
+      <div class="btn-linha"><a class="btn" href="#/caixa">A confirmar</a><a class="btn primario" href="#/captura">Configurar</a></div>
+    </section>
+
+    <section class="cartao">
       <h2>Plano de contas</h2>
       <p class="sub">Contas organizadas em grupos (Moradia, Alimentação, Transporte…), sugestões de contas novas a partir dos seus gastos e o que o app já aprendeu a reconhecer.</p>
       <a class="btn cheio" href="#/plano">Abrir plano de contas</a>
