@@ -21,11 +21,16 @@ const IGNORAR = [
   [/recusad|negad|nao aprovad|nao autorizad|nao foi aprovad|bloquead|insuficiente/, 'Compra recusada'],
   [/estorn|cancelad|devolvid|chargeback/, 'Estorno ou cancelamento'],
   [/pagamento (da |de )?fatura|fatura (paga|fechou|fechada|vence|disponivel|do cartao)|pgto fatura|sua fatura/, 'Fatura do cartão (as compras já entram uma a uma)'],
-  [/codigo de (seguranca|verificacao|acesso)|\btoken\b|senha|\bcodigo\b.*\d{4,}/, 'Código de segurança'],
-  [/saldo (disponivel|atual|em conta)|limite disponivel|seu limite/, 'Aviso de saldo ou limite'],
+  // os dois abaixo só valem quando a notificação NÃO é de uma compra ou pagamento: muitos bancos
+  // escrevem "compra com senha" ou "limite disponível: R$ …" junto da própria compra
+  [/codigo de (seguranca|verificacao|acesso)|\btoken\b|senha|\bcodigo\b.*\d{4,}/, 'Código de segurança', 'fraco'],
+  [/saldo (disponivel|atual|em conta)|limite disponivel|seu limite/, 'Aviso de saldo ou limite', 'fraco'],
   [/agendad|agendamento/, 'Pagamento agendado (ainda não saiu)'],
   [/aplicacao|resgate|investimento|cdb|rdb|poupanca|caixinha|cofrinho/, 'Investimento ou transferência entre suas contas'],
 ];
+
+/** Sinais de que a notificação é uma movimentação de verdade. */
+const MOVIMENTO = /compra|pagamento|\bpagou\b|\bpago\b|pix (enviado|recebido|realizado)|transferencia|voce recebeu|debito de|credito de|aprovad|boleto/;
 
 const RECEITA = /voce recebeu|recebeu (um |uma )?(pix|transferencia|ted|doc|deposito)|pix recebido|transferencia recebida|deposito recebido|credito em conta|creditad|salario|caiu na (sua )?conta|recebimento/;
 const VALOR = /(?:r\$|rs|brl)\s*-?\s*(\d{1,3}(?:\.\d{3})*(?:,\d{2})|\d+(?:,\d{2})|\d+(?:\.\d{2}))\b/i;
@@ -94,7 +99,8 @@ export function lerNotificacao(texto, { app = '', titulo = '', hoje = hojeStr() 
   if (!v) return null;
 
   const banco = (BANCOS.find(([re]) => re.test(semAcento(app))) || BANCOS.find(([re]) => re.test(n)) || [, ''])[1];
-  const motivo = IGNORAR.find(([re]) => re.test(n))?.[1] || '';
+  const movimento = MOVIMENTO.test(n);
+  const motivo = IGNORAR.find(([re, , forca]) => re.test(n) && !(forca === 'fraco' && movimento))?.[1] || '';
   let receita = RECEITA.test(n) && !/compra|pagamento (de|do|efetuado|realizado)|voce pagou|pix enviado|transferencia enviada/.test(n);
 
   // parcelas: "em 3x de R$ 50,00", "3x R$ 50,00", "parcelado em 3 vezes", "(3 parcelas)"
