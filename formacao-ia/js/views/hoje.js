@@ -4,7 +4,7 @@ import { h, put, rich, icon, seg, clear, plural, toast } from '../core/ui.js';
 import { S, eventosSemana, pendencias, responderCartao, salvar, filaDeHoje } from '../core/estado.js';
 import { hoje, DIAS, dow } from '../core/dia.js';
 import { proxima, seguinte, licao, modulo, moduloDe, PASSOS, cartao, moduloAtual, progressoModulo } from '../data/curso.js';
-import { semanaAtual, META, GELOS_MAX } from '../core/sequencia.js';
+import { semanaAtual, META, GELOS_MAX, diasSeguidos, diasEstudados } from '../core/sequencia.js';
 import { proximaMissao } from '../data/projeto.js';
 import { verificarConquistas } from '../core/conquistas.js';
 import { desafioDaVez } from '../data/desafios.js';
@@ -123,7 +123,9 @@ export default async function (el, args) {
   const semana = h('section.card.flat');
   function pintarSemana() {
     const s = semanaAtual(S.dias, d);
+    const seguidos = diasSeguidos(S.dias, d), total = diasEstudados(S.dias);
     clear(semana).append(
+      ...(total ? [h('p.dias-seguidos', seguidos > 1 ? `🔥 ${seguidos} dias seguidos` : seguidos === 1 ? '🔥 1 dia de estudo hoje' : '', h('span.small.muted', ` ${seguidos ? '· ' : ''}${plural(total, 'dia estudado', 'dias estudados')} ao todo`))] : []),
       h('div.row.between', h('div.eyebrow', 'Sua semana'), h('span.small.muted', { title: 'Congelamentos: protegem a sequência numa semana ruim' }, `${S.semana.gelos} de ${GELOS_MAX} congelamentos`)),
       h('div.semana', { style: { margin: '10px 0' }, role: 'img', 'aria-label': `${s.feitos} de ${META} dias de estudo nesta semana` }, s.lista.map((x) => h('div.d' + (x.on ? '.on' : '') + (x.hoje ? '.hoje' : ''), h('i', '✓'), DIAS[dow(x.d)]))),
       h('p.small.dim', s.batida ? `Meta da semana batida: ${s.feitos} dias.${S.semana.seq ? ` Sequência: ${plural(S.semana.seq, 'semana', 'semanas')}.` : ''}`

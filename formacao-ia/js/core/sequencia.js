@@ -48,3 +48,13 @@ export function semanaAtual(dias, hoje) {
   const restam = lista.filter((x) => !x.on && x.d >= hoje).length; // dias ainda possíveis (hoje incluso, se ainda não contou)
   return { start, lista, feitos, falta: Math.max(0, META - feitos), possivel: feitos + restam >= META, batida: feitos >= META };
 }
+
+const menosUmDia = (d) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10); };
+/** Dias seguidos estudando até hoje (se hoje ainda não estudou, conta até ontem: a sequência não quebra antes do fim do dia). */
+export function diasSeguidos(dias, hoje) {
+  let d = ativo(dias, hoje) ? hoje : menosUmDia(hoje), n = 0;
+  while (ativo(dias, d)) { n++; d = menosUmDia(d); }
+  return n;
+}
+/** Quantos dias, ao todo, tiveram estudo. */
+export const diasEstudados = (dias) => Object.keys(dias).filter((d) => ativo(dias, d)).length;

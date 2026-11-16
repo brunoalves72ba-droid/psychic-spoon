@@ -29,6 +29,18 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return; // chamadas externas (só o tutor opcional) passam direto
+  // áudio das aulas: guardado na primeira vez que é tocado (cache próprio, que sobrevive às atualizações do app)
+  if (/\/audio\/[^/]+\.mp3$/.test(url.pathname)) {
+    e.respondWith((async () => {
+      const c = await caches.open('fia-audio');
+      const hit = await c.match(url.pathname);
+      if (hit) return hit;
+      const r = await fetch(url.pathname);
+      if (r.ok && r.status === 200) await c.put(url.pathname, r.clone());
+      return r;
+    })());
+    return;
+  }
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const hit = await c.match(req, { ignoreSearch: true }) || (req.mode === 'navigate' ? await c.match('index.html') || await c.match('./') : null);

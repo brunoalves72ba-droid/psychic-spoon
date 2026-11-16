@@ -11,7 +11,8 @@ import { capturar } from '../core/pensamento.js';
 import { verificarConquistas } from '../core/conquistas.js';
 import { ehPC } from '../core/plataforma.js';
 import { figura } from '../core/fotos.js';
-import * as voz from '../core/voz.js';
+import { infoAudio, playerAula } from '../core/audio.js';
+import { videoDaAula } from '../data/videos.js';
 
 export default async function (el, [id]) {
   const L = licao(id);
@@ -28,7 +29,7 @@ export default async function (el, [id]) {
   const t0 = Date.now();
   let avisado = false, fluxo = false;
   const anterior = ORDEM[ORDEM.indexOf(id) - 1];
-  const fimVoz = new AbortController();     // solta os ouvintes da voz ao sair da lição
+  let player = null;                         // áudio da aula (voz neural), se houver
   const chave = () => (p === 4 ? `4.${qi}` : String(p));
 
   // ---- topo: fechar, 7 passos tocáveis, relógio ----
@@ -41,7 +42,10 @@ export default async function (el, [id]) {
     bVoltar,
     h('button.btn.big.pens', { type: 'button', 'aria-label': 'Anotar um pensamento e voltar', title: 'Anotar um pensamento (N)', onclick: capturar }, icon('nota')),
     btn));
-  el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), segs, relogio), corpo, barra);
+  const slotAudio = h('div.slot-audio');
+  el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), segs, relogio), slotAudio, corpo, barra);
+  // áudio com voz neural: só aparece se esta aula já tiver o MP3 gerado
+  infoAudio(id).then((info) => { if (info) { player = playerAula(id, info, { titulo: `${L.id} ${L.t}` }); slotAudio.append(player.el); } });
 
   const tick = setInterval(() => {
     const s = (Date.now() - t0) / 1000;
@@ -82,13 +86,19 @@ export default async function (el, [id]) {
       h('button.btn.primary.block', { type: 'button', onclick: () => close() }, 'Voltar ao que eu estava fazendo'),
     ]);
   }
+  /** Vídeo do YouTube da aula (opcional, em js/data/videos.js). Sem vídeo, nada aparece. */
+  function video() {
+    const v = videoDaAula(L.id);
+    if (!v) return null;
+    if (!navigator.onLine) return h('div.callout.dica', h('span.rot', 'Vídeo'), h('span', 'Esta aula tem um vídeo, mas ele precisa de internet.'));
+    return h('div.video', h('iframe', { src: `https://www.youtube-nocookie.com/embed/${v}?rel=0&modestbranding=1&playsinline=1`, title: `Vídeo da lição ${L.id}`, loading: 'lazy', allow: 'accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen', allowFullscreen: true, referrerPolicy: 'strict-origin-when-cross-origin' }));
+  }
   const botaoConsulta = () => h('button.btn.small.consulta', { type: 'button', onclick: consultar }, icon('lampada'), 'Rever a ideia e o exemplo');
 
   function montar() {
     const box = h('section.passo', { css: { '--c': m.cor }, tabIndex: -1 });
-    put(box, voz.linhaVoz(() => voz.textoDe(box), { id: `licao:${id}:${chave()}`, sinal: fimVoz.signal }));
     if (p === 0) {
-      put(box, h('div.eyebrow', `Lição ${L.id} · ${m.t}`), h('h1', L.t), figura(L.id, { capa: true }) || null, h('p.gancho', rich(L.gancho)),
+      put(box, h('div.eyebrow', `Lição ${L.id} · ${m.t}`), h('h1', L.t), video() || figura(L.id, { capa: true }) || null, h('p.gancho', rich(L.gancho)),
         h('div.row.wrap', h('span.tag', `${L.min} min`), h('span.tag', '7 passos'), revisita ? h('span.tag.ok', 'Já concluída: revisão livre') : null));
       if (anterior) put(box, h('a.btn.quiet.small', { href: `#/licao/${anterior}`, style: { alignSelf: 'flex-start' } }, `‹ Lição anterior: ${anterior} ${licao(anterior).t}`));
     } else if (p === 1) {
@@ -116,7 +126,7 @@ export default async function (el, [id]) {
         const g = registrarQuiz(id, i, ok);
         ganho += g;
         if (g) put(box, h('div', h('span.xp', `+${g} XP`)));
-        if (voz.autoLigada()) voz.falar(voz.textoDe(box.querySelector('.why')), { id: `licao:${id}:${chave()}` });
+        if (ok) { box.classList.remove('acertou'); void box.offsetWidth; box.classList.add('acertou'); try { navigator.vibrate && navigator.vibrate(20); } catch {} }
         if (p === 4 && qi === i) pintarBotao();
       }));
       if (ehPC()) put(box, h('p.small.muted.atalho', 'Atalho: teclas 1, 2 e 3 escolhem a opção.'));
@@ -150,7 +160,6 @@ export default async function (el, [id]) {
     if (p < 6) pintarBotao();
     clear(corpo).append(box);
     window.scrollTo(0, 0);
-    if (p < 6 && voz.autoLigada()) voz.falar(voz.textoDe(box), { id: `licao:${id}:${chave()}` }); else voz.parar();
     try { box.focus({ preventScroll: true }); } catch {}
   }
 
@@ -167,9 +176,11 @@ export default async function (el, [id]) {
     if (p === 4 && qi + 1 < L.quiz.length) { qi += 1; desenhar(); return; }
     if (p >= 6) return;
     p += 1; qi = 0;
+    const novo = p > alcancado;
     if (p > alcancado) alcancado = p;
     if (p < 6 && !revisita) irPasso(id, p);
     desenhar();
+    if (novo && p < 6) { const feito = segs.children[p - 1]; if (feito) { feito.classList.add('celebra'); setTimeout(() => feito.classList.remove('celebra'), 900); } try { navigator.vibrate && navigator.vibrate(12); } catch {} }
     const seg5 = (Date.now() - t0) / 1000 >= S.perfil.alvo * 60;
     if (seg5 && !avisado && !fluxo && p < 6) {
       avisado = true;
@@ -233,5 +244,5 @@ export default async function (el, [id]) {
   function avisarConquistas() { for (const c of verificarConquistas()) toast(`Conquista: ${c.t}`); }
 
   desenhar();
-  return () => { clearInterval(tick); document.removeEventListener('keydown', teclas); fimVoz.abort(); voz.parar(); };
+  return () => { clearInterval(tick); document.removeEventListener('keydown', teclas); if (player) player.parar(); };
 }

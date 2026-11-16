@@ -2,3 +2,9 @@ node_modules/
 .DS_Store
 tests/e2e/shots/
 previa/
+
+# chaves de API (gerador de áudio da Formação IA e outros)
+.env
+*.env
+!*.env.exemplo
+formacao-ia/audio/ssml/
