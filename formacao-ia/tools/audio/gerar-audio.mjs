@@ -107,7 +107,12 @@ for (const L of aulas) {
   if (!REFAZER && existsSync(destino) && statSync(destino).size > 1000) { puladas++; continue; }
   if (feitas >= LIMITE) break;
   const pecas = pecasDaAula(L);
-  const lotes = dividir(pecas, { modo: P.modo, limite: P.limite });
+  // vozes sem marcas de tempo (Chirp 3 HD, ElevenLabs): cada parte vai em pedidos separados, e o começo
+  // de cada parte é medido no próprio áudio. Assim o app corta exatamente entre Começo, Ideia, Exemplo e Erro comum.
+  const grupos = [];
+  for (const p of pecas) { const m = p.match(/<mark name="([^"]+)"\/>/); if (!grupos.length || (m && !P.marcas)) grupos.push({ marca: m ? m[1] : null, pecas: [] }); grupos[grupos.length - 1].pecas.push(p); }
+  const lotesPorGrupo = grupos.map((g) => dividir(g.pecas, { modo: P.modo, limite: P.limite }));
+  const lotes = lotesPorGrupo.flat();
   const caracteres = lotes.reduce((a, s) => a + s.length, 0), fala = textoPuro(pecas.join(''));
   enviados += caracteres; falados += fala.length; pedidos += lotes.length;
   if (SIMULAR) {
@@ -117,12 +122,15 @@ for (const L of aulas) {
   process.stdout.write(`aula ${L.id.padEnd(5)} ${String(lotes.length).padStart(2)} pedido(s) · ${caracteres} caracteres… `);
   const partes = [], marcas = [];
   let desloc = 0;
-  for (const lote of lotes) {
-    const { audio, marcas: mk } = await P.falar(lote);
-    const limpo = semId3(audio);
-    for (const m of mk) marcas.push({ nome: m.nome, t: Math.round((desloc + m.t) * 100) / 100 });
-    desloc += duracaoMp3(limpo);
-    partes.push(limpo);
+  for (const [gi, lotesG] of lotesPorGrupo.entries()) {
+    if (!P.marcas && grupos[gi].marca) marcas.push({ nome: grupos[gi].marca, t: Math.round(desloc * 100) / 100 });
+    for (const lote of lotesG) {
+      const { audio, marcas: mk } = await P.falar(lote);
+      const limpo = semId3(audio);
+      for (const m of mk) marcas.push({ nome: m.nome, t: Math.round((desloc + m.t) * 100) / 100 });
+      desloc += duracaoMp3(limpo);
+      partes.push(limpo);
+    }
   }
   const mp3 = Buffer.concat(partes);
   writeFileSync(destino, mp3);
@@ -134,7 +142,7 @@ for (const L of aulas) {
     let antes = 0;
     for (const p of pecas) { const m = p.match(/<mark name="([^"]+)"\/>/); if (m && CAPITULOS[m[1]]) capitulos.push({ id: m[1], nome: CAPITULOS[m[1]], t: Math.round((duracao * antes) / total * 100) / 100 }); antes += textoPuro(p).length + 1; }
   }
-  indice[L.id] = { arquivo, duracao, bytes: mp3.length, capitulos, voz: P.voz, gerado: new Date().toISOString().slice(0, 10) };
+  indice[L.id] = { arquivo, duracao, bytes: mp3.length, capitulos, cortes: marcas.length ? 'exatos' : 'estimados', voz: P.voz, gerado: new Date().toISOString().slice(0, 10) };
   writeFileSync(arqIndice, JSON.stringify(indice, null, 1) + '\n');
   feitas++;
   console.log(`ok (${Math.round(duracao)} s, ${(mp3.length / 1024).toFixed(0)} KB)`);

@@ -13,6 +13,7 @@ import { pecasDaAula, dividir, converter, textoPuro } from '../tools/audio/ssml.
 import { duracaoMp3, semId3 } from '../tools/audio/mp3.mjs';
 import { TODAS, licao } from '../js/data/curso.js';
 import { diasSeguidos, diasEstudados } from '../js/core/sequencia.js';
+import { energia, silencios, ajustarCortes } from '../js/core/cortes.js';
 
 const raiz = fileURLToPath(new URL('..', import.meta.url));
 const temFfmpeg = (() => { try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); return true; } catch { return false; } })();
@@ -104,8 +105,21 @@ test('gerador inteiro contra uma API de mentira: junta pedidos, capítulos, índ
   assert.match(saida2, /Geradas: 0 · já tinham áudio \(puladas\): 2/);
   assert.match(saida2, /Caracteres enviados.*: 0/);
   assert.equal(recebidos.length, 2);
-  // pedido grande é dividido: com limite pequeno a aula vira vários pedidos e um único MP3
-  writeFileSync(join(dir, 'x'), '');
+  // voz sem marcas de tempo (Chirp 3 HD): cada parte vai num pedido próprio e o corte é medido (exato)
+  const antes = recebidos.length;
+  const dirC = mkdtempSync(join(tmpdir(), 'aud-c-'));
+  const saidaC = await new Promise((ok, erro) => {
+    const p = spawn(process.execPath, [join(raiz, 'tools/audio/gerar-audio.mjs'), '--saida', dirC, '--sem-precache', '--aula', '0.1'], { env: { ...env, GOOGLE_VOZ: 'pt-BR-Chirp3-HD-Charon' } });
+    let out = ''; p.stdout.on('data', (d) => (out += d)); p.stderr.on('data', (d) => (out += d));
+    p.on('close', (c) => (c ? erro(new Error(out)) : ok(out)));
+  });
+  const novos = recebidos.slice(antes);
+  assert.equal(novos.length, 4, saidaC);
+  assert.ok(novos.every((r) => !r.marcas && !/<mark|<break|<prosody/.test(r.ssml)), 'Chirp: sem marcações que ela não aceita');
+  const indC = JSON.parse(readFileSync(join(dirC, 'indice.json'), 'utf8'))['0.1'];
+  assert.equal(indC.cortes, 'exatos');
+  assert.deepEqual(indC.capitulos.map((c) => [c.nome, Math.round(c.t)]), [['Começo', 0], ['Ideia', 1], ['Exemplo', 2], ['Erro comum', 3]]);
+  assert.equal(ind['3.5'].cortes, 'exatos');   // Neural2: marcas da própria API
   srv.close();
 });
 
@@ -124,4 +138,19 @@ test('dias seguidos e dias estudados', () => {
   assert.equal(diasSeguidos({ ...d, '2026-11-16': { l: 1 } }, '2026-11-16'), 3);
   assert.equal(diasSeguidos(d, '2026-11-18'), 0);
   assert.equal(diasEstudados(d), 3);
+});
+
+test('cortes pelas pausas: escolhe a pausa seguida de título perto da estimativa', () => {
+  // sinal de teste: fala (1) e silêncio (0) em janelas de 20 ms
+  const taxa = 1000, seg = (v, s) => new Array(Math.round(s * taxa)).fill(v);
+  const onda = [...seg(0.5, 4), ...seg(0, 0.4), ...seg(0.5, 3), ...seg(0, 0.9), ...seg(0.5, 0.7), ...seg(0, 0.5), ...seg(0.5, 4)];
+  const a = Float32Array.from(onda.map((v, i) => v * Math.sin(i)));
+  const sil = silencios(energia(a, taxa));
+  assert.deepEqual(sil.map((s) => Math.round(s.dur * 10) / 10), [0.4, 0.9, 0.5]);
+  // estimativa 9 s: o corte vai para o fim da pausa de 0,9 s (antes do "título" de 0,7 s), não para a de 0,4 s
+  const [c0, c1] = ajustarCortes([0, 9], sil);
+  assert.equal(c0, 0);
+  assert.ok(Math.abs(c1 - (4 + 0.4 + 3 + 0.9 - 0.12)) < 0.05, String(c1));
+  // sem pausa por perto, fica a estimativa
+  assert.deepEqual(ajustarCortes([0, 30], sil), [0, 30]);
 });

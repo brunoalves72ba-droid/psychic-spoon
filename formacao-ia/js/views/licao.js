@@ -45,7 +45,10 @@ export default async function (el, [id]) {
   const slotAudio = h('div.slot-audio');
   el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), segs, relogio), slotAudio, corpo, barra);
   // áudio com voz neural: só aparece se esta aula já tiver o MP3 gerado
-  infoAudio(id).then((info) => { if (info) { player = playerAula(id, info, { titulo: `${L.id} ${L.t}` }); slotAudio.append(player.el); } });
+  // o áudio toca por partes: cada passo de conteúdo tem a sua (exercício, quiz e fim não têm áudio)
+  const PARTE = { 0: 'passo-0', 1: 'passo-1', 2: 'passo-2', 5: 'passo-5' };
+  const parteDoPasso = () => (concluida ? null : PARTE[p] || null);
+  infoAudio(id).then((info) => { if (info) { player = playerAula(id, info, { titulo: `${L.id} ${L.t}` }); slotAudio.append(player.el); player.parte(parteDoPasso(), { auto: true }); } });
 
   const tick = setInterval(() => {
     const s = (Date.now() - t0) / 1000;
@@ -160,6 +163,7 @@ export default async function (el, [id]) {
     if (p < 6) pintarBotao();
     clear(corpo).append(box);
     window.scrollTo(0, 0);
+    if (player) player.parte(parteDoPasso(), { auto: true });
     try { box.focus({ preventScroll: true }); } catch {}
   }
 
