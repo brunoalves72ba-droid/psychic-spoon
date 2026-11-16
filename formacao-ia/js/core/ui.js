@@ -73,6 +73,11 @@ const ICONS = {
   som: 'M4 9.5v5h4l5 4v-13l-5 4zM16.5 9a4.5 4.5 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11',
   mudo: 'M4 9.5v5h4l5 4v-13l-5 4zM17 9.5l5 5M22 9.5l-5 5',
   pausa: 'M8.5 5.5v13M15.5 5.5v13',
+  lista: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  engrenagem: 'M4 7h9M17 7h3M15 5v4M4 17h3M11 17h9M9 15v4',
+  sync: 'M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5',
+  info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5h.01',
+  menu: 'M4 7h16M4 12h16M4 17h16',
   gelo: 'M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5',
 };
 export function icon(name, cls) {

@@ -16,6 +16,7 @@ const server = spawn(process.execPath, [root + 'tools/serve.mjs', String(PORT), 
 await new Promise((r) => setTimeout(r, 500));
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
 const page = await ctx.newPage();
 const erros = [];
 page.on('pageerror', (e) => erros.push(e.message));

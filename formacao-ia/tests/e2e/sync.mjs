@@ -34,6 +34,7 @@ async function falsoGitHub(route) {
 async function aparelho(nome, opts) {
   const ctx = await browser.newContext({ ...opts, locale: 'pt-BR', serviceWorkers: 'block' });
   await ctx.route('https://api.github.com/**', falsoGitHub);
+  await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
   const page = await ctx.newPage();
   const erros = [];
   page.on('pageerror', (e) => erros.push(`${nome}: ${e.message}`));

@@ -26,6 +26,7 @@ for (const [disp, vp] of [['celular', { width: 390, height: 844, isMobile: true,
   const ctx = await browser.newContext({ viewport, isMobile: !!isMobile, hasTouch: !!hasTouch, colorScheme: 'dark', deviceScaleFactor: 1, serviceWorkers: 'block' });
   // não toca áudio sozinho nas capturas
   await ctx.addInitScript(() => { try { localStorage.setItem('fia-audio-auto', '0'); } catch {} });
+  await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
   const p = await ctx.newPage();
   await p.goto(`http://localhost:${PORT}/index.html#/hoje`);
   await p.waitForSelector('#view h1, #view h2', { timeout: 20000 });

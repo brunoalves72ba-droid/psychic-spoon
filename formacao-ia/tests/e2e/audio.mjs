@@ -27,6 +27,7 @@ await ctx.route('**/audio/indice.json', (r) => r.fulfill({ contentType: 'applica
 await ctx.route('**/audio/aula-0.1.mp3', (r) => r.fulfill({ contentType: 'audio/mpeg', body: MP3 }));
 await ctx.route('**/js/data/videos.js', (r) => r.fulfill({ contentType: 'text/javascript', body: readFileSync(root + 'js/data/videos.js', 'utf8').replace("  // '0.1': 'https://youtu.be/XXXXXXXXXXX',", "  '0.1': 'https://youtu.be/abcdefghijk',") }));
 await ctx.route(/youtube(-nocookie)?\.com/, (r) => r.fulfill({ contentType: 'text/html', body: '<p>vídeo de teste</p>' }));
+await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
 const page = await ctx.newPage();
 page.on('pageerror', (e) => erros.push('erro na página: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error' && !/youtube/.test(m.text())) erros.push('console: ' + m.text()); });

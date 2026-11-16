@@ -21,6 +21,7 @@
     "docs": "node tools/gerar-inventario.mjs",
     "icones": "node tools/gerar-icones.mjs",
     "e2e:contraste": "node tests/e2e/contraste.mjs && node tests/e2e/contraste.mjs --pc",
-    "capturas": "node tests/e2e/capturas.mjs"
+    "capturas": "node tests/e2e/capturas.mjs",
+    "e2e:navegacao": "node tests/e2e/navegacao.mjs"
   }
 }

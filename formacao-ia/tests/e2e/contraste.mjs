@@ -16,6 +16,7 @@ await new Promise((r) => setTimeout(r, 500));
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: pc ? { width: 1440, height: 900 } : { width: 390, height: 844 }, isMobile: !pc, hasTouch: !pc, deviceScaleFactor: 1, serviceWorkers: 'block' });
 await ctx.addInitScript(() => { try { localStorage.setItem('fia-audio-auto', '0'); } catch {} });
+await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
 const page = await ctx.newPage();
 const leitor = await ctx.newPage();
 const TELAS = (process.env.TELAS || '#/hoje,#/trilha,#/trilha/m/1,#/licao/1.2,#/revisar,#/projeto,#/progresso,#/mais/ajustes,#/mais/sync,#/labs/x/tokens,#/projeto/m/1').split(',');

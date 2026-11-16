@@ -7,6 +7,9 @@ import * as nuvem from './core/nuvem.js';
 import { aplicarPlataforma } from './core/plataforma.js';
 import './core/instalar.js'; // escuta o convite de instalação desde o início
 import { persistir } from './core/store.js';
+import { saudacao, montarMenuPC, menuAberto, fechar as fecharMenu } from './core/menu.js';
+import { pedirNome } from './core/abertura.js';
+import { aoMudar as aoMudarInstalacao } from './core/instalar.js';
 
 export const OWNER = 'Bruno Moura';
 const APP = 'Formação IA';
@@ -19,12 +22,14 @@ const VIEWS = new Set([
   'projeto', 'projeto-m', 'projeto-diario', 'projeto-ficha', 'projeto-prompts', 'projeto-kits', 'projeto-pendencias',
   'progresso', 'progresso-semana', 'progresso-cronograma', 'progresso-conquistas',
   'labs', 'labs-x',
-  'mais-ficha', 'mais-porque', 'mais-ajustes', 'mais-backup', 'mais-pensamentos', 'mais-lembretes', 'mais-sync', 'mais-instalar',
+  'mais-ficha', 'mais-porque', 'mais-ajustes', 'mais-backup', 'mais-pensamentos', 'mais-lembretes', 'mais-sync', 'mais-instalar', 'mais-sobre',
   'foco',
 ]);
 const ABA = { hoje: 'hoje', foco: 'hoje', trilha: 'trilha', licao: 'trilha', labs: 'trilha', revisar: 'revisar', projeto: 'projeto', progresso: 'progresso', mais: 'progresso' };
-// telas de configuração ficam na aba Ajustes
-const ABA_AJUSTES = new Set(['mais-ajustes', 'mais-sync', 'mais-instalar', 'mais-backup']);
+// telas do menu lateral: nenhuma das cinco abas fica marcada; no PC, marca o item do menu
+const DO_MENU = { 'mais-ajustes': 'ajustes', 'mais-backup': 'ajustes', 'mais-lembretes': 'ajustes', 'mais-sync': 'sync', 'mais-instalar': 'instalar', 'mais-sobre': 'sobre', 'mais-porque': 'sobre', 'mais-pensamentos': 'pensamentos' };
+// as cinco telas principais começam com a saudação "Oi, nome"
+const RAIZ = new Set(['hoje', 'trilha', 'revisar', 'projeto', 'progresso']);
 const IMERSIVO = new Set(['licao', 'revisar-cartoes', 'revisar-mistura', 'foco']);
 
 const view = document.getElementById('view');
@@ -47,8 +52,9 @@ async function render() {
   const my = ++token;
   const r = parse();
   leave();
+  if (menuAberto()) fecharMenu({ pelaHistoria: true });
   document.body.classList.toggle('imersivo', IMERSIVO.has(r.name));
-  document.querySelectorAll('.tabs a').forEach((a) => { if (a.dataset.tab === (ABA_AJUSTES.has(r.name) ? 'ajustes' : ABA[r.sec])) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  marcarAtual(r);
   let mod;
   try { mod = await import(`./views/${r.name}.js`); }
   catch (e) {
@@ -62,15 +68,26 @@ async function render() {
   const page = h('div.page');
   // append nativo escreveria "null": aqui, filhos nulos são ignorados
   page.append = (...kids) => Element.prototype.append.apply(page, kids.flat(3).filter((k) => k != null && k !== false));
+  if (RAIZ.has(r.name)) page.append(saudacao());
   const swap = () => { clear(view).append(page); window.scrollTo(0, 0); };
   let ret;
   try { ret = await mod.default(page, r.args); } catch (e) { console.error(e); page.append(h('div.card', h('h3', 'Algo deu errado nesta tela'), h('p.small.muted', String(e && e.message || e)), h('a.btn', { href: '#/hoje' }, 'Voltar para Hoje'))); }
   if (my !== token) { if (typeof ret === 'function') ret(); return; }
   cleanup = typeof ret === 'function' ? ret : null;
-  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) { try { await document.startViewTransition(swap).updateCallbackDone; } catch { swap(); } }
+  if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // transição pulada (outra tela pedida no meio) não é erro: só some
+    try { const vt = document.startViewTransition(swap); vt.ready.catch(() => {}); vt.finished.catch(() => {}); await vt.updateCallbackDone; } catch { if (my === token) swap(); }
+  }
   else swap();
   document.title = (page.querySelector('h1')?.textContent || APP) + ' · ' + APP;
 }
+
+function marcarAtual(r) {
+  const tab = DO_MENU[r.name] ? null : ABA[r.sec];
+  document.querySelectorAll('.tabs > a').forEach((a) => { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  document.querySelectorAll('.menu-pc [data-menu]').forEach((a) => { if (a.dataset.menu === DO_MENU[r.name]) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+}
+function menuPC() { const nav = document.querySelector('.tabs'); if (nav) { montarMenuPC(nav); marcarAtual(parse()); } }
 
 /** Redesenha a tela atual (depois de uma mudança grande de estado, como restaurar um backup). */
 export const redesenhar = () => render();
@@ -107,7 +124,11 @@ async function boot() {
   try { sessionStorage.removeItem('fia-cura'); } catch {}
   await carregar().catch((e) => console.error(e));
   aplicarPlataforma();
+  menuPC();
+  aoMudarInstalacao(menuPC);
   if (!location.hash) history.replaceState(null, '', '#/hoje');
+  // primeira abertura: o nome antes de tudo (depois vêm as boas-vindas e a tela Hoje)
+  await pedirNome();
   await render();
   registerSW();
   persistir();

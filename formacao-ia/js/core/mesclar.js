@@ -113,6 +113,12 @@ export function mesclarKv(A, B) {
   }
   // a sequência semanal é recalculada a partir dos dias (quem chama faz isso); guarda a mais avançada por ora
   o.semana = (obj(b.semana).ult || '') > (obj(a.semana).ult || '') ? b.semana : a.semana || b.semana;
+  // chaves que esta versão não conhece (ou novas sem regra própria): nada se perde; entre duas, vale a de _t mais recente
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if (k in o || k === 'local') continue;
+    const x = a[k], y = b[k];
+    o[k] = x === undefined ? y : y === undefined ? x : ((obj(y)._t || 0) > (obj(x)._t || 0) ? y : x);
+  }
   return o;
 }
 

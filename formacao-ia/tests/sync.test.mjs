@@ -132,3 +132,16 @@ test('comparação estável: a ordem dos campos não conta como mudança', async
   assert.equal(estavel({ a: 1, b: { y: 2, x: [1, { q: 1, p: 2 }] } }), estavel({ b: { x: [1, { p: 2, q: 1 }], y: 2 }, a: 1 }));
   assert.notEqual(estavel({ a: 1 }), estavel({ a: 2 }));
 });
+
+test('mesclarKv preserva chaves que a versão não conhece (v2.*) e escolhe a mais recente por _t', () => {
+  const local = { perfil: { _t: 1 }, 'v2.nome': { nome: 'Bruno', _t: 200 }, 'v2.so.aqui': { x: 1 } };
+  const nuvemAntiga = { perfil: { _t: 2 } }; // pacote escrito por versão antiga: sem chaves v2.*
+  const m = mesclarKv(local, nuvemAntiga);
+  assert.deepEqual(m['v2.nome'], { nome: 'Bruno', _t: 200 });
+  assert.deepEqual(m['v2.so.aqui'], { x: 1 });
+  const m2 = mesclarKv({ 'v2.nome': { nome: 'A', _t: 5 } }, { 'v2.nome': { nome: 'B', _t: 9 } });
+  assert.equal(m2['v2.nome'].nome, 'B');
+  const m3 = mesclarKv({ 'v2.nome': { nome: 'A', _t: 9 } }, { 'v2.nome': { nome: 'B', _t: 5 } });
+  assert.equal(m3['v2.nome'].nome, 'A');
+  assert.ok(!('local' in mesclarKv({ local: { a: 1 } }, {})), 'a chave local nunca viaja');
+});
