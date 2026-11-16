@@ -3,7 +3,7 @@
 import { h, top, seg, toast, confirmSheet } from '../core/ui.js';
 import { baixados, baixarTodos } from '../core/audio.js';
 import { S, salvar, apagarTudo } from '../core/estado.js';
-import { aplicarTema, procurarAtualizacao, versaoAtual } from '../app.js';
+import { procurarAtualizacao, versaoAtual } from '../app.js';
 import { PLANOS } from '../core/plano.js';
 import { L } from '../core/estado.js';
 import { plataforma, escolher } from '../core/plataforma.js';
@@ -22,8 +22,6 @@ export default async function (el) {
       h('a.btn.block', { href: '#/mais/instalar' }, 'Instalar e salvar tudo no celular'),
       h('label.field', h('span', 'Este aparelho é'), seg([{ v: 'auto', label: 'Detectar sozinho' }, { v: 'pc', label: 'Computador' }, { v: 'celular', label: 'Celular' }], L.plataforma || 'auto', async (v) => { await escolher(v); pintarQual(); }, { wrap: true, label: 'Tipo de aparelho' })), qual),
     secaoVoz(),
-    h('section.card.flat.col', h('h3', 'Aparência'),
-      h('label.field', h('span', 'Tema'), seg([{ v: 'auto', label: 'Automático' }, { v: 'claro', label: 'Claro' }, { v: 'escuro', label: 'Escuro' }], S.perfil.tema || 'auto', (v) => { S.perfil.tema = v; salvar('perfil'); aplicarTema(v); }, { label: 'Tema' }))),
     h('section.card.flat.col', h('h3', 'Sessão'),
       h('label.field', h('span', 'Meta de minutos por sessão (o relógio só avisa, nunca interrompe)'), seg([5, 10, 15, 25].map((v) => ({ v, label: `${v} min` })), S.perfil.alvo, (v) => { S.perfil.alvo = v; salvar('perfil'); }, { wrap: true, label: 'Minutos' })),
       h('div.row.between', h('span.small', S.perfil.plano ? `${PLANOS[S.perfil.plano].nome}: ${PLANOS[S.perfil.plano].ritmo}` : 'Nenhum plano escolhido'), h('a.btn.small', { href: '#/progresso/cronograma' }, 'Cronograma'))),
@@ -35,7 +33,7 @@ export default async function (el) {
     h('section.card.flat.col', h('h3', 'Sobre'),
       h('p.small', 'Formação IA Generativa: app pessoal de estudo para a trilha de IA generativa, para quem começa do zero e para quem tem TDAH.'),
       h('p.small.dim', 'App pessoal e não oficial: não é afiliado à escola que oferece o curso nem às empresas citadas nas lições. O conteúdo é formação geral; não é parecer jurídico nem tratamento clínico.'),
-      h('p.small.dim', '© Bruno Moura. Fontes Atkinson Hyperlegible e Bricolage Grotesque (SIL OFL 1.1). MicroPython (licença MIT).'),
+      h('p.small.dim', '© Bruno Moura. Fontes Manrope, Inter e Atkinson Hyperlegible Mono (SIL OFL 1.1). MicroPython (licença MIT).'),
       versao,
       h('button.btn.block', { type: 'button', onclick: async (e) => {
         const b = e.currentTarget; b.disabled = true; b.textContent = 'Procurando…';

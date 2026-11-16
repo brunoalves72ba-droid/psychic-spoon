@@ -136,7 +136,7 @@ export default async function (el, args) {
   // ---- no computador: as práticas que esperavam por ele ----
   if (pc && pendPC.length) {
     const l0 = licaoDe(pendPC[0]);
-    dir.append(h('section.card.dest', { css: { '--c': 'var(--m4)' } }, h('div.row', icon('pc'), h('div.eyebrow', 'Você está no computador')),
+    dir.append(h('section.card.dest', h('div.row', icon('pc'), h('div.eyebrow', 'Você está no computador')),
       h('h3', { style: { margin: '6px 0' } }, `${plural(pendPC.length, 'prática esperava', 'práticas esperavam')} por este momento`),
       h('p.small.dim', `A primeira: ${l0.mao.t} (lição ${l0.id}).`),
       h('a.btn.primary.block', { href: '#/projeto/pendencias' }, 'Fazer agora')));

@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 143 (versão e21228256357) |
+| Arquivos no pré-cache do app | 144 (versão de18e669c44d) |
 
 ## Telas (rotas)
 
@@ -98,7 +98,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/views/labs-x.js` | 15 | Um laboratório aberto em modo livre (sem missão). | `default` |
 | `js/views/labs.js` | 11 | Laboratórios: simuladores para mexer e ver acontecer. | `default` |
 | `js/views/licao.js` | 253 | Player da micro-lição: sempre os mesmos 7 passos, um conceito, uma tela por vez. Gancho → ideia com analogia → exemplo resolvido → exercício → quiz → erro comum → fim com o próximo passo pronto. Dá para voltar a qualquer passo já visto (tocando nos passos do topo, no botão Voltar ou na seta ←) | `default` |
-| `js/views/mais-ajustes.js` | 68 | Ajustes: tema, meta de minutos, plano, backup e a parte de privacidade. | `default` |
+| `js/views/mais-ajustes.js` | 66 | Ajustes: tema, meta de minutos, plano, backup e a parte de privacidade. | `default` |
 | `js/views/mais-backup.js` | 25 | Backup: exportar tudo num arquivo JSON e restaurar em outro aparelho. | `default` |
 | `js/views/mais-ficha.js` | 34 | Ficha viva: modelos, cotas, preços e regras que mudam rápido, com a data da última conferência. | `default` |
 | `js/views/mais-instalar.js` | 52 | Instalar como app próprio e guardar tudo no aparelho: lições, fotos, laboratórios, Python e kits. | `default` |
@@ -178,9 +178,9 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 
 | Arquivo | Linhas | O que é | Exporta |
 |---|---:|---|---|
-| `index.html` | 50 | — | — |
+| `index.html` | 46 | — | — |
 | `sw.js` | 52 | Service worker: pré-cache de tudo na primeira visita; depois, o app funciona offline. | — |
-| `js/app.js` | 168 | Ponto de entrada: roteador por hash, cinco abas e service worker. | `OWNER`, `redesenhar`, `aplicarTema`, `procurarAtualizacao`, `versaoAtual` |
+| `js/app.js` | 160 | Ponto de entrada: roteador por hash, cinco abas e service worker. | `OWNER`, `redesenhar`, `procurarAtualizacao`, `versaoAtual` |
 | `tools/audio/falado.mjs` | 76 | Formação IA — gerador de áudio (roda só no computador, fora do app). Converte o texto das aulas para a forma FALADA em português, sem mexer no texto exibido na tela: abreviações, símbolos, números, moeda, datas, código em linha e termos em inglês (com <sub alias>). | `escXml`, `codigoFalado`, `falado` |
 | `tools/audio/gerar-audio.mjs` | 161 | !/usr/bin/env node Formação IA — gera o áudio de cada aula com voz neural (rode no SEU computador, nunca no app). node tools/audio/gerar-audio.mjs --simular mostra quantos caracteres vai gastar (não chama a API) node tools/audio/gerar-audio.mjs gera o que falta (pula aulas que já têm áudio) | — |
 | `tools/audio/mp3.mjs` | 26 | Utilidades de MP3 sem dependências: tirar etiquetas ID3 (para juntar pedaços) e medir a duração pelos quadros. | `semId3`, `duracaoMp3` |
@@ -193,6 +193,8 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tests/audio.test.mjs` | 157 | Gerador de áudio (tools/audio): forma falada, SSML, divisão no limite da API, MP3 e o gerador inteiro contra uma API do Google de mentira (nenhuma chave real, nenhum caractere gasto). | — |
 | `tests/conteudo.test.mjs` | 147 | Valida o conteúdo: as 98 micro-lições do documento, cada uma com os 7 passos completos. | — |
 | `tests/e2e/audio.mjs` | 90 | Player do áudio das aulas (voz neural), vídeo opcional e recompensas. Um MP3 de teste (feito com ffmpeg) faz o papel do áudio gerado; o índice e o arquivo de vídeos são trocados só neste teste. Uso: node tests/e2e/audio.mjs | — |
+| `tests/e2e/capturas.mjs` | 52 | Capturas de tela das telas principais, no celular (390×844) e no PC (1440×900), com um pouco de progresso já feito (para as telas não ficarem vazias). Uso: node tests/e2e/capturas.mjs <nome-da-pasta> Salva em docs/capturas/<nome>/ — usado para comparar o antes e o depois de uma mudança visual. | — |
+| `tests/e2e/contraste.mjs` | 103 | Contraste medido nos pixels reais: esconde o texto, fotografa a tela, mede o fundo atrás de cada trecho de texto e compara com a cor do texto (WCAG: 4,5:1 normal; 3:1 para texto grande). Repete em várias posições de rolagem, porque o fundo é fixo e um card pode passar por cima da parte violeta da tela. Uso: node tests/e2e/contraste.mjs [--pc] | — |
 | `tests/e2e/offline.mjs` | 72 | Teste offline e de convivência: serve o repositório inteiro (Sexteto na raiz, este app em /formacao-ia/), instala primeiro o service worker do Sexteto, depois abre este app, corta a rede e confere que tudo abre, inclusive o Python embutido e os kits. Uso: node tests/e2e/offline.mjs | — |
 | `tests/e2e/run.mjs` | 155 | Teste ponta a ponta: abre o app a 390×844 no Chromium, conclui lições com cada tipo de exercício, percorre todas as telas e falha em erro de console, requisição externa, rolagem horizontal ou alvo de toque < 44 px. Uso: node tests/e2e/run.mjs [--dark] [--w=360] | — |
 | `tests/e2e/sync.mjs` | 137 | Sincronização de ponta a ponta com dois aparelhos simulados (celular e PC) e uma API de Gist falsa. Confere: ligar com o mesmo token, levar progresso de um para o outro, estudar nos dois sem perder nada, exclusões chegarem ao outro lado, dados cifrados na nuvem e o layout de PC/celular. | — |
@@ -205,7 +207,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 
 | Pasta | Arquivos | Tamanho |
 |---|---|---:|
-| `assets/fonts` | `OFL-AtkinsonHyperlegibleMono.txt`, `OFL-AtkinsonHyperlegibleNext.txt`, `OFL-BricolageGrotesque.txt`, `atkinson-hyperlegible-mono-latin-wght-normal.woff2`, `atkinson-hyperlegible-next-latin-wght-italic.woff2`, `atkinson-hyperlegible-next-latin-wght-normal.woff2`, `bricolage-grotesque-latin-wght-normal.woff2` | 141 KB |
+| `assets/fonts` | `OFL-AtkinsonHyperlegibleMono.txt`, `OFL-Inter.txt`, `OFL-Manrope.txt`, `atkinson-hyperlegible-mono-latin-wght-normal.woff2`, `inter-latin-ext-wght-normal.woff2`, `inter-latin-wght-normal.woff2`, `manrope-latin-ext-wght-normal.woff2`, `manrope-latin-wght-normal.woff2` | 200 KB |
 | `assets/icons` | `apple-touch-icon.png`, `favicon-32.png`, `icon-192.png`, `icon-512.png`, `icon.svg`, `maskable-192.png`, `maskable-512.png` | 298 KB |
 | `assets/fotos` | 22 arquivos | 1.6 MB |
 | `assets/micropython` | `micropython.mjs`, `micropython.wasm` | 547 KB |
@@ -216,7 +218,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 
 ### M0 · Pré-requisitos
 
-Computador, internet e lógica. 6 h · Fora da ementa. Obrigatório para quem começa do zero. · Marco: Pastas e diário de bordo · O projeto ganha: A casa do projeto: pastas e diário de bordo. Cor: `var(--m0)`. Foto do módulo: `notebook`.
+Computador, internet e lógica. 6 h · Fora da ementa. Obrigatório para quem começa do zero. · Marco: Pastas e diário de bordo · O projeto ganha: A casa do projeto: pastas e diário de bordo. Cor: `var(--acento)`. Foto do módulo: `notebook`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -230,7 +232,7 @@ Computador, internet e lógica. 6 h · Fora da ementa. Obrigatório para quem co
 
 ### M1 · IA generativa e LLMs
 
-Como os modelos funcionam e como usar com responsabilidade. 10 h · 8 h na ementa · Marco: Ficha técnica de 1 página · O projeto ganha: Modelos escolhidos e regras de ética e LGPD. Cor: `var(--m1)`. Foto do módulo: `datacenter`.
+Como os modelos funcionam e como usar com responsabilidade. 10 h · 8 h na ementa · Marco: Ficha técnica de 1 página · O projeto ganha: Modelos escolhidos e regras de ética e LGPD. Cor: `var(--acento)`. Foto do módulo: `datacenter`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -251,7 +253,7 @@ Como os modelos funcionam e como usar com responsabilidade. 10 h · 8 h na ement
 
 ### M2 · Prompt engineering
 
-Pedir bem para receber bem. 10 h · 8 h na ementa · Marco: Biblioteca de 10 prompts · O projeto ganha: A voz: biblioteca de prompts testados. Cor: `var(--m2)`. Foto do módulo: `escrita`.
+Pedir bem para receber bem. 10 h · 8 h na ementa · Marco: Biblioteca de 10 prompts · O projeto ganha: A voz: biblioteca de prompts testados. Cor: `var(--acento)`. Foto do módulo: `escrita`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -272,7 +274,7 @@ Pedir bem para receber bem. 10 h · 8 h na ementa · Marco: Biblioteca de 10 pro
 
 ### M3 · Fundamentos técnicos
 
-APIs, embeddings e RAG. O salto mais difícil. 12 h · 8 h na ementa · Marco: Mini-RAG que cita a fonte · O projeto ganha: A memória de consulta: primeira chamada de API e mini-RAG. Cor: `var(--m3)`. Foto do módulo: `racks`.
+APIs, embeddings e RAG. O salto mais difícil. 12 h · 8 h na ementa · Marco: Mini-RAG que cita a fonte · O projeto ganha: A memória de consulta: primeira chamada de API e mini-RAG. Cor: `var(--acento)`. Foto do módulo: `racks`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -295,7 +297,7 @@ APIs, embeddings e RAG. O salto mais difícil. 12 h · 8 h na ementa · Marco: M
 
 ### M4 · Automação com n8n
 
-Fluxos que trabalham por você. 22 h · 20 h na ementa · Marco: Fluxo conversacional no n8n · O projeto ganha: Os braços: pergunta → IA → registro na planilha. Cor: `var(--m4)`. Foto do módulo: `montagem`.
+Fluxos que trabalham por você. 22 h · 20 h na ementa · Marco: Fluxo conversacional no n8n · O projeto ganha: Os braços: pergunta → IA → registro na planilha. Cor: `var(--acento)`. Foto do módulo: `montagem`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -323,7 +325,7 @@ Fluxos que trabalham por você. 22 h · 20 h na ementa · Marco: Fluxo conversac
 
 ### M5 · Python para IA
 
-Do print à fábrica de flashcards. 28 h · 24 h na ementa · Marco: Repositório “Fábrica de flashcards” · O projeto ganha: O motor: Python lê seus arquivos e gera cartões. Cor: `var(--m5)`. Foto do módulo: `codigo`.
+Do print à fábrica de flashcards. 28 h · 24 h na ementa · Marco: Repositório “Fábrica de flashcards” · O projeto ganha: O motor: Python lê seus arquivos e gera cartões. Cor: `var(--acento)`. Foto do módulo: `codigo`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -353,7 +355,7 @@ Do print à fábrica de flashcards. 28 h · 24 h na ementa · Marco: Repositóri
 
 ### M6 · Agentes inteligentes
 
-RAG, memória, ferramentas e endereço público. 28 h · 24 h na ementa · Marco: APE-IA v1.0 com URL pública · O projeto ganha: O corpo inteiro: agente com RAG, memória e endereço público. Cor: `var(--m6)`. Foto do módulo: `biblioteca`.
+RAG, memória, ferramentas e endereço público. 28 h · 24 h na ementa · Marco: APE-IA v1.0 com URL pública · O projeto ganha: O corpo inteiro: agente com RAG, memória e endereço público. Cor: `var(--acento)`. Foto do módulo: `biblioteca`.
 
 | Lição | Título | Min | Exercício | Quiz | Mão na massa | Foto | Áudio |
 |---|---|---:|---|---:|---|---|---|
@@ -522,51 +524,78 @@ Formato de cada entrada: `{ arquivo, duracao (s), bytes, capitulos: [{ id: "pass
 
 ## Design: variáveis de CSS (`css/app.css`)
 
-| Variável | Tema claro | Tema escuro |
-|---|---|---|
-| `--bg` | `#f6f2e9` | `#12141b` |
-| `--bg2` | `#fffdf9` | `#1a1d27` |
-| `--bg3` | `#ece6d8` | `#242836` |
-| `--line` | `#ddd5c3` | `#2f3446` |
-| `--line2` | `#b5a98e` | `#525a76` |
-| `--ink` | `#1c2130` | `#f2eee6` |
-| `--ink2` | `#434a5c` | `#c9cbd5` |
-| `--ink3` | `#5d6375` | `#9a9fb2` |
-| `--acao` | `#3138c9` | `#9aa0ff` |
-| `--acao-ink` | `#ffffff` | `#12141b` |
-| `--acao-tint` | `#e2e4fb` | `#262a4d` |
-| `--ok` | `#17794e` | `#5fd39a` |
-| `--ok-bg` | `#dcf2e5` | `#153527` |
-| `--quase` | `#a85504` | `#ffb454` |
-| `--quase-bg` | `#fcebd0` | `#3a2a10` |
-| `--ouro` | `#8a6100` | `#ffd166` |
-| `--ouro-bg` | `#ffefc2` | `#3a3010` |
-| `--info-bg` | `#e4ecfa` | `#1c2740` |
-| `--code-bg` | `#1d2130` | `#0c0e14` |
-| `--code-ink` | `#edeff7` | `#edeff7` |
-| `--code-dim` | `#a3abc4` | `#9aa3bd` |
-| `--code-ac` | `#ffd166` | `#ffd166` |
-| `--m0` | `#127a72` | `#4fd1c5` |
-| `--m1` | `#5b3fd0` | `#a996ff` |
-| `--m2` | `#c2356f` | `#ff86b3` |
-| `--m3` | `#b85c0c` | `#ffa657` |
-| `--m4` | `#22794a` | `#6bd691` |
-| `--m5` | `#2262b8` | `#74b0ff` |
-| `--m6` | `#8a6a00` | `#ecc94b` |
-| `--on-c` | `#ffffff` | `#12141b` |
-| `--shadow` | `0 1px 2px rgba(40,34,20,.06),0 6px 20px -8px rgba(40,34,20,.18)` | `0 1px 2px rgba(0,0,0,.3),0 8px 24px -10px rgba(0,0,0,.6)` |
-| `--r` | `18px` | (igual) |
-| `--r2` | `12px` | (igual) |
-| `--tab-h` | `62px` | (igual) |
-| `--sat` | `env(safe-area-inset-top,0px)` | (igual) |
-| `--sab` | `env(safe-area-inset-bottom,0px)` | (igual) |
-| `--sal` | `env(safe-area-inset-left,0px)` | (igual) |
-| `--sar` | `env(safe-area-inset-right,0px)` | (igual) |
-| `--font` | `"Atkinson Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif` | (igual) |
-| `--display` | `"Bricolage Grotesque","Atkinson Next",system-ui,sans-serif` | (igual) |
-| `--mono` | `"Atkinson Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace` | (igual) |
+Um tema só (escuro). Os nomes antigos (`--bg`, `--ink`, `--acao`…) apontam para a paleta nova.
 
-Fontes: **Atkinson Next** (`assets/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2`), **Atkinson Next** (`assets/fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2`), **Atkinson Mono** (`assets/fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2`), **Bricolage Grotesque** (`assets/fonts/bricolage-grotesque-latin-wght-normal.woff2`).
+| Variável | Valor |
+|---|---|
+| `--bg-base` | `#0B0B0D` |
+| `--bg-violeta-meio` | `#1E1238` |
+| `--bg-violeta-base` | `#4A2A85` |
+| `--texto-primario` | `#F1F0F5` |
+| `--texto-secundario` | `#A7A5B3` |
+| `--texto-apagado` | `#6E6C7A` |
+| `--divisor` | `#2A2A31` |
+| `--acento` | `#8B6CF2` |
+| `--acento-claro` | `#C4B5FD` |
+| `--acento-texto-ativo` | `#D9CCFF` |
+| `--acento-fundo-ativo` | `rgba(139,108,242,.22)` |
+| `--botao-topo` | `#7656DC` |
+| `--botao-base` | `#3A2470` |
+| `--vidro-fundo` | `rgba(22,22,26,.20)` |
+| `--vidro-borda` | `rgba(255,255,255,.08)` |
+| `--vidro-blur` | `14px` |
+| `--raio-card` | `12px` |
+| `--raio-botao` | `10px` |
+| `--certo` | `#5BD68A` |
+| `--certo-bg` | `rgba(91,214,138,.16)` |
+| `--errado` | `#FF8A80` |
+| `--errado-bg` | `rgba(255,138,128,.16)` |
+| `--cat1` | `#8B6CF2` |
+| `--cat2` | `#C4B5FD` |
+| `--cat3` | `#A7A5B3` |
+| `--cat4` | `#6F58C9` |
+| `--cat5` | `#E2DAFF` |
+| `--curva-ios` | `cubic-bezier(.32,.72,0,1)` |
+| `--curva-ok` | `cubic-bezier(.2,.8,.2,1)` |
+| `--t-toque` | `120ms` |
+| `--t-painel` | `300ms` |
+| `--bg` | `var(--bg-base)` |
+| `--bg2` | `rgba(22,22,26,.55)` |
+| `--bg3` | `rgba(255,255,255,.06)` |
+| `--line` | `var(--divisor)` |
+| `--line2` | `#3B3A45` |
+| `--ink` | `var(--texto-primario)` |
+| `--ink2` | `#BDBBC8` |
+| `--ink3` | `var(--texto-secundario)` |
+| `--acao` | `var(--acento)` |
+| `--acao-ink` | `#0B0B0D` |
+| `--acao-tint` | `var(--acento-fundo-ativo)` |
+| `--ok` | `var(--acento-claro)` |
+| `--ok-bg` | `rgba(139,108,242,.18)` |
+| `--quase` | `#F2B35E` |
+| `--quase-bg` | `rgba(242,179,94,.14)` |
+| `--ouro` | `var(--acento-claro)` |
+| `--ouro-bg` | `rgba(139,108,242,.18)` |
+| `--info-bg` | `rgba(139,108,242,.12)` |
+| `--code-bg` | `#0E0E12` |
+| `--code-ink` | `#edeff7` |
+| `--code-dim` | `#9aa3bd` |
+| `--code-ac` | `#C4B5FD` |
+| `--c` | `var(--acento)` |
+| `--on-c` | `#0B0B0D` |
+| `--shadow` | `0 8px 24px -12px rgba(0,0,0,.7)` |
+| `--r` | `var(--raio-card)` |
+| `--r2` | `10px` |
+| `--tab-h` | `62px` |
+| `--sat` | `env(safe-area-inset-top,0px)` |
+| `--sab` | `env(safe-area-inset-bottom,0px)` |
+| `--sal` | `env(safe-area-inset-left,0px)` |
+| `--sar` | `env(safe-area-inset-right,0px)` |
+| `--font` | `"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif` |
+| `--display` | `"Manrope","Inter",system-ui,-apple-system,sans-serif` |
+| `--mono` | `"Atkinson Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace` |
+
+Fontes: **Manrope** (`assets/fonts/manrope-latin-wght-normal.woff2`), **Manrope** (`assets/fonts/manrope-latin-ext-wght-normal.woff2`), **Inter** (`assets/fonts/inter-latin-wght-normal.woff2`), **Inter** (`assets/fonts/inter-latin-ext-wght-normal.woff2`), **Atkinson Mono** (`assets/fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2`).
 
 ## Manifesto (PWA)
 
@@ -582,8 +611,8 @@ Fontes: **Atkinson Next** (`assets/fonts/atkinson-hyperlegible-next-latin-wght-n
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f6f2e9",
-  "theme_color": "#3138c9",
+  "background_color": "#0B0B0D",
+  "theme_color": "#0B0B0D",
   "categories": [
     "education",
     "productivity"
@@ -656,3 +685,5 @@ Fontes: **Atkinson Next** (`assets/fonts/atkinson-hyperlegible-next-latin-wght-n
 | `npm run e2e:audio` | `node tests/e2e/audio.mjs` |
 | `npm run docs` | `node tools/gerar-inventario.mjs` |
 | `npm run icones` | `node tools/gerar-icones.mjs` |
+| `npm run e2e:contraste` | `node tests/e2e/contraste.mjs && node tests/e2e/contraste.mjs --pc` |
+| `npm run capturas` | `node tests/e2e/capturas.mjs` |

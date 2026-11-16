@@ -135,9 +135,9 @@ else {
 const css = ler('css/app.css');
 const bloco = (re) => (css.match(re) || [, ''])[1];
 const tokens = (txt) => [...txt.matchAll(/(--[\w-]+):([^;]+);/g)].map((m) => [m[1], m[2].trim()]);
-const claro = tokens(bloco(/:root\{([\s\S]*?)\n\}/)), escuro = Object.fromEntries(tokens(bloco(/:root\[data-theme=escuro\]\{([\s\S]*?)\n\}/)));
-p('## Design: variáveis de CSS (`css/app.css`)', '', '| Variável | Tema claro | Tema escuro |', '|---|---|---|');
-for (const [k, v] of claro) p(`| \`${k}\` | \`${v.replace(/\|/g, '\\|')}\` | ${escuro[k] ? `\`${escuro[k]}\`` : '(igual)'} |`);
+const vars = tokens(bloco(/:root\{([\s\S]*?)\n\}/));
+p('## Design: variáveis de CSS (`css/app.css`)', '', 'Um tema só (escuro). Os nomes antigos (`--bg`, `--ink`, `--acao`…) apontam para a paleta nova.', '', '| Variável | Valor |', '|---|---|');
+for (const [k, v] of vars) p(`| \`${k}\` | \`${v.replace(/\|/g, '\\|')}\` |`);
 p('', `Fontes: ${[...css.matchAll(/font-family:"([^"]+)";src:url\("([^"]+)"\)/g)].map((m) => `**${m[1]}** (\`${m[2].replace('../', '')}\`)`).join(', ')}.`, '');
 
 // ---------- manifesto e scripts ----------

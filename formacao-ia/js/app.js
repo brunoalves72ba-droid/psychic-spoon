@@ -78,12 +78,6 @@ export const redesenhar = () => render();
 window.addEventListener('hashchange', render);
 window.addEventListener('unhandledrejection', (e) => console.error('Promessa rejeitada:', e.reason));
 
-export function aplicarTema(tema) {
-  const el = document.documentElement;
-  if (tema === 'claro' || tema === 'escuro') { el.dataset.theme = tema; try { localStorage.setItem('fia-tema', tema); } catch {} }
-  else { delete el.dataset.theme; try { localStorage.removeItem('fia-tema'); } catch {} }
-}
-
 // Se o Sexteto (na raiz do mesmo site) já estava instalado, o service worker antigo dele pode entregar
 // a página dele neste endereço. Aqui o app percebe, instala o próprio service worker e recarrega.
 const ativo = (reg, ms) => new Promise((res, rej) => {
@@ -112,7 +106,6 @@ async function boot() {
   if (await paginaErrada()) return;
   try { sessionStorage.removeItem('fia-cura'); } catch {}
   await carregar().catch((e) => console.error(e));
-  aplicarTema(S.perfil.tema);
   aplicarPlataforma();
   if (!location.hash) history.replaceState(null, '', '#/hoje');
   await render();
@@ -120,7 +113,6 @@ async function boot() {
   persistir();
   // dados que chegam do outro aparelho: redesenha, menos no meio de uma lição ou revisão
   nuvem.quandoReceber(() => {
-    aplicarTema(S.perfil.tema);
     if (document.body.classList.contains('imersivo')) toast('Progresso do outro aparelho recebido.');
     else { render(); toast('Progresso do outro aparelho recebido.'); }
   });

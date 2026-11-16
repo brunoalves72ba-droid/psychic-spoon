@@ -16,8 +16,8 @@ export default function ({ missao: m, feito }) {
     const B = [comp * Math.cos(ang * Math.PI / 180), comp * Math.sin(ang * Math.PI / 180)];
     const c = cosseno(A, B);
     clear(svg).append(s('line', { x1: -5, y1: 0, x2: 5, y2: 0, stroke: 'var(--line2)', 'stroke-width': 0.04 }), s('line', { x1: 0, y1: -5, x2: 0, y2: 5, stroke: 'var(--line2)', 'stroke-width': 0.04 }),
-      ...seta(A[0], A[1], 'var(--acao)'), ...seta(B[0], B[1], 'var(--m3)'),
-      s('text', { x: A[0] + 0.3, y: -A[1], 'font-size': 0.7, fill: 'var(--acao)' }, 'A'), s('text', { x: B[0] + 0.3, y: -B[1], 'font-size': 0.7, fill: 'var(--m3)' }, 'B'));
+      ...seta(A[0], A[1], 'var(--acao)'), ...seta(B[0], B[1], 'var(--cat2)'),
+      s('text', { x: A[0] + 0.3, y: -A[1], 'font-size': 0.7, fill: 'var(--acao)' }, 'A'), s('text', { x: B[0] + 0.3, y: -B[1], 'font-size': 0.7, fill: 'var(--cat2)' }, 'B'));
     val.textContent = fmt(c, 2);
     leg.textContent = c > 0.95 ? 'Quase o mesmo sentido.' : Math.abs(c) < 0.05 ? 'Sem relação: setas perpendiculares.' : c < -0.9 ? 'Sentidos opostos (raro com texto).' : 'Alguma semelhança.';
     if (c > 0.95) { mi.marcar(0); alinhou = true; }

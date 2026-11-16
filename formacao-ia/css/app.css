@@ -1,50 +1,47 @@
 /* Formação IA Generativa — © Bruno Moura, único e exclusivo proprietário. */
-@font-face{font-family:"Atkinson Next";src:url("../assets/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2") format("woff2-variations");font-weight:200 800;font-style:normal;font-display:swap}
-@font-face{font-family:"Atkinson Next";src:url("../assets/fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2") format("woff2-variations");font-weight:200 800;font-style:italic;font-display:swap}
+/* Fontes servidas pelo próprio app (offline), todas SIL OFL 1.1: Manrope (títulos), Inter (texto), Atkinson Hyperlegible Mono (código). */
+@font-face{font-family:"Manrope";src:url("../assets/fonts/manrope-latin-wght-normal.woff2") format("woff2-variations");font-weight:200 800;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Manrope";src:url("../assets/fonts/manrope-latin-ext-wght-normal.woff2") format("woff2-variations");font-weight:200 800;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Inter";src:url("../assets/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Inter";src:url("../assets/fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Atkinson Mono";src:url("../assets/fonts/atkinson-hyperlegible-mono-latin-wght-normal.woff2") format("woff2-variations");font-weight:200 800;font-display:swap}
-@font-face{font-family:"Bricolage Grotesque";src:url("../assets/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");font-weight:200 800;font-display:swap}
 
+/* ---------- Sistema visual (tokens). Um tema só, escuro. Nenhuma cor nova direto em componente. ---------- */
 :root{
-  --bg:#f6f2e9;--bg2:#fffdf9;--bg3:#ece6d8;--line:#ddd5c3;--line2:#b5a98e;
-  --ink:#1c2130;--ink2:#434a5c;--ink3:#5d6375;
-  --acao:#3138c9;--acao-ink:#ffffff;--acao-tint:#e2e4fb;
-  --ok:#17794e;--ok-bg:#dcf2e5;--quase:#a85504;--quase-bg:#fcebd0;--ouro:#8a6100;--ouro-bg:#ffefc2;--info-bg:#e4ecfa;
-  --code-bg:#1d2130;--code-ink:#edeff7;--code-dim:#a3abc4;--code-ac:#ffd166;
-  --m0:#127a72;--m1:#5b3fd0;--m2:#c2356f;--m3:#b85c0c;--m4:#22794a;--m5:#2262b8;--m6:#8a6a00;--on-c:#ffffff;
-  --shadow:0 1px 2px rgba(40,34,20,.06),0 6px 20px -8px rgba(40,34,20,.18);
-  --r:18px;--r2:12px;--tab-h:62px;
+  /* paleta */
+  --bg-base:#0B0B0D;--bg-violeta-meio:#1E1238;--bg-violeta-base:#4A2A85;
+  --texto-primario:#F1F0F5;--texto-secundario:#A7A5B3;--texto-apagado:#6E6C7A;--divisor:#2A2A31;
+  --acento:#8B6CF2;--acento-claro:#C4B5FD;--acento-texto-ativo:#D9CCFF;--acento-fundo-ativo:rgba(139,108,242,.22);
+  --botao-topo:#7656DC;--botao-base:#3A2470;
+  --vidro-fundo:rgba(22,22,26,.20);--vidro-borda:rgba(255,255,255,.08);--vidro-blur:14px;
+  --raio-card:12px;--raio-botao:10px;
+  /* certo e errado: só nas respostas (quiz e exercícios) */
+  --certo:#5BD68A;--certo-bg:rgba(91,214,138,.16);--errado:#FF8A80;--errado-bg:rgba(255,138,128,.16);
+  /* categorias nos laboratórios (tons de violeta e cinza) */
+  --cat1:#8B6CF2;--cat2:#C4B5FD;--cat3:#A7A5B3;--cat4:#6F58C9;--cat5:#E2DAFF;
+  /* curvas e tempos (fluidez tipo iOS) */
+  --curva-ios:cubic-bezier(.32,.72,0,1);--curva-ok:cubic-bezier(.2,.8,.2,1);--t-toque:120ms;--t-painel:300ms;
+  /* nomes usados pelos componentes (apontam para a paleta) */
+  --bg:var(--bg-base);--bg2:rgba(22,22,26,.55);--bg3:rgba(255,255,255,.06);--line:var(--divisor);--line2:#3B3A45;
+  --ink:var(--texto-primario);--ink2:#BDBBC8;--ink3:var(--texto-secundario);
+  --acao:var(--acento);--acao-ink:#0B0B0D;--acao-tint:var(--acento-fundo-ativo);
+  --ok:var(--acento-claro);--ok-bg:rgba(139,108,242,.18);--quase:#F2B35E;--quase-bg:rgba(242,179,94,.14);--ouro:var(--acento-claro);--ouro-bg:rgba(139,108,242,.18);--info-bg:rgba(139,108,242,.12);
+  --code-bg:#0E0E12;--code-ink:#edeff7;--code-dim:#9aa3bd;--code-ac:#C4B5FD;
+  --c:var(--acento);--on-c:#0B0B0D;
+  --shadow:0 8px 24px -12px rgba(0,0,0,.7);
+  --r:var(--raio-card);--r2:10px;--tab-h:62px;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);
-  --font:"Atkinson Next",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --display:"Bricolage Grotesque","Atkinson Next",system-ui,sans-serif;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Manrope","Inter",system-ui,-apple-system,sans-serif;
   --mono:"Atkinson Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme=claro]){
-  --bg:#12141b;--bg2:#1a1d27;--bg3:#242836;--line:#2f3446;--line2:#525a76;
-  --ink:#f2eee6;--ink2:#c9cbd5;--ink3:#9a9fb2;
-  --acao:#9aa0ff;--acao-ink:#12141b;--acao-tint:#262a4d;
-  --ok:#5fd39a;--ok-bg:#153527;--quase:#ffb454;--quase-bg:#3a2a10;--ouro:#ffd166;--ouro-bg:#3a3010;--info-bg:#1c2740;
-  --code-bg:#0c0e14;--code-ink:#edeff7;--code-dim:#9aa3bd;--code-ac:#ffd166;
-  --m0:#4fd1c5;--m1:#a996ff;--m2:#ff86b3;--m3:#ffa657;--m4:#6bd691;--m5:#74b0ff;--m6:#ecc94b;--on-c:#12141b;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -10px rgba(0,0,0,.6);
-  color-scheme:dark;
-}}
-:root[data-theme=escuro]{
-  --bg:#12141b;--bg2:#1a1d27;--bg3:#242836;--line:#2f3446;--line2:#525a76;
-  --ink:#f2eee6;--ink2:#c9cbd5;--ink3:#9a9fb2;
-  --acao:#9aa0ff;--acao-ink:#12141b;--acao-tint:#262a4d;
-  --ok:#5fd39a;--ok-bg:#153527;--quase:#ffb454;--quase-bg:#3a2a10;--ouro:#ffd166;--ouro-bg:#3a3010;--info-bg:#1c2740;
-  --code-bg:#0c0e14;--code-ink:#edeff7;--code-dim:#9aa3bd;--code-ac:#ffd166;
-  --m0:#4fd1c5;--m1:#a996ff;--m2:#ff86b3;--m3:#ffa657;--m4:#6bd691;--m5:#74b0ff;--m6:#ecc94b;--on-c:#12141b;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -10px rgba(0,0,0,.6);
   color-scheme:dark;
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
-body{margin:0;min-height:100dvh;overflow-x:clip;overscroll-behavior-y:none;background:var(--bg)}
-h1,h2,h3{font-family:var(--display);line-height:1.14;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
-h1{font-size:1.8rem}h2{font-size:1.3rem}h3{font-size:1.06rem}
+html{background:var(--bg-base);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
+body{margin:0;min-height:100dvh;overflow-x:clip;overscroll-behavior-y:none;background:transparent}
+h1,h2,h3{font-family:var(--display);line-height:1.2;margin:0;font-weight:500;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:1.25rem}h2{font-size:1.125rem}h3{font-size:.9375rem}
 p{margin:0 0 .8em;text-wrap:pretty}p:last-child{margin-bottom:0}
 a{color:var(--acao)}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -464,3 +461,112 @@ body.pc .tabs a[data-tab=ajustes]{margin-top:auto}
 .parte-nome { font-weight: 700; font-size: .92rem; }
 .vel.auto { font-size: .74rem; min-width: 0; padding: 0 10px; }
 .player-aula.terminou .play { opacity: .85; }
+
+
+/* =====================================================================
+   Nova direção visual (Fase 1): fundo, vidro fosco, botões, tipografia
+   ===================================================================== */
+/* fundo fixo em camada própria (não repinta na rolagem): degradê, luz interna nas bordas e manchas estáticas */
+.fundo{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background:linear-gradient(to bottom,var(--bg-base) 0%,var(--bg-base) 40%,var(--bg-violeta-meio) 70%,var(--bg-violeta-base) 100%);
+  box-shadow:inset 0 0 22px rgba(139,108,242,.22)}
+.fundo i{position:absolute;border-radius:50%;background:rgba(139,108,242,.40);filter:blur(18px)}
+.fundo i:nth-child(1){width:46vmax;height:30vmax;left:-14vmax;top:48%;opacity:.55}
+.fundo i:nth-child(2){width:40vmax;height:26vmax;right:-16vmax;top:62%;opacity:.45}
+.fundo i:nth-child(3){width:60vmax;height:22vmax;left:20%;bottom:-14vmax;opacity:.35}
+
+/* vidro fosco: todos os cards; listas longas usam superfície translúcida sem desfoque (orçamento de blur) */
+.card,.cartao,.tool,.sheet,figure.foto{background:var(--vidro-fundo);-webkit-backdrop-filter:blur(var(--vidro-blur)) saturate(140%);backdrop-filter:blur(var(--vidro-blur)) saturate(140%);
+  border:.5px solid var(--vidro-borda);border-radius:var(--raio-card);box-shadow:none}
+.card{contain:layout paint}
+.card.dest{border-color:rgba(139,108,242,.35);background:var(--vidro-fundo)}
+.sheet{background:rgba(22,22,26,.92);border-radius:16px 16px 0 0}
+.item,.opt,.ord .peca,.tick,.cls .it,.msg,.achado,.rota>div,.tblwrap,.plano,.ilha .orb{background:var(--bg2);border:.5px solid var(--vidro-borda)}
+.item{border-radius:var(--raio-card)}
+.lista>li,.list>*{content-visibility:auto;contain-intrinsic-size:auto 64px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .card,.cartao,.tool,.sheet,figure.foto{background:rgba(22,22,26,.85)}
+}
+.tabs{background:rgba(11,11,13,.72);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border-top:.5px solid var(--vidro-borda)}
+.tabs a[aria-current=page]{color:var(--acento-texto-ativo)}
+.acao-bar{background:linear-gradient(180deg,transparent,rgba(11,11,13,.92) 40%)}
+
+/* botões: um principal por tela (degradê), secundário quase preto; toque encolhe 3% */
+.btn{border-radius:var(--raio-botao);background:rgba(11,11,13,.85);border:.5px solid var(--divisor);color:var(--ink);font-weight:500;
+  transition:transform var(--t-toque) var(--curva-ok);-webkit-tap-highlight-color:transparent}
+.btn.primary{background:linear-gradient(to bottom,var(--botao-topo) 0%,var(--botao-base) 100%);color:#fff;border-color:transparent;font-family:var(--display);font-weight:500}
+.btn.big{border-radius:var(--raio-botao)}
+.btn.quiet{background:transparent;border-color:transparent}
+.btn:active,.chip:active,.item:active,.opt:active,.vel:active{transform:scale(.97)}
+.chip,.vel,.opt,.item{transition:transform var(--t-toque) var(--curva-ok)}
+.chip[aria-pressed=true],.chip.on{background:var(--acento-fundo-ativo);color:var(--acento-texto-ativo);border-color:var(--acento)}
+:focus-visible{outline:2px solid var(--acento);outline-offset:3px}
+
+/* tipografia: escala do celular (nunca abaixo de 11px); texto da lição com 16px e entrelinha 1,6 */
+.top h1{font-size:1.25rem}
+.card h3,.cartao h3{font-size:.9375rem}
+small,.small{font-size:.8125rem}
+.eyebrow{font-size:.6875rem;font-weight:600;color:var(--ink3)}
+.tag{font-size:.6875rem;font-weight:600}
+.item .t b,.tool b,.ilha .t b,.stat b,.big,.cartao .frente,.gancho,.foco .tempo,.frase{font-family:var(--display);font-weight:500}
+.item .t span,.tool span,.ilha .t span{font-size:.8125rem}
+.prose{font-size:1rem;line-height:1.6}
+.passo p,.passo li{line-height:1.6}
+.gancho{font-size:1.35rem;line-height:1.3}
+.cartao .frente{font-size:1.25rem}
+body.pc .page>h1,body.pc header h1{font-size:1.6rem}
+body.pc .prose{font-size:1.0625rem}
+body.pc .gancho{font-size:1.55rem}
+body.pc .passo p,body.pc .passo li,body.pc .prose,body.pc .passo .callout{max-width:68ch}
+
+/* violeta = concluído e progresso (textos escuros sobre o violeta) */
+.item.done .n,.semana .d.on i,.tick[aria-pressed=true] .box{color:#0B0B0D}
+.item.done .n{background:var(--acento-claro)}
+.callout.aviso{--c:var(--quase);background:var(--quase-bg)}
+.callout.dica{--c:var(--acento-claro);background:var(--ok-bg)}
+.resp .st.s4,.resp .st.s5,.rota .f h4,.linha-t .ev.no span,.checks li.no::before{color:var(--quase)}
+
+/* certo e errado: verde e vermelho só nas respostas, sempre com ícone além da cor */
+.opt{position:relative}
+.opt.ok{border-color:var(--certo);background:var(--certo-bg);padding-right:40px}
+.opt.no{border-color:var(--errado);background:var(--errado-bg);padding-right:40px}
+.opt.ok::after,.opt.no::after,.cls .it.ok .nome::after,.ord .slot .peca.ok::after{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-weight:800;font-size:1.05rem}
+.opt.ok::after{content:"✓";color:var(--certo)}
+.opt.no::after{content:"✕";color:var(--errado)}
+.why.ok{background:var(--certo-bg);border-left:3px solid var(--certo)}
+.why.no{background:var(--errado-bg);border-left:3px solid var(--errado)}
+.why.ok::before{content:"✓ ";color:var(--certo);font-weight:800}
+.why.no::before{content:"✕ ";color:var(--errado);font-weight:800}
+.cls .it.ok{border-color:var(--certo);background:var(--certo-bg);position:relative}
+.cls .it.ok .nome::after{content:"✓";color:var(--certo);top:18px}
+.ord .slot .peca{position:relative}
+.ord .slot .peca.ok{border-color:var(--certo);background:var(--certo-bg);padding-right:40px}
+.ord .slot .peca.ok::after{content:"✓";color:var(--certo)}
+.chip.ok{background:var(--certo-bg);border-color:var(--certo);color:var(--certo)}
+.chip.ok::before{content:"✓ "}
+.chip.no{background:var(--errado-bg);border-color:var(--errado);color:var(--errado)}
+.chip.no::before{content:"✕ "}
+.lac input.ok,.lac select.ok{border-color:var(--certo);background:var(--certo-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='%235BD68A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 4px top 4px/12px 12px;padding-right:18px}
+.lac input.no,.lac select.no{border-color:var(--errado);background:var(--errado-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 4l-8 8' fill='none' stroke='%23FF8A80' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 4px top 4px/12px 12px;padding-right:18px}
+.checks li.ok::before{color:var(--certo)}
+
+/* foto do cabeçalho: degradê escuro até o fundo para o título e o crédito ficarem legíveis */
+.faixa::before{background:linear-gradient(180deg,rgba(11,11,13,.15) 0%,rgba(11,11,13,.55) 45%,rgba(11,11,13,.94) 100%)}
+.faixa.sem-foto{background:linear-gradient(135deg,var(--botao-topo),var(--botao-base))}
+.faixa .credito.sobre{color:#fff;background:rgba(11,11,13,.55);padding:2px 6px;border-radius:6px;text-shadow:none}
+
+/* contraste (medido em tests/e2e/contraste.mjs): texto colorido usa o violeta claro; nada de cinza direto sobre o violeta */
+.tag.c{color:var(--acento-texto-ativo);background:var(--acento-fundo-ativo)}
+.passo>.eyebrow,.callout .rot{color:var(--acento-claro)}
+.callout.analogia{--c:var(--acento-claro)}
+.callout.erro .rot,.callout.aviso .rot{color:var(--quase)}
+.faixa .faixa-txt .eyebrow{color:#fff}
+.faixa::before{background:linear-gradient(180deg,rgba(11,11,13,.2) 0%,rgba(11,11,13,.62) 38%,rgba(11,11,13,.95) 100%)}
+.ilha .orb.foto-orb{box-shadow:inset 0 0 0 64px rgba(11,11,13,.5)}
+.ilha{background:var(--bg2);border:.5px solid var(--vidro-borda);border-radius:var(--raio-card);padding:10px 12px;margin-bottom:8px}
+.ilha:not(:last-child)::before{display:none}
+/* um botão principal por tela: o play do áudio e a velocidade escolhida usam o estilo de item ativo */
+.player-aula .play{background:var(--acento-fundo-ativo);color:var(--acento-texto-ativo);border:.5px solid var(--acento)}
+.vel[aria-pressed=true]{background:var(--acento-fundo-ativo);border-color:var(--acento);color:var(--acento-texto-ativo)}
+/* no PC a faixa violeta da base é maior: cards e atalhos um pouco mais opacos para o texto manter 4,5:1 */
+body.pc .card,body.pc .tool,body.pc .cartao{background:rgba(22,22,26,.30)}

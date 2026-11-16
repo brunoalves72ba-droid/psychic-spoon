@@ -16,15 +16,15 @@ export default function ({ missao: m, feito }) {
   const passo = (tipo) => {
     if (fim) return;
     rodada++;
-    if (tipo === 'calc') { p(`Rodada ${rodada} · agir`, 'var(--m3)', 'calculadora("240 * 0.15")'); conta = '36.0'; p('observar', 'var(--m4)', '36.0'); mi.marcar(0); }
-    else if (tipo === 'data') { const d = hoje(); data = d.split('-').reverse().join('/'); p(`Rodada ${rodada} · agir`, 'var(--m3)', 'data_de_hoje()'); p('observar', 'var(--m4)', d); mi.marcar(1); }
-    else if (tipo === 'busca') { p(`Rodada ${rodada} · agir`, 'var(--m3)', 'buscar_anotacoes("15% de 240")'); p('observar', 'var(--m4)', 'Nada encontrado nas anotações.'); p('pensar', 'var(--m1)', 'Essa ferramenta não serve para contas nem datas. Rodada gasta.'); }
+    if (tipo === 'calc') { p(`Rodada ${rodada} · agir`, 'var(--cat2)', 'calculadora("240 * 0.15")'); conta = '36.0'; p('observar', 'var(--cat3)', '36.0'); mi.marcar(0); }
+    else if (tipo === 'data') { const d = hoje(); data = d.split('-').reverse().join('/'); p(`Rodada ${rodada} · agir`, 'var(--cat2)', 'data_de_hoje()'); p('observar', 'var(--cat3)', d); mi.marcar(1); }
+    else if (tipo === 'busca') { p(`Rodada ${rodada} · agir`, 'var(--cat2)', 'buscar_anotacoes("15% de 240")'); p('observar', 'var(--cat3)', 'Nada encontrado nas anotações.'); p('pensar', 'var(--cat1)', 'Essa ferramenta não serve para contas nem datas. Rodada gasta.'); }
     else {
       if (conta && data) {
         p(`Rodada ${rodada} · resposta final`, 'var(--ok)', `15% de 240 é 36, e hoje é ${data}.`); fim = true; mi.marcar(2); marco('agente');
       } else {
         p(`Rodada ${rodada} · resposta final`, 'var(--quase)', conta ? '15% de 240 é 36, e hoje é… (o modelo chutou uma data qualquer)' : data ? `Hoje é ${data}, e 15% de 240 é… uns 40? (conta de cabeça)` : 'Uns 40, e hoje deve ser segunda. (chute completo)');
-        p('pensar', 'var(--m1)', 'Respondeu sem as observações: é assim que um agente alucina. Recomece e use as ferramentas antes.'); fim = true;
+        p('pensar', 'var(--cat1)', 'Respondeu sem as observações: é assim que um agente alucina. Recomece e use as ferramentas antes.'); fim = true;
       }
     }
     if (!fim && rodada >= MAX) { p('limite', 'var(--quase)', `Teto de ${MAX} rodadas atingido. O laço parou: é o guardrail contra voltas sem fim.`); fim = true; }

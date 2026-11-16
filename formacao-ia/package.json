@@ -19,6 +19,8 @@
     "quiz:revisar": "node tools/exportar-quiz.mjs",
     "e2e:audio": "node tests/e2e/audio.mjs",
     "docs": "node tools/gerar-inventario.mjs",
-    "icones": "node tools/gerar-icones.mjs"
+    "icones": "node tools/gerar-icones.mjs",
+    "e2e:contraste": "node tests/e2e/contraste.mjs && node tests/e2e/contraste.mjs --pc",
+    "capturas": "node tests/e2e/capturas.mjs"
   }
 }

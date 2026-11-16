@@ -26,11 +26,11 @@ export default async function (el) {
     })),
     h('h3', 'Ferramentas do projeto'),
     h('div.tools',
-      h('a.tool', { href: '#/projeto/diario', css: { '--c': 'var(--m0)' } }, h('b', 'Diário de bordo'), h('span', `Uma frase por sessão. ${plural(S.diario.length, 'entrada', 'entradas')}.`)),
-      h('a.tool', { href: '#/projeto/ficha', css: { '--c': 'var(--m1)' } }, h('b', 'Ficha técnica'), h('span', 'Objetivo, modelos e regras do APE-IA.')),
-      h('a.tool', { href: '#/projeto/prompts', css: { '--c': 'var(--m2)' } }, h('b', 'Biblioteca de prompts'), h('span', `${plural(S.prompts.length, 'prompt', 'prompts')} com versão e rubrica.`)),
-      h('a.tool', { href: '#/projeto/kits', css: { '--c': 'var(--m3)' } }, h('b', 'Kits de código'), h('span', 'Arquivos prontos para os Módulos 3, 5 e 6.')),
-      h('a.tool', { href: '#/projeto/pendencias', css: { '--c': 'var(--m4)' } }, h('b', 'Práticas pendentes'), h('span', pend ? `${plural(pend, 'prática', 'práticas')} para fazer no computador.` : 'Nada pendente.')),
-      h('a.tool', { href: '#/foco', css: { '--c': 'var(--m5)' } }, h('b', 'Modo foco'), h('span', 'Relógio de 10, 15 ou 25 min para as missões.'))),
+      h('a.tool', { href: '#/projeto/diario' }, h('b', 'Diário de bordo'), h('span', `Uma frase por sessão. ${plural(S.diario.length, 'entrada', 'entradas')}.`)),
+      h('a.tool', { href: '#/projeto/ficha' }, h('b', 'Ficha técnica'), h('span', 'Objetivo, modelos e regras do APE-IA.')),
+      h('a.tool', { href: '#/projeto/prompts' }, h('b', 'Biblioteca de prompts'), h('span', `${plural(S.prompts.length, 'prompt', 'prompts')} com versão e rubrica.`)),
+      h('a.tool', { href: '#/projeto/kits' }, h('b', 'Kits de código'), h('span', 'Arquivos prontos para os Módulos 3, 5 e 6.')),
+      h('a.tool', { href: '#/projeto/pendencias' }, h('b', 'Práticas pendentes'), h('span', pend ? `${plural(pend, 'prática', 'práticas')} para fazer no computador.` : 'Nada pendente.')),
+      h('a.tool', { href: '#/foco' }, h('b', 'Modo foco'), h('span', 'Relógio de 10, 15 ou 25 min para as missões.'))),
   );
 }
