@@ -44,13 +44,13 @@ Proprietário único e exclusivo do app: **Bruno Moura**.
 - O manifesto do Sexteto passou a ter `"scope": "./index.html"`: antes, a área dele (`/psychic-spoon/`) incluía `/formacao-ia/`, e o Android abria este app dentro do Sexteto instalado. O `id` do Sexteto não mudou (o app instalado continua o mesmo); a mudança chega aos celulares quando o Chrome atualiza o Sexteto instalado, o que pode levar um ou dois dias.
 - `id` próprio no manifesto deste app, ícone novo (“IA” com faísca) e tela `#/mais/instalar`: botão de instalar (quando o navegador oferece), passo a passo para Android e iPhone, conferência de que os arquivos do app estão guardados e pedido de armazenamento permanente.
 
-## Leitura em voz alta
+## Áudio das aulas (voz neural) — novembro de 2026
 
-- `js/core/voz.js`: usa as vozes do próprio aparelho (Web Speech API). Grátis, sem servidor e, com uma voz instalada no aparelho, sem internet. Lê frase por frase (frases longas travam no Chrome); a pausa guarda a frase e recomeça dela, porque `pause()` falha no Android. Para ao trocar de tela ou sair do app.
-- Lê o que está na tela, na ordem da tela (`textoDe`): o quiz embaralha as opções, e a explicação só é lida depois da resposta. Pula código (avisa “o código está na tela”), botões, campos, fotos e etiquetas.
-- `js/core/voz-texto.js`: limpeza do texto e dicionário de pronúncia dos termos em inglês (prompt, token, JSON, API, RAG, LangChain…). Para corrigir uma pronúncia, edite a lista `PRONUNCIA`.
-- Preferências (ligada, ler sozinho, voz, velocidade) em `L.voz`: ficam só no aparelho, porque cada aparelho tem vozes diferentes.
-- `tests/e2e/voz.mjs` usa uma voz falsa que anota o que seria falado. **A qualidade da voz de verdade não foi testada** (depende do aparelho).
+- A voz do aparelho (Web Speech) saiu. Cada aula pode ter um MP3 gerado uma vez por `tools/audio/gerar-audio.mjs` (Google Cloud TTS, voz Neural2 por padrão; ElevenLabs como alternativa), com SSML montado por `tools/audio/ssml.mjs` e forma falada por `tools/audio/falado.mjs`. Guia completo: `AUDIO.md`.
+- `audio/indice.json` (no pré-cache) diz quais aulas têm áudio, a duração e os capítulos. O app (`js/core/audio.js`) baixa o MP3 ao tocar, guarda no cache `fia-audio` (o service worker não apaga esse cache ao atualizar) e toca da memória.
+- Vídeo opcional por aula em `js/data/videos.js` (YouTube, youtube-nocookie). Dias seguidos e dias estudados no Hoje; o passo concluído pulsa e o acerto no quiz tem animação curta (desligada com “reduzir movimento”).
+- `QUIZ-PARA-REVISAR.md` (gerado por `npm run quiz:revisar`) lista as 293 perguntas para revisão.
+- **Não testado contra a API real** (este ambiente não alcança o Google): `tests/audio.test.mjs` usa uma API de mentira com MP3 de verdade (ffmpeg).
 
 ## Pendências e limites conhecidos
 

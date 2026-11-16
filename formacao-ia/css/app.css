@@ -435,3 +435,28 @@ body.pc .ilhas-grade .ilha{background:var(--bg2);border:1px solid var(--line);bo
 .tabs a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 @media (max-width:360px){.tabs a{font-size:.66rem}}
 body.pc .tabs a[data-tab=ajustes]{margin-top:auto}
+
+/* player do áudio da aula (voz neural) */
+.slot-audio:empty { display: none; }
+.player-aula { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; margin: 0 0 12px; display: grid; gap: 8px; }
+.player-aula.tocando { border-color: var(--acao); }
+.player-linha { gap: 12px; align-items: center; }
+.player-aula .play { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%; flex: none; }
+.player-aula .play.carregando { opacity: .6; }
+.player-aula .play .ic { width: 22px; height: 22px; }
+.prog-audio { width: 100%; accent-color: var(--acao); min-height: 28px; }
+.vels { display: flex; gap: 4px; }
+.vel { min-height: 32px; min-width: 44px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--ink2); font: inherit; font-size: .82rem; font-weight: 650; }
+.vel[aria-pressed=true] { background: var(--acao); border-color: var(--acao); color: var(--acao-ink); }
+.caps { display: flex; gap: 6px; overflow-x: auto; }
+.cap[aria-current=true] { border-color: var(--acao); color: var(--ink); }
+/* vídeo opcional da aula */
+.video { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: #000; margin: 6px 0 4px; }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+/* recompensa: bloco concluído e acerto no quiz */
+.segs.passos .pp.celebra i { animation: celebra .9s ease; }
+@keyframes celebra { 0% { transform: scaleY(1); } 30% { transform: scaleY(2.2); background: var(--ok); } 100% { transform: scaleY(1); } }
+.passo.acertou .why.ok { animation: acerto .6s ease; }
+@keyframes acerto { 0% { transform: scale(.96); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+.dias-seguidos { margin: 0 0 6px; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .segs.passos .pp.celebra i, .passo.acertou .why.ok { animation: none; } }

@@ -70,3 +70,7 @@ tests/                   unitários e ponta a ponta
 
 - `PROGRESSO.md`: o que foi feito, decisões e como continuar.
 - `CREDITOS.md`: fontes, MicroPython e as bases científicas.
+
+## Áudio das aulas
+
+Voz neural gerada uma vez no seu computador e tocada no app: veja [AUDIO.md](AUDIO.md).
