@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "start": "node tools/serve.mjs",
-    "test": "node tools/gen-precache.mjs --check && node --test tests/*.test.mjs",
+    "test": "node tools/gen-precache.mjs --check && node tools/gerar-inventario.mjs --check && node --test tests/*.test.mjs",
     "precache": "node tools/gen-precache.mjs",
     "e2e": "node tests/e2e/run.mjs",
     "e2e:offline": "node tests/e2e/offline.mjs",
@@ -17,6 +17,8 @@
     "audio": "node tools/audio/gerar-audio.mjs",
     "audio:simular": "node tools/audio/gerar-audio.mjs --simular",
     "quiz:revisar": "node tools/exportar-quiz.mjs",
-    "e2e:audio": "node tests/e2e/audio.mjs"
+    "e2e:audio": "node tests/e2e/audio.mjs",
+    "docs": "node tools/gerar-inventario.mjs",
+    "icones": "node tools/gerar-icones.mjs"
   }
 }
