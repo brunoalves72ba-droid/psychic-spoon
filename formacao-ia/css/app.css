@@ -446,7 +446,7 @@ body.pc .tabs a[data-tab=ajustes]{margin-top:auto}
 .player-aula .play .ic { width: 22px; height: 22px; }
 .prog-audio { width: 100%; accent-color: var(--acao); min-height: 28px; }
 .vels { display: flex; gap: 4px; }
-.vel { min-height: 32px; min-width: 44px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--ink2); font: inherit; font-size: .82rem; font-weight: 650; }
+.vel { min-height: 44px; min-width: 44px; border-radius: 999px; border: 1px solid var(--line2); background: transparent; color: var(--ink2); font: inherit; font-size: .82rem; font-weight: 650; }
 .vel[aria-pressed=true] { background: var(--acao); border-color: var(--acao); color: var(--acao-ink); }
 .caps { display: flex; gap: 6px; overflow-x: auto; }
 .cap[aria-current=true] { border-color: var(--acao); color: var(--ink); }
@@ -460,3 +460,7 @@ body.pc .tabs a[data-tab=ajustes]{margin-top:auto}
 @keyframes acerto { 0% { transform: scale(.96); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
 .dias-seguidos { margin: 0 0 6px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .segs.passos .pp.celebra i, .passo.acertou .why.ok { animation: none; } }
+.player-aula[hidden] { display: none; }
+.parte-nome { font-weight: 700; font-size: .92rem; }
+.vel.auto { font-size: .74rem; min-width: 0; padding: 0 10px; }
+.player-aula.terminou .play { opacity: .85; }

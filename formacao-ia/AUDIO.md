@@ -45,6 +45,8 @@ Precisa do **Node.js 18 ou mais novo** (https://nodejs.org, versão LTS) e do re
 
 ## No app
 
-- Player no topo da aula: play/pausa, barra de progresso (dá para arrastar), tempo, velocidades **1x, 1,25x e 1,5x** (a escolha fica guardada) e capítulos.
+- O áudio toca **por partes**: ao abrir o passo Começo, Ideia, Exemplo ou Erro comum, o player toca só aquele trecho e para no fim dele (“Tocar ao abrir: sim/não” liga e desliga o começo automático). No exercício, no quiz e no fim, o player some.
+- Play/pausa, barra da parte (dá para arrastar), tempo e velocidades **1x, 1,25x (padrão) e 1,5x** (a escolha fica guardada).
+- **Cortes entre as partes:** com Neural2/WaveNet, a API devolve o tempo exato de cada parte. Com Chirp 3 HD e ElevenLabs, o gerador pede cada parte separadamente e mede o começo de cada uma (cortes exatos). Áudios gerados antes dessa mudança usam cortes estimados, que o app ajusta para a pausa de silêncio mais próxima; para cortes exatos, gere de novo com `--refazer`.
 - O MP3 é baixado na primeira vez que você toca a aula e fica no aparelho. Em **Progresso › Ajustes › Áudio das aulas** dá para baixar todos de uma vez, para estudar sem internet.
 - **Vídeo opcional:** em `js/data/videos.js`, acrescente `'0.1': 'https://youtu.be/…',` (pode ser vídeo “não listado”). O vídeo aparece no topo da aula; sem vídeo, nada muda.

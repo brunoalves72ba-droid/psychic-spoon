@@ -15,7 +15,7 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 const tmp = mkdtempSync(join(tmpdir(), 'e2e-audio-'));
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=330:duration=12', '-ac', '1', '-ar', '24000', '-b:a', '32k', join(tmp, 'a.mp3')]);
 const MP3 = readFileSync(join(tmp, 'a.mp3'));
-const INDICE = { '0.1': { arquivo: 'aula-0.1.mp3', duracao: 12, bytes: MP3.length, capitulos: [{ id: 'passo-0', nome: 'Começo', t: 0 }, { id: 'passo-1', nome: 'Ideia', t: 3 }, { id: 'passo-2', nome: 'Exemplo', t: 6 }, { id: 'passo-5', nome: 'Erro comum', t: 9 }], voz: 'teste' } };
+const INDICE = { '0.1': { arquivo: 'aula-0.1.mp3', duracao: 12, bytes: MP3.length, capitulos: [{ id: 'passo-0', nome: 'Começo', t: 0 }, { id: 'passo-1', nome: 'Ideia', t: 3 }, { id: 'passo-2', nome: 'Exemplo', t: 6 }, { id: 'passo-5', nome: 'Erro comum', t: 9 }], voz: 'pt-BR-Neural2-A', cortes: 'exatos' } };
 const PORT = 8132;
 const server = spawn(process.execPath, [root + 'tools/serve.mjs', String(PORT)], { stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 500));
@@ -32,33 +32,42 @@ page.on('pageerror', (e) => erros.push('erro na página: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error' && !/youtube/.test(m.text())) erros.push('console: ' + m.text()); });
 const base = `http://localhost:${PORT}/index.html`;
 try {
-  // 1. aula com áudio: player no topo
+  // 1. aula com áudio: o player aparece no topo e toca sozinho só a parte aberta (Começo: 0 a 3 s)
   await page.goto(base + '#/licao/0.1');
   await page.locator('.player-aula').waitFor({ timeout: 8000 });
-  ok(true, 'aula com áudio mostra o player');
-  ok((await page.locator('.vel').allInnerTexts()).join(' ') === '1x 1,25x 1,5x', 'velocidades 1x, 1,25x e 1,5x');
-  ok((await page.locator('.cap').allInnerTexts()).join(' | ') === 'Começo | Ideia | Exemplo | Erro comum', 'capítulos do áudio');
+  ok(/Ouvir: Começo/.test(await page.locator('.parte-nome').innerText()), 'abre na parte Começo');
+  ok((await page.locator('.vels .vel[aria-pressed=true]').innerText()) === '1,25x', 'velocidade padrão 1,25x');
+  ok((await page.locator('.vel').allInnerTexts()).filter((t) => /x$/.test(t)).join(' ') === '1x 1,25x 1,5x', 'velocidades 1x, 1,25x e 1,5x');
   ok(await page.locator('.video iframe').count() === 1 && /youtube-nocookie\.com\/embed\/abcdefghijk/.test(await page.locator('.video iframe').getAttribute('src')), 'vídeo do YouTube no topo da aula');
-  await page.locator('.player-aula .play').click();
   await page.waitForFunction(() => document.querySelector('.player-aula.tocando'), null, { timeout: 8000 });
-  await page.waitForTimeout(1500);
-  const t1 = await page.locator('.player-aula .num').innerText();
-  ok(/^0:0[1-9] \/ 0:12$/.test(t1), `toca e o tempo anda (${t1})`);
-  await page.locator('.vel', { hasText: '1,5x' }).click();
-  ok(await page.evaluate(() => [...document.querySelectorAll('audio')].length === 0) || true, 'player usa um elemento de áudio próprio');
-  ok((await page.locator('.vel[aria-pressed=true]').innerText()) === '1,5x' && await page.evaluate(() => localStorage.getItem('fia-vel')) === '1.5', 'velocidade 1,5x escolhida e lembrada');
-  await page.locator('.cap', { hasText: 'Exemplo' }).click();
-  await page.waitForTimeout(300);
-  ok((await page.locator('.cap[aria-current=true]').innerText()) === 'Exemplo', 'capítulo pula para o Exemplo');
-  await page.locator('.player-aula .play').click();
-  await page.waitForTimeout(200);
-  ok(!(await page.locator('.player-aula').getAttribute('class')).includes('tocando'), 'pausa');
+  ok(true, 'começa a tocar sozinho ao abrir');
+  await page.waitForFunction(() => document.querySelector('.player-aula.terminou'), null, { timeout: 8000 });
+  const t0 = await page.locator('.player-aula .num').innerText();
+  ok(/^0:03 \/ 0:03$/.test(t0), `para no fim da parte Começo (${t0})`);
   await page.screenshot({ path: root + 'tests/e2e/shots/audio-player.png' });
-  // 2. recompensa ao terminar um bloco
+  // 2. passo seguinte: toca só a Ideia (3 a 6 s), com feedback visual do passo concluído
   await page.locator('.acao-bar .btn.primary').click();
   ok(await page.locator('.segs.passos .pp.celebra').count() === 1, 'passo concluído pulsa (feedback visual)');
-  // 3. o áudio continua no topo ao trocar de passo
-  ok(await page.locator('.player-aula').count() === 1, 'o player continua ao trocar de passo');
+  ok(/Ouvir: Ideia/.test(await page.locator('.parte-nome').innerText()), 'no passo Ideia, o player mostra a Ideia');
+  await page.waitForFunction(() => document.querySelector('.player-aula.tocando'), null, { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelector('.player-aula.terminou'), null, { timeout: 8000 });
+  ok(/^0:03 \/ 0:03$/.test(await page.locator('.player-aula .num').innerText()), 'toca a Ideia inteira e para no fim dela');
+  // 3. tocar de novo recomeça a parte; pausa funciona; 1,5x é lembrada
+  await page.locator('.player-aula .play').click();
+  await page.waitForTimeout(500);
+  ok(/^0:0[0-1] \/ 0:03$/.test(await page.locator('.player-aula .num').innerText()), 'tocar de novo recomeça a Ideia');
+  await page.locator('.player-aula .play').click();
+  await page.locator('.vel', { hasText: '1,5x' }).click();
+  ok(await page.evaluate(() => localStorage.getItem('fia-vel')) === '1.5', 'velocidade 1,5x escolhida e lembrada');
+  // 4. desligar "tocar ao abrir": o próximo passo só posiciona, não toca
+  await page.locator('.vel.auto').click();
+  await page.locator('.acao-bar .btn.primary').click();
+  await page.waitForTimeout(700);
+  ok(/Ouvir: Exemplo/.test(await page.locator('.parte-nome').innerText()) && !(await page.locator('.player-aula').getAttribute('class')).includes('tocando'), 'com “tocar ao abrir: não”, o Exemplo fica parado esperando o play');
+  // 5. exercício (sem áudio): o player some
+  await page.locator('.acao-bar .btn.primary').click();
+  await page.waitForTimeout(300);
+  ok(await page.locator('.player-aula').isHidden(), 'no exercício, o player some');
   // 4. aula sem áudio: só o texto, sem erro
   await page.evaluate(() => { location.hash = '#/licao/0.2'; });
   await page.locator('.passo h1').waitFor();
