@@ -1,1 +1,2844 @@
-{}
+{
+ "0.1": {
+  "arquivo": "aula-0.1.mp3",
+  "duracao": 138.41,
+  "bytes": 553632,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.39
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 87.25
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 114.88
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "0.2": {
+  "arquivo": "aula-0.2.mp3",
+  "duracao": 145.1,
+  "bytes": 580416,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 7.92
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 89.06
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 122.22
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "0.3": {
+  "arquivo": "aula-0.3.mp3",
+  "duracao": 126.7,
+  "bytes": 506784,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.78
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 74.36
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 102.87
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "0.4": {
+  "arquivo": "aula-0.4.mp3",
+  "duracao": 95.26,
+  "bytes": 381024,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.18
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 59.47
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 79.55
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "0.5": {
+  "arquivo": "aula-0.5.mp3",
+  "duracao": 127.94,
+  "bytes": 511776,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.14
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 75.68
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 109.17
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "0.6": {
+  "arquivo": "aula-0.6.mp3",
+  "duracao": 122.78,
+  "bytes": 491136,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.45
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 75.55
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 100.24
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.1": {
+  "arquivo": "aula-1.1.mp3",
+  "duracao": 157.78,
+  "bytes": 631104,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.66
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 98.97
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 134.54
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.2": {
+  "arquivo": "aula-1.2.mp3",
+  "duracao": 127.49,
+  "bytes": 509952,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.78
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 78.19
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 108.62
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.3": {
+  "arquivo": "aula-1.3.mp3",
+  "duracao": 124.61,
+  "bytes": 498432,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 7.77
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 74.48
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 104.99
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.4": {
+  "arquivo": "aula-1.4.mp3",
+  "duracao": 125.62,
+  "bytes": 502464,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.59
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 80.61
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 107.43
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.5": {
+  "arquivo": "aula-1.5.mp3",
+  "duracao": 115.37,
+  "bytes": 461472,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.75
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 75.19
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 98.15
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.6": {
+  "arquivo": "aula-1.6.mp3",
+  "duracao": 165.22,
+  "bytes": 660864,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 15.61
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 116.98
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 146.62
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.7": {
+  "arquivo": "aula-1.7.mp3",
+  "duracao": 148.01,
+  "bytes": 592032,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.82
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 98.36
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 128.34
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.8": {
+  "arquivo": "aula-1.8.mp3",
+  "duracao": 146.98,
+  "bytes": 587904,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.45
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 95.06
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 126.41
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.9": {
+  "arquivo": "aula-1.9.mp3",
+  "duracao": 127.42,
+  "bytes": 509664,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.42
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 82.23
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 108.76
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.10": {
+  "arquivo": "aula-1.10.mp3",
+  "duracao": 139.94,
+  "bytes": 559776,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.33
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 89.1
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 120.07
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.11": {
+  "arquivo": "aula-1.11.mp3",
+  "duracao": 173.3,
+  "bytes": 693216,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.17
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 108.91
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 151.66
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "1.12": {
+  "arquivo": "aula-1.12.mp3",
+  "duracao": 149.86,
+  "bytes": 599424,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.92
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 101.36
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 129.77
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.1": {
+  "arquivo": "aula-2.1.mp3",
+  "duracao": 150.53,
+  "bytes": 602112,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.68
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 78.38
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 131.4
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.2": {
+  "arquivo": "aula-2.2.mp3",
+  "duracao": 132.26,
+  "bytes": 529056,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 15.11
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 83.03
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 111.9
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.3": {
+  "arquivo": "aula-2.3.mp3",
+  "duracao": 118.73,
+  "bytes": 474912,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.84
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 70.77
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 100.56
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.4": {
+  "arquivo": "aula-2.4.mp3",
+  "duracao": 130.73,
+  "bytes": 522912,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.09
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 68.08
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 114.38
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.5": {
+  "arquivo": "aula-2.5.mp3",
+  "duracao": 154.73,
+  "bytes": 618912,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.29
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 96.25
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 134.03
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.6": {
+  "arquivo": "aula-2.6.mp3",
+  "duracao": 114.7,
+  "bytes": 458784,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.09
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 69.56
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 96.49
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.7": {
+  "arquivo": "aula-2.7.mp3",
+  "duracao": 127.13,
+  "bytes": 508512,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.25
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 83.2
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 108.91
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.8": {
+  "arquivo": "aula-2.8.mp3",
+  "duracao": 146.02,
+  "bytes": 584064,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.03
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 92.86
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 126.74
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.9": {
+  "arquivo": "aula-2.9.mp3",
+  "duracao": 159.14,
+  "bytes": 636576,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.7
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 90.14
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 141.06
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.10": {
+  "arquivo": "aula-2.10.mp3",
+  "duracao": 146.54,
+  "bytes": 586176,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.89
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 87.39
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 127.73
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.11": {
+  "arquivo": "aula-2.11.mp3",
+  "duracao": 140.3,
+  "bytes": 561216,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.72
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 80.23
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 121.89
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "2.12": {
+  "arquivo": "aula-2.12.mp3",
+  "duracao": 150.17,
+  "bytes": 600672,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.51
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 87.07
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 129.51
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.1": {
+  "arquivo": "aula-3.1.mp3",
+  "duracao": 128.5,
+  "bytes": 513984,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.03
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 83.59
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 106.87
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.2": {
+  "arquivo": "aula-3.2.mp3",
+  "duracao": 174.5,
+  "bytes": 698016,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.3
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 116.51
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 150.97
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.3": {
+  "arquivo": "aula-3.3.mp3",
+  "duracao": 137.78,
+  "bytes": 551136,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.29
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 93.01
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 117.78
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.4": {
+  "arquivo": "aula-3.4.mp3",
+  "duracao": 132.74,
+  "bytes": 530976,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.8
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 84.67
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 113.69
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.5": {
+  "arquivo": "aula-3.5.mp3",
+  "duracao": 160.9,
+  "bytes": 643584,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 16.63
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 103.05
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 136.75
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.6": {
+  "arquivo": "aula-3.6.mp3",
+  "duracao": 161.42,
+  "bytes": 645696,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.62
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 98.46
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 137.45
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.7": {
+  "arquivo": "aula-3.7.mp3",
+  "duracao": 169.25,
+  "bytes": 676992,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.45
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 100.74
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 144.02
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.8": {
+  "arquivo": "aula-3.8.mp3",
+  "duracao": 146.26,
+  "bytes": 585024,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.76
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 87.65
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 120.98
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.9": {
+  "arquivo": "aula-3.9.mp3",
+  "duracao": 134.33,
+  "bytes": 537312,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.07
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 80.37
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 107.35
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.10": {
+  "arquivo": "aula-3.10.mp3",
+  "duracao": 135.65,
+  "bytes": 542592,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.38
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 85.93
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 114.97
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.11": {
+  "arquivo": "aula-3.11.mp3",
+  "duracao": 138.02,
+  "bytes": 552096,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.13
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 87.93
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 119.39
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.12": {
+  "arquivo": "aula-3.12.mp3",
+  "duracao": 151.06,
+  "bytes": 604224,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.82
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 92.65
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 130.83
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.13": {
+  "arquivo": "aula-3.13.mp3",
+  "duracao": 137.54,
+  "bytes": 550176,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.8
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 85.21
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 116.68
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "3.14": {
+  "arquivo": "aula-3.14.mp3",
+  "duracao": 130.46,
+  "bytes": 521856,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.03
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 75.97
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 110.96
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.1": {
+  "arquivo": "aula-4.1.mp3",
+  "duracao": 133.58,
+  "bytes": 534336,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.56
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 84.26
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 114.86
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.2": {
+  "arquivo": "aula-4.2.mp3",
+  "duracao": 137.9,
+  "bytes": 551616,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.44
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 93.32
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 121.44
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.3": {
+  "arquivo": "aula-4.3.mp3",
+  "duracao": 116.09,
+  "bytes": 464352,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 7.42
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 76.05
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 98.38
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.4": {
+  "arquivo": "aula-4.4.mp3",
+  "duracao": 120.14,
+  "bytes": 480576,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.1
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 76.3
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 97.97
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.5": {
+  "arquivo": "aula-4.5.mp3",
+  "duracao": 142.18,
+  "bytes": 568704,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 15.94
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 95.41
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 121.79
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.6": {
+  "arquivo": "aula-4.6.mp3",
+  "duracao": 148.54,
+  "bytes": 594144,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.81
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 88.92
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 123.92
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.7": {
+  "arquivo": "aula-4.7.mp3",
+  "duracao": 150.86,
+  "bytes": 603456,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.69
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 93.81
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 125.02
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.8": {
+  "arquivo": "aula-4.8.mp3",
+  "duracao": 145.82,
+  "bytes": 583296,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.5
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 92.05
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 123.96
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.9": {
+  "arquivo": "aula-4.9.mp3",
+  "duracao": 150.65,
+  "bytes": 602592,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.68
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 94.8
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 130.71
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.10": {
+  "arquivo": "aula-4.10.mp3",
+  "duracao": 143.74,
+  "bytes": 574944,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.58
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 88.02
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 121.56
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.11": {
+  "arquivo": "aula-4.11.mp3",
+  "duracao": 152.21,
+  "bytes": 608832,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.89
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 99.7
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 128.34
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.12": {
+  "arquivo": "aula-4.12.mp3",
+  "duracao": 163.34,
+  "bytes": 653376,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 15.51
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 105.17
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 145.05
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.13": {
+  "arquivo": "aula-4.13.mp3",
+  "duracao": 131.69,
+  "bytes": 526752,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.84
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 77.42
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 112.09
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.14": {
+  "arquivo": "aula-4.14.mp3",
+  "duracao": 160.06,
+  "bytes": 640224,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.53
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 87.07
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 136.75
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.15": {
+  "arquivo": "aula-4.15.mp3",
+  "duracao": 130.61,
+  "bytes": 522432,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.68
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 83.35
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 114.83
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.16": {
+  "arquivo": "aula-4.16.mp3",
+  "duracao": 151.42,
+  "bytes": 605664,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.09
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 100.68
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 129.74
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.17": {
+  "arquivo": "aula-4.17.mp3",
+  "duracao": 179.45,
+  "bytes": 717792,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.26
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 121.08
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 155.43
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "4.18": {
+  "arquivo": "aula-4.18.mp3",
+  "duracao": 199.22,
+  "bytes": 796896,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 17.3
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 131.96
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 172.74
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.1": {
+  "arquivo": "aula-5.1.mp3",
+  "duracao": 186.05,
+  "bytes": 744192,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.8
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 125.27
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 159.91
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.2": {
+  "arquivo": "aula-5.2.mp3",
+  "duracao": 111.89,
+  "bytes": 447552,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 8.3
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 66.32
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 92.8
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.3": {
+  "arquivo": "aula-5.3.mp3",
+  "duracao": 142.1,
+  "bytes": 568416,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.81
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 94.89
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 116.97
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.4": {
+  "arquivo": "aula-5.4.mp3",
+  "duracao": 109.46,
+  "bytes": 437856,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.57
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 69.79
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 90.54
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.5": {
+  "arquivo": "aula-5.5.mp3",
+  "duracao": 137.86,
+  "bytes": 551424,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.95
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 85.03
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 115.23
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.6": {
+  "arquivo": "aula-5.6.mp3",
+  "duracao": 123.58,
+  "bytes": 494304,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.91
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 79.77
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 100.26
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.7": {
+  "arquivo": "aula-5.7.mp3",
+  "duracao": 130.13,
+  "bytes": 520512,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.93
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 84.74
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 108.51
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.8": {
+  "arquivo": "aula-5.8.mp3",
+  "duracao": 109.46,
+  "bytes": 437856,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.2
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 72.95
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 93.18
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.9": {
+  "arquivo": "aula-5.9.mp3",
+  "duracao": 175.97,
+  "bytes": 703872,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.06
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 121.09
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 154.02
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.10": {
+  "arquivo": "aula-5.10.mp3",
+  "duracao": 151.97,
+  "bytes": 607872,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 15.56
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 104.56
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 131.42
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.11": {
+  "arquivo": "aula-5.11.mp3",
+  "duracao": 195.05,
+  "bytes": 780192,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 140.48
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 169.39
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.12": {
+  "arquivo": "aula-5.12.mp3",
+  "duracao": 160.37,
+  "bytes": 641472,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.2
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 100.85
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 137.39
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.13": {
+  "arquivo": "aula-5.13.mp3",
+  "duracao": 161.86,
+  "bytes": 647424,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 16.48
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 112.24
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 134.54
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.14": {
+  "arquivo": "aula-5.14.mp3",
+  "duracao": 144.7,
+  "bytes": 578784,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.78
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 100.44
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 121.97
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.15": {
+  "arquivo": "aula-5.15.mp3",
+  "duracao": 139.61,
+  "bytes": 558432,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.55
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 95.51
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 119.33
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.16": {
+  "arquivo": "aula-5.16.mp3",
+  "duracao": 144.77,
+  "bytes": 579072,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.23
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 98.46
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 122.54
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.17": {
+  "arquivo": "aula-5.17.mp3",
+  "duracao": 152.78,
+  "bytes": 611136,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 15.97
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 101.94
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 124.52
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.18": {
+  "arquivo": "aula-5.18.mp3",
+  "duracao": 155.66,
+  "bytes": 622656,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.93
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 106.25
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 135.51
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.19": {
+  "arquivo": "aula-5.19.mp3",
+  "duracao": 153.86,
+  "bytes": 615456,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.84
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 108.42
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 129.36
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "5.20": {
+  "arquivo": "aula-5.20.mp3",
+  "duracao": 183.46,
+  "bytes": 733824,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.81
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 127.39
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 158.6
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.1": {
+  "arquivo": "aula-6.1.mp3",
+  "duracao": 181.06,
+  "bytes": 724224,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 17.03
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 117.71
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 157.23
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.2": {
+  "arquivo": "aula-6.2.mp3",
+  "duracao": 123.29,
+  "bytes": 493152,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 12.29
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 77.26
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 101.42
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.3": {
+  "arquivo": "aula-6.3.mp3",
+  "duracao": 151.54,
+  "bytes": 606144,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.68
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 98.36
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 125.51
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.4": {
+  "arquivo": "aula-6.4.mp3",
+  "duracao": 150.22,
+  "bytes": 600864,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.13
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 88.91
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 128.14
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.5": {
+  "arquivo": "aula-6.5.mp3",
+  "duracao": 124.13,
+  "bytes": 496512,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.07
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 84.43
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 106.26
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.6": {
+  "arquivo": "aula-6.6.mp3",
+  "duracao": 136.97,
+  "bytes": 547872,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.12
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 95.49
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 117.07
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.7": {
+  "arquivo": "aula-6.7.mp3",
+  "duracao": 149.02,
+  "bytes": 596064,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.18
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 104.2
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 127.91
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.8": {
+  "arquivo": "aula-6.8.mp3",
+  "duracao": 149.66,
+  "bytes": 598656,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.23
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 91.49
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 130.55
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.9": {
+  "arquivo": "aula-6.9.mp3",
+  "duracao": 156.17,
+  "bytes": 624672,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 9.21
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 98.02
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 134.26
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.10": {
+  "arquivo": "aula-6.10.mp3",
+  "duracao": 136.18,
+  "bytes": 544704,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 13.5
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 90.79
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 115.04
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.11": {
+  "arquivo": "aula-6.11.mp3",
+  "duracao": 182.66,
+  "bytes": 730656,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.9
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 122.61
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 159.81
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.12": {
+  "arquivo": "aula-6.12.mp3",
+  "duracao": 130.06,
+  "bytes": 520224,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.46
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 86.86
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 107.86
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.13": {
+  "arquivo": "aula-6.13.mp3",
+  "duracao": 142.7,
+  "bytes": 570816,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 10.74
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 99.16
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 122.04
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.14": {
+  "arquivo": "aula-6.14.mp3",
+  "duracao": 145.46,
+  "bytes": 581856,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 11.98
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 99.8
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 124.77
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.15": {
+  "arquivo": "aula-6.15.mp3",
+  "duracao": 191.5,
+  "bytes": 765984,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.21
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 121.86
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 165.43
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ },
+ "6.16": {
+  "arquivo": "aula-6.16.mp3",
+  "duracao": 161.5,
+  "bytes": 645984,
+  "capitulos": [
+   {
+    "id": "passo-0",
+    "nome": "Começo",
+    "t": 0
+   },
+   {
+    "id": "passo-1",
+    "nome": "Ideia",
+    "t": 14.64
+   },
+   {
+    "id": "passo-2",
+    "nome": "Exemplo",
+    "t": 109.47
+   },
+   {
+    "id": "passo-5",
+    "nome": "Erro comum",
+    "t": 139.69
+   }
+  ],
+  "voz": "pt-BR-Chirp3-HD-Puck",
+  "gerado": "2026-11-16"
+ }
+}
