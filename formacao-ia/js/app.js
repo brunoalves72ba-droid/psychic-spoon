@@ -9,6 +9,7 @@ import './core/instalar.js'; // escuta o convite de instalação desde o início
 import { persistir } from './core/store.js';
 import { saudacao, montarMenuPC, menuAberto, fechar as fecharMenu } from './core/menu.js';
 import { pedirNome } from './core/abertura.js';
+import { mostrarBoasVindas } from './core/boasvindas.js';
 import { aoMudar as aoMudarInstalacao } from './core/instalar.js';
 
 export const OWNER = 'Bruno Moura';
@@ -68,7 +69,7 @@ async function render() {
   const page = h('div.page');
   // append nativo escreveria "null": aqui, filhos nulos são ignorados
   page.append = (...kids) => Element.prototype.append.apply(page, kids.flat(3).filter((k) => k != null && k !== false));
-  if (RAIZ.has(r.name)) page.append(saudacao());
+  if (RAIZ.has(r.name)) page.append(saudacao(r.name));
   const swap = () => { clear(view).append(page); window.scrollTo(0, 0); };
   let ret;
   try { ret = await mod.default(page, r.args); } catch (e) { console.error(e); page.append(h('div.card', h('h3', 'Algo deu errado nesta tela'), h('p.small.muted', String(e && e.message || e)), h('a.btn', { href: '#/hoje' }, 'Voltar para Hoje'))); }
@@ -127,9 +128,10 @@ async function boot() {
   menuPC();
   aoMudarInstalacao(menuPC);
   if (!location.hash) history.replaceState(null, '', '#/hoje');
-  // primeira abertura: o nome antes de tudo (depois vêm as boas-vindas e a tela Hoje)
+  // primeira abertura: o nome antes de tudo; depois as boas-vindas, com a tela Hoje já carregada por trás
   await pedirNome();
   await render();
+  mostrarBoasVindas({ naoMostrar: parse().name !== 'hoje' });
   registerSW();
   persistir();
   // dados que chegam do outro aparelho: redesenha, menos no meio de uma lição ou revisão

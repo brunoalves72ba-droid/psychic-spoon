@@ -32,6 +32,20 @@ try {
   await p.fill('#nome-campo', '  Bruno  ');
   await p.click('.abertura button[type=submit]');
   await p.waitForSelector('.abertura', { state: 'detached' });
+  // boas-vindas: depois do nome, antes de usar a Hoje (que já está carregada por trás)
+  await p.waitForSelector('.boasvindas .bv-card');
+  ok((await p.textContent('#bv-tit')).trim() === 'Bem-vindo, Bruno', 'boas-vindas com o nome');
+  const frases = await p.evaluate(async () => (await fetch('js/data/mensagens.json')).json());
+  ok(frases.length === 150 && frases.includes((await p.textContent('.bv-frase')).trim()), 'frase sorteada do banco de 150');
+  ok(await p.evaluate(() => document.activeElement && document.activeElement.classList.contains('bv-pular')), '"Pular" com foco de teclado');
+  ok(!!(await p.$('.proximo')) && await p.evaluate(() => document.querySelector('.proximo .luz-giro').getAnimations().length === 0), 'luz do Próximo passo espera as boas-vindas');
+  await p.keyboard.press('Escape');
+  await p.waitForSelector('.boasvindas', { state: 'detached' });
+  ok(true, 'Esc fecha as boas-vindas');
+  await p.waitForFunction(() => document.querySelector('.proximo .luz-giro').getAnimations().length > 0, null, { timeout: 2000 }).catch(() => {});
+  ok(await p.evaluate(() => document.querySelector('.proximo .luz-giro').getAnimations().length > 0), 'depois que fecha, a luz do Próximo passo gira');
+  // mascote com acessório por aba
+  ok(!!(await p.$('.saudacao svg.mascote .acc-cafe.on')), 'mascote com café na Hoje');
   await p.waitForSelector('button.saudacao');
   ok((await p.textContent('button.saudacao')).trim() === 'Oi, Bruno', 'saudação "Oi, Bruno" na tela Hoje');
   ok(await p.evaluate(() => document.querySelectorAll('.tabs > a').length === 5), 'barra de baixo com 5 abas');
@@ -98,11 +112,32 @@ try {
   // Sobre
   await p.goto(URL0 + '#/mais/sobre'); await p.waitForSelector('text=Procurar atualização');
   ok(true, 'tela Sobre o app abre');
+  // acessórios e óculos na lição
+  await p.goto(URL0 + '#/trilha'); await p.waitForSelector('.saudacao svg.mascote .acc-oculos.on');
+  ok(true, 'mascote com óculos na Trilha');
+  await p.goto(URL0 + '#/licao/0.1'); await p.waitForSelector('.ptop svg.mascote');
+  await p.waitForTimeout(600);
+  ok(await p.evaluate(() => getComputedStyle(document.querySelector('.ptop svg.mascote .acc-oculos')).transform === 'none'), 'na lição, os óculos descem até os olhos');
+  for (const [aba, acc] of [['revisar', 'cartao'], ['projeto', 'chave'], ['progresso', 'trofeu']]) { await p.goto(URL0 + '#/' + aba); await p.waitForSelector(`.saudacao svg.mascote .acc-${acc}.on`, { timeout: 3000 }).catch(() => {}); ok(!!(await p.$(`.saudacao svg.mascote .acc-${acc}.on`)), `mascote em ${aba} com ${acc}`); }
+  ok(await p.$$eval('svg.mascote', (xs) => xs.every((x) => x.getAttribute('aria-hidden') === 'true')), 'mascote decorativa (aria-hidden)');
   // saudação nas cinco abas
   for (const t of ['trilha', 'revisar', 'projeto', 'progresso']) { await p.goto(URL0 + '#/' + t); await p.waitForSelector('button.saudacao'); }
   ok(true, 'saudação nas cinco abas');
-  // o nome é pedido uma vez só
-  await p.reload(); await p.waitForSelector('button.saudacao'); ok(!(await p.$('.abertura')), 'nome não é pedido de novo');
+  // o nome é pedido uma vez só; boas-vindas não voltam se o app saiu há menos de 30 min
+  await p.evaluate(() => { localStorage.setItem('fia-saiu-em', String(Date.now() - 5 * 60 * 1000)); });
+  await p.goto(URL0 + '#/hoje'); await p.reload(); await p.waitForSelector('button.saudacao'); await p.waitForTimeout(400);
+  ok(!(await p.$('.abertura')), 'nome não é pedido de novo');
+  ok(!(await p.$('.boasvindas')), 'voltou em menos de 30 min: sem boas-vindas');
+  const vistas = [];
+  // simula "saiu há mais de 30 min" a cada carga (o próprio recarregar marca a saída como agora)
+  await p.addInitScript(() => { if (sessionStorage.getItem('forcar-frio')) localStorage.setItem('fia-saiu-em', String(Date.now() - 31 * 60 * 1000)); });
+  await p.evaluate(() => sessionStorage.setItem('forcar-frio', '1'));
+  for (let i = 0; i < 12; i++) {
+    await p.reload(); await p.waitForSelector('.bv-frase'); vistas.push((await p.textContent('.bv-frase')).trim());
+    await p.click('.bv-pular'); await p.waitForSelector('.boasvindas', { state: 'detached' });
+  }
+  ok(vistas.every((f, i) => !vistas.slice(Math.max(0, i - 10), i).includes(f)), 'abertura a frio: sem repetir as últimas 10 frases');
+  await p.evaluate(() => sessionStorage.removeItem('forcar-frio'));
   ok(!erros.length, 'sem erros no console: ' + erros.join(' | '));
   await ctx.close();
 

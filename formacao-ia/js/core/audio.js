@@ -138,6 +138,9 @@ export function playerAula(id, info, { titulo = '' } = {}) {
   btn.onclick = () => (audio.paused ? tocar() : audio.pause());
   const pintarBtn = () => { btn.replaceChildren(icon(audio.paused ? 'play' : 'pausa')); btn.setAttribute('aria-label', audio.paused ? (el.classList.contains('terminou') ? 'Ouvir de novo' : 'Ouvir esta parte') : 'Pausar'); el.classList.toggle('tocando', !audio.paused); if (!audio.paused) vigiar(); };
   audio.addEventListener('play', pintarBtn); audio.addEventListener('pause', pintarBtn); audio.addEventListener('ended', pintarBtn);
+  // a mascote não pisca durante a leitura com áudio
+  const marcar = () => document.body.classList.toggle('audio-tocando', !audio.paused);
+  audio.addEventListener('play', marcar); audio.addEventListener('pause', marcar); audio.addEventListener('ended', marcar);
   audio.addEventListener('timeupdate', pintarTempo);
   barra.addEventListener('input', async () => { if (atual && (await garantir())) { audio.currentTime = atual.ini + +barra.value; el.classList.remove('terminou'); pintarTempo(); } });
 
@@ -152,6 +155,6 @@ export function playerAula(id, info, { titulo = '' } = {}) {
     pintarTempo();
     if (tocarSozinho && lerAuto() && outra) await tocar();
   }
-  const parar = () => { cancelAnimationFrame(quadro); audio.pause(); if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  const parar = () => { cancelAnimationFrame(quadro); audio.pause(); document.body.classList.remove('audio-tocando'); if (blobUrl) URL.revokeObjectURL(blobUrl); };
   return { el, parar, audio, parte, partes: () => partes };
 }

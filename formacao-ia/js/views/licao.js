@@ -13,6 +13,7 @@ import { ehPC } from '../core/plataforma.js';
 import { figura } from '../core/fotos.js';
 import { infoAudio, playerAula } from '../core/audio.js';
 import { videoDaAula } from '../data/videos.js';
+import { mascote } from '../core/mascote.js';
 
 export default async function (el, [id]) {
   const L = licao(id);
@@ -43,7 +44,7 @@ export default async function (el, [id]) {
     h('button.btn.big.pens', { type: 'button', 'aria-label': 'Anotar um pensamento e voltar', title: 'Anotar um pensamento (N)', onclick: capturar }, icon('nota')),
     btn));
   const slotAudio = h('div.slot-audio');
-  el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), segs, relogio), slotAudio, corpo, barra);
+  el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), mascote('oculos-olhos', 30), segs, relogio), slotAudio, corpo, barra);
   // áudio com voz neural: só aparece se esta aula já tiver o MP3 gerado
   // o áudio toca por partes: cada passo de conteúdo tem a sua (exercício, quiz e fim não têm áudio)
   const PARTE = { 0: 'passo-0', 1: 'passo-1', 2: 'passo-2', 5: 'passo-5' };

@@ -7,6 +7,7 @@ import { instalado } from './instalar.js';
 import { nomeUsuario } from './estado.js';
 import { ehPC } from './plataforma.js';
 import { checkinHoje, rosto, ROTULO } from './checkin.js';
+import { mascote, ACESSORIO } from './mascote.js';
 
 /** Os seis itens, na ordem combinada. "Instalar" some quando o app já está instalado. */
 export const itensMenu = () => [
@@ -20,12 +21,13 @@ export const itensMenu = () => [
 
 const textoOi = () => { const n = nomeUsuario(); return n ? `Oi, ${n}` : 'Oi'; };
 
-/** Saudação do topo das cinco abas. No celular é o botão que abre o menu; no PC, só o nome. */
-export function saudacao() {
+/** Saudação do topo das cinco abas, com a mascote. No celular é o botão que abre o menu; no PC, só o nome. */
+export function saudacao(aba) {
   let s;
-  if (ehPC()) s = h('div.saudacao', h('span.oi', textoOi()));
+  const m = mascote(ACESSORIO[aba] || 'cafe');
+  if (ehPC()) s = h('div.saudacao', m, h('span.oi', textoOi()));
   else {
-    s = h('button.saudacao', { type: 'button', id: 'saudacao', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'menu-lateral' }, h('span.oi', textoOi()));
+    s = h('button.saudacao', { type: 'button', id: 'saudacao', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'menu-lateral' }, m, h('span.oi', textoOi()));
     s.addEventListener('click', () => abrirMenu(s));
   }
   // canto direito: a carinha do check-in de hoje (some na virada do dia)

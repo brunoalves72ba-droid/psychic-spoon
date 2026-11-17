@@ -15,6 +15,7 @@ import { instalado } from '../core/instalar.js';
 import { licao as licaoDe } from '../data/curso.js';
 import { luz } from '../core/luz.js';
 import { cartaoCheckin } from '../core/cartao-checkin.js';
+import { boasVindasFechadas } from '../core/boasvindas.js';
 
 let avisouSemana = false;
 
@@ -151,5 +152,5 @@ export default async function (el, args) {
   if (dow(d) >= 5 && !S.semanais.some((x) => x.semana === semanaAtual(S.dias, d).start)) extras.append(h('a.item', { href: '#/progresso/semana' }, icon('lampada'), h('span.t', h('b', 'Revisão da semana'), h('span', '3 vitórias, 1 dificuldade e o plano em 3 linhas.')), h('span.chev', '›')));
   if (extras.children.length) dir.append(extras);
   el.append(h('div.grade-pc', esq, dir));
-  luz(destaque, { aba: 'hoje' });
+  luz(destaque, { aba: 'hoje', adiar: boasVindasFechadas() }); // uma luz por vez: a do Próximo passo espera as boas-vindas
 }
