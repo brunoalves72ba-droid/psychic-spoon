@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 155 (versão 214962c8b8f8) |
+| Arquivos no pré-cache do app | 157 (versão 115e8dbfc91d) |
 
 ## Telas (rotas)
 
@@ -77,9 +77,10 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/core/conquistas.js` | 46 | Conquistas por habilidade: marcam coisas que você passou a saber fazer, não tempo de tela. | `CONQUISTAS`, `verificarConquistas` |
 | `js/core/cortes.js` | 55 | Pontos de corte entre as partes do áudio de uma aula (Começo, Ideia, Exemplo, Erro comum). Com vozes que não devolvem o tempo exato de cada parte (Chirp 3 HD, ElevenLabs), o gerador só estima onde cada parte começa. Aqui o app procura, perto de cada estimativa, a pausa de silêncio mais longa: | `energia`, `silencios`, `ajustarCortes` |
 | `js/core/dia.js` | 18 | Datas como chaves "AAAA-MM-DD" (dia local). Semana de segunda a domingo. Funções puras. | `dayKey`, `addDays`, `diffDays`, `dow`, `weekStart`, `weekDays`, `DIAS`, `hoje` |
-| `js/core/estado.js` | 265 | Estado do app em memória (carregado uma vez, gravado a cada mudança) e as ações de estudo. | `XP`, `XP_NIVEL`, `nivel`, `L`, `salvarLocal`, `uid`, `aoSalvar`, `S`, `revs`, `eventosSemana`, `salvar`, `gravado`, `nomeUsuario`, `definirNome`, `carregar`, `fecharSemanas`, `apagar`, `registrar`, `tocarDia`, `ganhar`, `marco`, `prog`, `irPasso`, `registrarQuiz`, `registrarExercicio`, `concluirLicao`, `marcarMao`, `pendencias`, `responderCartao`, `filaDeHoje`, `vencidosHoje`, `adicionarMeus`, `removerMeu`, `apagarDiario`, `apagarPensamento`, `anotarPensamento`, `escreverDiario`, `marcarMissao`, `exportar`, `importar`, `aplicar`, `lerTudo`, `apagarTudo` |
+| `js/core/estado.js` | 266 | Estado do app em memória (carregado uma vez, gravado a cada mudança) e as ações de estudo. | `XP`, `XP_NIVEL`, `nivel`, `L`, `salvarLocal`, `uid`, `aoSalvar`, `S`, `revs`, `eventosSemana`, `salvar`, `gravado`, `nomeUsuario`, `definirNome`, `carregar`, `fecharSemanas`, `apagar`, `registrar`, `tocarDia`, `ganhar`, `marco`, `prog`, `irPasso`, `registrarQuiz`, `registrarExercicio`, `concluirLicao`, `marcarMao`, `pendencias`, `responderCartao`, `filaDeHoje`, `vencidosHoje`, `adicionarMeus`, `removerMeu`, `apagarDiario`, `apagarPensamento`, `anotarPensamento`, `escreverDiario`, `marcarMissao`, `exportar`, `importar`, `aplicar`, `lerTudo`, `apagarTudo` |
 | `js/core/exercicios.js` | 286 | Exercícios das micro-lições, todos com resposta imediata. Cada um chama feito({ dePrimeira, tent, ajuda }) ao terminar. | `embaralhar`, `pergunta`, `TIPOS_EX`, `montarExercicio`, `gabarito` |
 | `js/core/fotos.js` | 27 | Fotos reais (Wikimedia Commons, licenças livres) com crédito visível em cada uma. | `foto`, `fotoDaLicao`, `fotoDoModulo`, `credito`, `figura`, `faixa` |
+| `js/core/grifo.js` | 87 | Texto grifado durante o áudio: o parágrafo que a voz está lendo fica em destaque (barra cinza-clara de 2 px à esquerda, texto claro) e os outros ficam em cinza. Sem violeta e sem rolar a tela sozinho: se o trecho sair da tela, aparece o botão "Voltar ao trecho". Os tempos vêm de audio/tempos.json (gerado | `carregarTempos`, `grifoLigado`, `trechoEm`, `grifador` |
 | `js/core/instalar.js` | 63 | Instalação como app próprio (ícone separado do Sexteto) e tudo guardado no aparelho para usar sem internet. | `aoMudar`, `instalado`, `podeInstalar`, `ehIOS`, `instalar`, `situacaoOffline`, `guardarTudo` |
 | `js/core/json-pt.js` | 158 | Leitor de JSON com mensagens de erro em português, pensadas para quem está começando. analisar(texto) → { ok: true, valor } ou { ok: false, pos, linha, col, msg, dica }. | `analisar`, `conferirFormato` |
 | `js/core/luz.js` | 66 | Luz em volta do card de destaque (um por tela): uma volta de 2,4 s ao entrar na aba pela primeira vez na sessão; toque no card = nova volta + brilho difuso atrás; toque no botão principal = flash do contorno. Só transform e opacity animam. Com "reduzir movimento": sem giro, o toque só acende um pouco a borda. | `luz`, `_reiniciarLuz` |
@@ -96,7 +97,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/core/srs.js` | 56 | Revisão espaçada em escada fixa: o conceito volta em 1, 3, 7 e 21 dias (depois 60 e 120). A escada fixa é previsível e deixa medir a retenção de 7 e de 21 dias diretamente. Funções puras. | `ESCADA`, `TETO`, `NOTAS`, `novoCartao`, `responder`, `vencidos`, `fila`, `previsao`, `retencao`, `resumo` |
 | `js/core/store.js` | 71 | Armazenamento local (IndexedDB) com esquema versionado. Tudo fica só no aparelho: sem servidor, sem login, sem analytics. Sem IndexedDB (ou nos testes), usa memória. | `DB_NAME`, `SCHEMA`, `kv`, `log`, `persistir`, `_resetMem` |
 | `js/core/texto.js` | 139 | Algoritmos dos laboratórios: tokens (aproximação didática), softmax com temperatura, cosseno, chunking e busca por palavras (TF-IDF). Tudo puro e testado. | `tokensAprox`, `contarPalavras`, `softmax`, `amostrar`, `cosseno`, `chunk`, `semAcento`, `termos`, `criarIndice`, `buscar` |
-| `js/core/ui.js` | 274 | Utilitários de interface: criação de DOM, texto rico das lições, avisos, folhas e controles. | `h`, `s`, `clear`, `put`, `reducedMotion`, `clamp`, `fmt`, `fmtDur`, `fmtDia`, `plural`, `icon`, `top`, `rich`, `blocks`, `codeBlock`, `copyText`, `toast`, `sheet`, `confirmSheet`, `seg`, `slider`, `toggle`, `tick`, `progressBar`, `vib`, `wake`, `shareOrDownload`, `download`, `textFile` |
+| `js/core/ui.js` | 280 | Utilitários de interface: criação de DOM, texto rico das lições, avisos, folhas e controles. | `h`, `s`, `clear`, `put`, `reducedMotion`, `clamp`, `fmt`, `fmtDur`, `fmtDia`, `plural`, `icon`, `top`, `rich`, `blocks`, `codeBlock`, `copyText`, `toast`, `sheet`, `confirmSheet`, `seg`, `slider`, `toggle`, `tick`, `progressBar`, `vib`, `wake`, `shareOrDownload`, `download`, `textFile` |
 
 ### Telas (`js/views`)
 
@@ -106,8 +107,8 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/views/hoje.js` | 157 | Hoje: um botão grande para começar, uma pergunta-relâmpago e a semana. O resto fica quieto. | `default` |
 | `js/views/labs-x.js` | 15 | Um laboratório aberto em modo livre (sem missão). | `default` |
 | `js/views/labs.js` | 11 | Laboratórios: simuladores para mexer e ver acontecer. | `default` |
-| `js/views/licao.js` | 254 | Player da micro-lição: sempre os mesmos 7 passos, um conceito, uma tela por vez. Gancho → ideia com analogia → exemplo resolvido → exercício → quiz → erro comum → fim com o próximo passo pronto. Dá para voltar a qualquer passo já visto (tocando nos passos do topo, no botão Voltar ou na seta ←) | `default` |
-| `js/views/mais-ajustes.js` | 59 | Ajustes: nome, celular e PC, áudio, meta de minutos, plano e dados. "Sobre o app" fica no menu lateral. | `default` |
+| `js/views/licao.js` | 263 | Player da micro-lição: sempre os mesmos 7 passos, um conceito, uma tela por vez. Gancho → ideia com analogia → exemplo resolvido → exercício → quiz → erro comum → fim com o próximo passo pronto. Dá para voltar a qualquer passo já visto (tocando nos passos do topo, no botão Voltar ou na seta ←) | `default` |
+| `js/views/mais-ajustes.js` | 62 | Ajustes: nome, celular e PC, áudio, meta de minutos, plano e dados. "Sobre o app" fica no menu lateral. | `default` |
 | `js/views/mais-backup.js` | 25 | Backup: exportar tudo num arquivo JSON e restaurar em outro aparelho. | `default` |
 | `js/views/mais-ficha.js` | 34 | Ficha viva: modelos, cotas, preços e regras que mudam rápido, com a data da última conferência. | `default` |
 | `js/views/mais-instalar.js` | 52 | Instalar como app próprio e guardar tudo no aparelho: lições, fotos, laboratórios, Python e kits. | `default` |
@@ -195,7 +196,8 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tools/audio/falado.mjs` | 76 | Formação IA — gerador de áudio (roda só no computador, fora do app). Converte o texto das aulas para a forma FALADA em português, sem mexer no texto exibido na tela: abreviações, símbolos, números, moeda, datas, código em linha e termos em inglês (com <sub alias>). | `escXml`, `codigoFalado`, `falado` |
 | `tools/audio/gerar-audio.mjs` | 161 | !/usr/bin/env node Formação IA — gera o áudio de cada aula com voz neural (rode no SEU computador, nunca no app). node tools/audio/gerar-audio.mjs --simular mostra quantos caracteres vai gastar (não chama a API) node tools/audio/gerar-audio.mjs gera o que falta (pula aulas que já têm áudio) | — |
 | `tools/audio/mp3.mjs` | 26 | Utilidades de MP3 sem dependências: tirar etiquetas ID3 (para juntar pedaços) e medir a duração pelos quadros. | `semId3`, `duracaoMp3` |
-| `tools/audio/ssml.mjs` | 80 | Monta a fala de cada aula em SSML: pausas de ~600 ms entre parágrafos, ~1 s antes de títulos e entre tópicos, títulos um pouco mais devagar, listas item por item, e marcas (<mark>) no começo de cada passo para o app mostrar os capítulos. Também converte para os formatos da Chirp 3 HD e do ElevenLabs. | `CAPITULOS`, `pecasDaAula`, `converter`, `textoPuro`, `dividir` |
+| `tools/audio/ssml.mjs` | 104 | Monta a fala de cada aula em SSML: pausas de ~600 ms entre parágrafos, ~1 s antes de títulos e entre tópicos, títulos um pouco mais devagar, listas item por item, e marcas (<mark>) no começo de cada passo para o app mostrar os capítulos. Também converte para os formatos da Chirp 3 HD e do ElevenLabs. | `CAPITULOS`, `pecasDaAula`, `unidadesDaAula`, `converter`, `textoPuro`, `dividir` |
+| `tools/audio/tempos.mjs` | 100 | Tempos de cada parágrafo do áudio das aulas (para grifar o texto enquanto a voz lê). Roda uma vez no computador, sobre os MP3 que já existem: não gera áudio nem gasta créditos. 1. acha o começo de cada parte (as mesmas regras do app: a pausa mais longa perto da estimativa); | `temposDaParte`, `temposDaAula` |
 | `tools/exportar-quiz.mjs` | 20 | Gera QUIZ-PARA-REVISAR.md com todas as perguntas do quiz de cada aula (resposta certa, alternativas e explicação), para revisar fora do app. As perguntas ficam nos arquivos das aulas (js/data/m*.js): a PRIMEIRA opção é a certa (a tela embaralha). Uso: node tools/exportar-quiz.mjs | — |
 | `tools/gen-precache.mjs` | 27 | Gera sw-assets.js: lista de arquivos para o pré-cache e versão (hash do conteúdo). Uso: node tools/gen-precache.mjs (escreve) node tools/gen-precache.mjs --check (falha se estiver desatualizado) | — |
 | `tools/gerar-icones.mjs` | 26 | Gera os ícones PNG a partir de assets/icons/icon.svg (o desenho-fonte): icon-192/512 (cantos arredondados), maskable-192/512 (fundo inteiro, desenho a 80% para o recorte redondo do Android), apple-touch-icon (180, desenho a 86%) e favicon-32. Uso: node tools/gerar-icones.mjs (precisa do Playwright/Chromium). Depois: npm run precache. | — |
@@ -204,17 +206,18 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tests/abertura.test.mjs` | 33 | Boas-vindas: o banco tem as 150 frases sem numeração, e o sorteio não repete as últimas 10. | — |
 | `tests/audio.test.mjs` | 157 | Gerador de áudio (tools/audio): forma falada, SSML, divisão no limite da API, MP3 e o gerador inteiro contra uma API do Google de mentira (nenhuma chave real, nenhum caractere gasto). | — |
 | `tests/conteudo.test.mjs` | 147 | Valida o conteúdo: as 98 micro-lições do documento, cada uma com os 7 passos completos. | — |
-| `tests/e2e/audio.mjs` | 91 | Player do áudio das aulas (voz neural), vídeo opcional e recompensas. Um MP3 de teste (feito com ffmpeg) faz o papel do áudio gerado; o índice e o arquivo de vídeos são trocados só neste teste. Uso: node tests/e2e/audio.mjs | — |
+| `tests/e2e/audio.mjs` | 118 | Player do áudio das aulas (voz neural), vídeo opcional e recompensas. Um MP3 de teste (feito com ffmpeg) faz o papel do áudio gerado; o índice e o arquivo de vídeos são trocados só neste teste. Uso: node tests/e2e/audio.mjs | — |
 | `tests/e2e/capturas.mjs` | 53 | Capturas de tela das telas principais, no celular (390×844) e no PC (1440×900), com um pouco de progresso já feito (para as telas não ficarem vazias). Uso: node tests/e2e/capturas.mjs <nome-da-pasta> Salva em docs/capturas/<nome>/ — usado para comparar o antes e o depois de uma mudança visual. | — |
 | `tests/e2e/contraste.mjs` | 104 | Contraste medido nos pixels reais: esconde o texto, fotografa a tela, mede o fundo atrás de cada trecho de texto e compara com a cor do texto (WCAG: 4,5:1 normal; 3:1 para texto grande). Repete em várias posições de rolagem, porque o fundo é fixo e um card pode passar por cima da parte violeta da tela. Uso: node tests/e2e/contraste.mjs [--pc] | — |
 | `tests/e2e/navegacao.mjs` | 237 | Teste ponta a ponta da navegação: pergunta do nome na primeira abertura, saudação, menu lateral (abrir, foco, Esc, véu, arrastar, "voltar" do Android, itens) e a seção do menu no PC. Uso: node tests/e2e/navegacao.mjs | — |
-| `tests/e2e/offline.mjs` | 73 | Teste offline e de convivência: serve o repositório inteiro (Sexteto na raiz, este app em /formacao-ia/), instala primeiro o service worker do Sexteto, depois abre este app, corta a rede e confere que tudo abre, inclusive o Python embutido e os kits. Uso: node tests/e2e/offline.mjs | — |
+| `tests/e2e/offline.mjs` | 74 | Teste offline e de convivência: serve o repositório inteiro (Sexteto na raiz, este app em /formacao-ia/), instala primeiro o service worker do Sexteto, depois abre este app, corta a rede e confere que tudo abre, inclusive o Python embutido e os kits. Uso: node tests/e2e/offline.mjs | — |
 | `tests/e2e/run.mjs` | 156 | Teste ponta a ponta: abre o app a 390×844 no Chromium, conclui lições com cada tipo de exercício, percorre todas as telas e falha em erro de console, requisição externa, rolagem horizontal ou alvo de toque < 44 px. Uso: node tests/e2e/run.mjs [--dark] [--w=360] | — |
 | `tests/e2e/sync.mjs` | 138 | Sincronização de ponta a ponta com dois aparelhos simulados (celular e PC) e uma API de Gist falsa. Confere: ligar com o mesmo token, levar progresso de um para o outro, estudar nos dois sem perder nada, exclusões chegarem ao outro lado, dados cifrados na nuvem e o layout de PC/celular. | — |
 | `tests/labs.test.mjs` | 68 | Testes das regras dos laboratórios (partes puras, sem tela). | — |
 | `tests/motores.test.mjs` | 254 | Testes dos motores puros: datas, revisão espaçada, sequência semanal, andaime, plano, JSON e texto. | — |
 | `tests/python.test.mjs` | 45 | Roda a solução de cada exercício de Python no mesmo MicroPython do app e confere com os testes da lição. | — |
 | `tests/sync.test.mjs` | 161 | Sincronização: a mesclagem não perde progresso, e a cifra só abre com o mesmo token. | — |
+| `tests/tempos.test.mjs` | 64 | Texto grifado: as unidades faladas são exatamente o texto narrado; os tempos do M1 existem, crescem e apontam para trechos que existem na tela; o cálculo puxa o começo para as pausas. | — |
 
 ### Recursos estáticos
 
@@ -225,7 +228,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `assets/fotos` | 22 arquivos | 1.6 MB |
 | `assets/micropython` | `micropython.mjs`, `micropython.wasm` | 547 KB |
 | `kits` | `env.example.txt`, `gitignore.txt`, `m3/mini_rag.py`, `m3/requirements.txt`, `m5/fabrica_flashcards.py`, `m5/requirements.txt`, `m6/agente.py`, `m6/app.py`, `m6/requirements.txt`, `m6/secrets.toml.txt` | 16 KB |
-| `audio` | 99 arquivos | 54.2 MB |
+| `audio` | 101 arquivos | 54.2 MB |
 
 ## Trilha: módulos, aulas e lições
 
@@ -701,3 +704,4 @@ Fontes: **Manrope** (`assets/fonts/manrope-latin-wght-normal.woff2`), **Manrope*
 | `npm run e2e:contraste` | `node tests/e2e/contraste.mjs && node tests/e2e/contraste.mjs --pc` |
 | `npm run capturas` | `node tests/e2e/capturas.mjs` |
 | `npm run e2e:navegacao` | `node tests/e2e/navegacao.mjs` |
+| `npm run audio:tempos` | `node tools/audio/tempos.mjs` |

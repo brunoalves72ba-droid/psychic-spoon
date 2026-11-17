@@ -33,7 +33,8 @@ await page.goto(`http://localhost:${PORT}/formacao-ia/index.html#/hoje`);
 await page.waitForFunction(() => document.querySelector('meta[name="app-id"][content="formacao-ia"]') && document.querySelector('#view h1'), null, { timeout: 30000 });
 await page.evaluate(async () => { const reg = await navigator.serviceWorker.getRegistration('./'); if (!reg) throw new Error('sem service worker'); await navigator.serviceWorker.ready; });
 await page.waitForFunction(async () => { const r = await navigator.serviceWorker.getRegistration('./'); return r && r.active && r.active.state === 'activated'; }, null, { timeout: 60000 });
-await page.reload(); await page.waitForTimeout(1200);
+// o próprio app pode recarregar ao trocar de service worker: um recarregamento abortado não é falha
+await page.reload().catch(() => {}); await page.waitForLoadState('load').catch(() => {}); await page.waitForTimeout(1200);
 const controlado = await page.evaluate(() => navigator.serviceWorker.controller && navigator.serviceWorker.controller.scriptURL);
 if (!controlado || !controlado.includes('/formacao-ia/sw.js')) falha(`a página não está sob o service worker certo: ${controlado}`); else console.log('ok  service worker próprio controla /formacao-ia/');
 const nCache = await page.evaluate(async () => { const ks = await caches.keys(); const k = ks.find((x) => x.startsWith('formacao-ia-')); return k ? (await (await caches.open(k)).keys()).length : 0; });

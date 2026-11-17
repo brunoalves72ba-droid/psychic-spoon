@@ -115,17 +115,23 @@ const ROTULOS = { dica: 'Dica', aviso: 'Atenção', analogia: 'Analogia', erro: 
 /** Blocos: string = parágrafo; {c,l} código; {ul}/{ol} listas; {nota,tipo}; {tab:{h,r}}; {h} subtítulo. */
 export function blocks(arr, opts = {}) {
   const box = h('div.prose');
-  for (const b of [].concat(arr || [])) {
-    if (b == null || b === false) continue;
-    if (typeof b === 'string') box.append(h('p', rich(b)));
-    else if (b.c != null) box.append(codeBlock(b.c, b.l, { run: b.run && opts.run ? (c) => opts.run(c, b.ent || []) : null, wrap: b.wrap, titulo: b.t }));
-    else if (b.ul) box.append(h('ul', b.ul.map((x) => h('li', rich(x)))));
-    else if (b.ol) box.append(h('ol', b.ol.map((x) => h('li', rich(x)))));
-    else if (b.passos) box.append(h('ol.steps', b.passos.map((x, i) => h('li', h('span', String(i + 1)), h('div', rich(x))))));
-    else if (b.nota) box.append(h('div.callout.' + (b.tipo || 'dica'), h('span.rot', b.rot || ROTULOS[b.tipo || 'dica']), rich(b.nota)));
-    else if (b.h) box.append(h('h3', b.h));
-    else if (b.tab) box.append(h('div.tblwrap', h('table.tbl', h('thead', h('tr', b.tab.h.map((x) => h('th', x)))), h('tbody', b.tab.r.map((r) => h('tr', r.map((x) => h('td', rich(x)))))))));
-  }
+  // data-trecho: a chave de cada bloco (b3) e de cada item (b3.1), a mesma do áudio (texto grifado)
+  [].concat(arr || []).forEach((b, n) => {
+    if (b == null || b === false) return;
+    const k = 'b' + n, it = (i) => ({ 'data-trecho': `${k}.${i}` });
+    let e;
+    if (typeof b === 'string') e = h('p', rich(b));
+    else if (b.c != null) e = codeBlock(b.c, b.l, { run: b.run && opts.run ? (c) => opts.run(c, b.ent || []) : null, wrap: b.wrap, titulo: b.t });
+    else if (b.ul) e = h('ul', b.ul.map((x, i) => h('li', it(i), rich(x))));
+    else if (b.ol) e = h('ol', b.ol.map((x, i) => h('li', it(i), rich(x))));
+    else if (b.passos) e = h('ol.steps', b.passos.map((x, i) => h('li', it(i), h('span', String(i + 1)), h('div', rich(x)))));
+    else if (b.nota) e = h('div.callout.' + (b.tipo || 'dica'), h('span.rot', b.rot || ROTULOS[b.tipo || 'dica']), rich(b.nota));
+    else if (b.h) e = h('h3', b.h);
+    else if (b.tab) e = h('div.tblwrap', h('table.tbl', h('thead', h('tr', b.tab.h.map((x) => h('th', x)))), h('tbody', b.tab.r.map((r, i) => h('tr', it(i), r.map((x) => h('td', rich(x))))))));
+    if (!e) return;
+    if (!(b.ul || b.ol || b.passos || b.tab)) e.setAttribute('data-trecho', k);
+    box.append(e);
+  });
   return box;
 }
 

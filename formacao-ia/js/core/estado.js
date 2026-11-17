@@ -37,9 +37,10 @@ const PADRAO = () => ({
   'v2.nome': { nome: '' },          // como a pessoa quer ser chamada (sincroniza; vale o mais recente)
   'v2.checkin.dia': {},             // { data: 'AAAA-MM-DD', humor: 'feliz'|'neutro'|'triste', tempo: 5|15|30, em }
   'v2.checkin.historico': {},       // { 'AAAA-MM-DD': { h: humor, em } }, últimos 120 dias (não aparece na tela)
+  'v2.leitura.grifado': { ligado: true }, // texto grifado durante o áudio (sincroniza; vale o mais recente)
 });
 // Chaves editadas por inteiro: na sincronização, vale a versão mais recente (_t).
-const INTEIRAS = new Set(['perfil', 'ficha', 'sessao', 'andaime', 'mistura', 'v2.nome', 'v2.checkin.dia']);
+const INTEIRAS = new Set(['perfil', 'ficha', 'sessao', 'andaime', 'mistura', 'v2.nome', 'v2.checkin.dia', 'v2.leitura.grifado']);
 // Chaves que não são gravadas (derivadas).
 const DERIVADAS = new Set(['xp']);
 

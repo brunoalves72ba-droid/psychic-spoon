@@ -22,6 +22,7 @@
     "icones": "node tools/gerar-icones.mjs",
     "e2e:contraste": "node tests/e2e/contraste.mjs && node tests/e2e/contraste.mjs --pc",
     "capturas": "node tests/e2e/capturas.mjs",
-    "e2e:navegacao": "node tests/e2e/navegacao.mjs"
+    "e2e:navegacao": "node tests/e2e/navegacao.mjs",
+    "audio:tempos": "node tools/audio/tempos.mjs"
   }
 }

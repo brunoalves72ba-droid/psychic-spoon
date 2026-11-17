@@ -2,6 +2,7 @@
 // Ajustes: nome, celular e PC, áudio, meta de minutos, plano e dados. "Sobre o app" fica no menu lateral.
 import { h, top, seg, toast, confirmSheet } from '../core/ui.js';
 import { nomeUsuario, definirNome } from '../core/estado.js';
+import { grifoLigado } from '../core/grifo.js';
 import { baixados, baixarTodos } from '../core/audio.js';
 import { S, salvar, apagarTudo } from '../core/estado.js';
 import { PLANOS } from '../core/plano.js';
@@ -39,7 +40,9 @@ export default async function (el) {
 }
 /** Áudio das aulas (voz neural gerada uma vez): quantas têm áudio, quantas já estão no aparelho e baixar tudo. */
 function secaoVoz() {
-  const sec = h('section.card.flat.col', h('h3', 'Áudio das aulas'), h('p.small.dim', 'As aulas com áudio têm um player no topo, com voz neural natural. O áudio de cada aula é baixado na primeira vez que você toca e fica no aparelho.'));
+  const sec = h('section.card.flat.col', h('h3', 'Áudio das aulas'), h('p.small.dim', 'As aulas com áudio têm um player no topo, com voz neural natural. O áudio de cada aula é baixado na primeira vez que você toca e fica no aparelho.'),
+    h('label.field', h('span', 'Texto grifado durante o áudio'), seg([{ v: true, label: 'Ligado' }, { v: false, label: 'Desligado' }], grifoLigado(), (v) => { S['v2.leitura.grifado'] = { ligado: v }; salvar('v2.leitura.grifado'); }, { label: 'Texto grifado durante o áudio' })),
+    h('p.small.muted', 'Enquanto a voz lê, o parágrafo da vez fica em destaque e os outros em cinza. A tela não rola sozinha: se o trecho sair da tela, aparece o botão “Voltar ao trecho”.'));
   const info = h('p.small');
   const pintar = async () => {
     const b = await baixados();

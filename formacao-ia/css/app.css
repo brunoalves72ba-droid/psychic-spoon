@@ -677,3 +677,14 @@ svg.mascote .acc-oculos{fill:rgba(196,181,253,.10)}
 .bv-frase{margin:6px 0 4px;font-size:1rem;line-height:1.55;color:var(--texto-primario)}
 .bv-mascote{display:grid;place-items:center;width:72px;height:72px}
 .bv-pular{min-height:44px;color:var(--texto-secundario)}
+
+/* ===== Fase 6: texto grifado durante o áudio ===== */
+.passo{position:relative}
+.passo.grifando [data-trecho]{color:var(--texto-secundario)}
+.passo.grifando [data-trecho].lendo,.passo.grifando .lendo [data-trecho]{color:var(--texto-primario)}
+.passo.grifando .lendo b,.passo.grifando .lendo strong{color:inherit}
+.grifo-barra{position:absolute;left:-10px;top:0;width:2px;height:100px;border-radius:1px;background:#D4D3DB;transform-origin:0 0;pointer-events:none;transition:transform 220ms var(--curva-ios)}
+.grifo-voltar{position:fixed;left:50%;bottom:calc(var(--sab) + 96px);z-index:30;transform:translateX(-50%);min-height:44px;padding:0 18px;border-radius:22px;background:rgba(22,22,26,.92);border:.5px solid var(--vidro-borda);color:var(--texto-primario);box-shadow:0 8px 22px rgba(0,0,0,.4)}
+.grifo-voltar.hide{display:none}
+.grifo-conferir{position:fixed;top:calc(var(--sat) + 6px);right:8px;z-index:95;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.85);color:#fff;font:500 .75rem/1.3 var(--mono);pointer-events:none}
+@media (prefers-reduced-motion:reduce){.grifo-barra{transition:none}}
