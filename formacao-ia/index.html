@@ -12,26 +12,22 @@
 <meta name="app-id" content="formacao-ia">
 <meta name="description" content="Trilha de IA generativa em micro-lições de 5 a 10 minutos, com revisão espaçada e um projeto de portfólio.">
 <meta name="author" content="Bruno Moura">
-<meta name="theme-color" content="#f6f2e9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#12141b" media="(prefers-color-scheme: dark)">
-<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0B0B0D">
+<meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Formação IA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icons/icon.svg?v=3" type="image/svg+xml">
 <link rel="icon" href="assets/icons/favicon-32.png?v=3" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=3">
-<link rel="preload" href="assets/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<script>
-// tema escolhido nos Ajustes, aplicado antes da primeira pintura
-try { var t = localStorage.getItem('fia-tema'); if (t === 'claro' || t === 'escuro') document.documentElement.dataset.theme = t; } catch (e) {}
-</script>
+<link rel="preload" href="assets/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/manrope-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+<div class="fundo" aria-hidden="true"><i></i><i></i><i></i></div>
 <a class="skip" href="#view">Pular para o conteúdo</a>
 <main id="view" tabindex="-1" aria-live="off"></main>
 <nav class="tabs" aria-label="Seções do app">
@@ -40,7 +36,6 @@ try { var t = localStorage.getItem('fia-tema'); if (t === 'claro' || t === 'escu
   <a href="#/revisar" data-tab="revisar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="13" height="10" rx="2"/><path d="M7.5 20h11a2 2 0 0 0 2-2V10" stroke-linecap="round"/></svg><span>Revisar</span></a>
   <a href="#/projeto" data-tab="projeto"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4.5M9.5 13v1.5M14.5 13v1.5M2.5 12.5v3M21.5 12.5v3" stroke-linecap="round"/><circle cx="12" cy="3.6" r="1.1"/></svg><span>Projeto</span></a>
   <a href="#/progresso" data-tab="progresso"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16V11M12 16V6M17.5 16v-3.5" stroke-linecap="round"/></svg><span>Progresso</span></a>
-  <a href="#/mais/ajustes" data-tab="ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" stroke-linecap="round"/><circle cx="12" cy="12" r="6.2"/></svg><span>Ajustes</span></a>
 </nav>
 <div id="toasts" role="status" aria-live="polite"></div>
 <noscript><p style="padding:24px">O app precisa de JavaScript para funcionar.</p></noscript>

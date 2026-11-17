@@ -16,6 +16,7 @@ export default async function (el) {
       corpo.append(h('section.card.dest.col',
         h('div.eyebrow', 'Sincronização ligada'),
         h('h2', st.rodando ? 'Sincronizando…' : st.erro ? 'Não deu para sincronizar' : `Sincronizado ${quando(st.ult)}`),
+        st.versaoAntiga ? h('p.small.muted', 'Atualize o app no outro aparelho: ele está numa versão antiga. Nada se perde aqui, mas o nome, o check-in e o ajuste do texto grifado só chegam lá depois da atualização.') : null,
         st.erro ? h('div.banner.quase', st.erro) : h('p.small.dim', 'Cada lição, cartão, missão e anotação vai sozinho para o outro aparelho: ao abrir o app, alguns segundos depois de cada mudança e ao sair.'),
         st.outroToken ? h('div.col', h('p.small', 'Os dados na nuvem foram gravados com outro token. Se você trocou de token, recomece a nuvem a partir deste aparelho: o progresso daqui é enviado, e o outro aparelho precisa usar este token novo.'),
           h('button.btn.block', { type: 'button', onclick: async () => { if (await confirmSheet('Recomeçar a nuvem com os dados deste aparelho?', 'Recomeçar')) { await nuvem.recomecarNuvem(); pintar(); } } }, 'Recomeçar a nuvem daqui')) : null,

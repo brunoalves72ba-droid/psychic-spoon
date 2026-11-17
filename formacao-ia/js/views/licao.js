@@ -13,8 +13,10 @@ import { ehPC } from '../core/plataforma.js';
 import { figura } from '../core/fotos.js';
 import { infoAudio, playerAula } from '../core/audio.js';
 import { videoDaAula } from '../data/videos.js';
+import { mascote } from '../core/mascote.js';
+import { grifador } from '../core/grifo.js';
 
-export default async function (el, [id]) {
+export default async function (el, [id, modo]) {
   const L = licao(id);
   if (!L) { el.append(top('Lição não encontrada', '#/trilha'), h('p', 'Esta lição não existe (ou ainda não foi escrita).'), h('a.btn.primary', { href: '#/trilha' }, 'Ver a trilha')); return; }
   const m = modulo(moduloDe(id));
@@ -43,12 +45,18 @@ export default async function (el, [id]) {
     h('button.btn.big.pens', { type: 'button', 'aria-label': 'Anotar um pensamento e voltar', title: 'Anotar um pensamento (N)', onclick: capturar }, icon('nota')),
     btn));
   const slotAudio = h('div.slot-audio');
-  el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), segs, relogio), slotAudio, corpo, barra);
+  el.append(h('div.ptop', h('a.x', { href: `#/trilha/m/${m.n}`, 'aria-label': 'Sair da lição (seu lugar fica guardado)' }, icon('fecha')), mascote('oculos-olhos', 30), segs, relogio), slotAudio, corpo, barra);
   // áudio com voz neural: só aparece se esta aula já tiver o MP3 gerado
   // o áudio toca por partes: cada passo de conteúdo tem a sua (exercício, quiz e fim não têm áudio)
   const PARTE = { 0: 'passo-0', 1: 'passo-1', 2: 'passo-2', 5: 'passo-5' };
   const parteDoPasso = () => (concluida ? null : PARTE[p] || null);
-  infoAudio(id).then((info) => { if (info) { player = playerAula(id, info, { titulo: `${L.id} ${L.t}` }); slotAudio.append(player.el); player.parte(parteDoPasso(), { auto: true }); } });
+  let grifo = null;
+  infoAudio(id).then((info) => {
+    if (!info) return;
+    player = playerAula(id, info, { titulo: `${L.id} ${L.t}` }); slotAudio.append(player.el); player.parte(parteDoPasso(), { auto: true });
+    // texto grifado: o parágrafo que a voz lê; "#/licao/<id>/conferir" mostra o tempo e o trecho calculado
+    grifo = grifador(id, player.audio, { passoAtual: () => corpo.querySelector('section.passo'), parteAtual: parteDoPasso, conferir: modo === 'conferir' });
+  });
 
   const tick = setInterval(() => {
     const s = (Date.now() - t0) / 1000;
@@ -77,6 +85,8 @@ export default async function (el, [id]) {
     });
   }
   const rotulo = (txt) => h('div.eyebrow', `Passo ${p + 1} de 7 · ${txt}`);
+  // chave do trecho falado (texto grifado durante o áudio)
+  const trecho = (e, k) => { e.setAttribute('data-trecho', k); return e; };
   const rodarPython = async (codigo, ent) => (await import('../labs/python.js')).rodar(codigo, ent);
 
   /** Consulta rápida: a analogia, a ideia e o exemplo, sem sair do exercício ou do quiz. */
@@ -101,13 +111,13 @@ export default async function (el, [id]) {
   function montar() {
     const box = h('section.passo', { css: { '--c': m.cor }, tabIndex: -1 });
     if (p === 0) {
-      put(box, h('div.eyebrow', `Lição ${L.id} · ${m.t}`), h('h1', L.t), video() || figura(L.id, { capa: true }) || null, h('p.gancho', rich(L.gancho)),
+      put(box, h('div.eyebrow', `Lição ${L.id} · ${m.t}`), h('h1', { 'data-trecho': 'tit' }, L.t), video() || figura(L.id, { capa: true }) || null, h('p.gancho', { 'data-trecho': 'gancho' }, rich(L.gancho)),
         h('div.row.wrap', h('span.tag', `${L.min} min`), h('span.tag', '7 passos'), revisita ? h('span.tag.ok', 'Já concluída: revisão livre') : null));
       if (anterior) put(box, h('a.btn.quiet.small', { href: `#/licao/${anterior}`, style: { alignSelf: 'flex-start' } }, `‹ Lição anterior: ${anterior} ${licao(anterior).t}`));
     } else if (p === 1) {
-      put(box, rotulo('Ideia'), h('h2', L.t), h('div.callout.analogia', h('span.rot', 'Analogia'), rich(L.analogia)), figura(L.id) || null, blocks(L.ideia, { run: rodarPython }));
+      put(box, trecho(rotulo('Ideia'), 'tit'), h('h2', L.t), h('div.callout.analogia', { 'data-trecho': 'analogia' }, h('span.rot', 'Analogia'), rich(L.analogia)), figura(L.id) || null, blocks(L.ideia, { run: rodarPython }));
     } else if (p === 2) {
-      put(box, rotulo('Exemplo resolvido'), h('h2', 'Veja um exemplo pronto'), blocks(L.exemplo, { run: rodarPython }));
+      put(box, trecho(rotulo('Exemplo resolvido'), 'tit'), h('h2', 'Veja um exemplo pronto'), blocks(L.exemplo, { run: rodarPython }));
     } else if (p === 3) {
       const status = h('div.banner.ok.hide', { role: 'status' });
       put(box, rotulo('Sua vez'), h('div.row.between.wrap', h('h2', 'Exercício'), botaoConsulta()), montarExercicio(L.ex, (r) => {
@@ -134,7 +144,7 @@ export default async function (el, [id]) {
       }));
       if (ehPC()) put(box, h('p.small.muted.atalho', 'Atalho: teclas 1, 2 e 3 escolhem a opção.'));
     } else if (p === 5) {
-      put(box, rotulo('Erro comum de iniciante'), h('div.callout.erro', h('span.rot', 'Erro comum'), h('h2', { style: { marginBottom: '6px' } }, L.erro.t), h('div.prose', h('p', rich(L.erro.d)))), botaoConsulta());
+      put(box, trecho(rotulo('Erro comum de iniciante'), 'tit'), h('div.callout.erro', h('span.rot', 'Erro comum'), h('h2', { 'data-trecho': 'erro-t', style: { marginBottom: '6px' } }, L.erro.t), h('div.prose', h('p', { 'data-trecho': 'erro-d' }, rich(L.erro.d)))), botaoConsulta());
     }
     return box;
   }
@@ -248,5 +258,5 @@ export default async function (el, [id]) {
   function avisarConquistas() { for (const c of verificarConquistas()) toast(`Conquista: ${c.t}`); }
 
   desenhar();
-  return () => { clearInterval(tick); document.removeEventListener('keydown', teclas); if (player) player.parar(); };
+  return () => { clearInterval(tick); document.removeEventListener('keydown', teclas); if (grifo) grifo.parar(); if (player) player.parar(); };
 }

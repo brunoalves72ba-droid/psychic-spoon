@@ -73,6 +73,11 @@ const ICONS = {
   som: 'M4 9.5v5h4l5 4v-13l-5 4zM16.5 9a4.5 4.5 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11',
   mudo: 'M4 9.5v5h4l5 4v-13l-5 4zM17 9.5l5 5M22 9.5l-5 5',
   pausa: 'M8.5 5.5v13M15.5 5.5v13',
+  lista: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  engrenagem: 'M4 7h9M17 7h3M15 5v4M4 17h3M11 17h9M9 15v4',
+  sync: 'M4 12a8 8 0 0 1 13.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 0 1-13.7 5.6L4 15M4 20v-5h5',
+  info: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 11v6M12 7.5h.01',
+  menu: 'M4 7h16M4 12h16M4 17h16',
   gelo: 'M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5',
 };
 export function icon(name, cls) {
@@ -110,17 +115,23 @@ const ROTULOS = { dica: 'Dica', aviso: 'Atenção', analogia: 'Analogia', erro: 
 /** Blocos: string = parágrafo; {c,l} código; {ul}/{ol} listas; {nota,tipo}; {tab:{h,r}}; {h} subtítulo. */
 export function blocks(arr, opts = {}) {
   const box = h('div.prose');
-  for (const b of [].concat(arr || [])) {
-    if (b == null || b === false) continue;
-    if (typeof b === 'string') box.append(h('p', rich(b)));
-    else if (b.c != null) box.append(codeBlock(b.c, b.l, { run: b.run && opts.run ? (c) => opts.run(c, b.ent || []) : null, wrap: b.wrap, titulo: b.t }));
-    else if (b.ul) box.append(h('ul', b.ul.map((x) => h('li', rich(x)))));
-    else if (b.ol) box.append(h('ol', b.ol.map((x) => h('li', rich(x)))));
-    else if (b.passos) box.append(h('ol.steps', b.passos.map((x, i) => h('li', h('span', String(i + 1)), h('div', rich(x))))));
-    else if (b.nota) box.append(h('div.callout.' + (b.tipo || 'dica'), h('span.rot', b.rot || ROTULOS[b.tipo || 'dica']), rich(b.nota)));
-    else if (b.h) box.append(h('h3', b.h));
-    else if (b.tab) box.append(h('div.tblwrap', h('table.tbl', h('thead', h('tr', b.tab.h.map((x) => h('th', x)))), h('tbody', b.tab.r.map((r) => h('tr', r.map((x) => h('td', rich(x)))))))));
-  }
+  // data-trecho: a chave de cada bloco (b3) e de cada item (b3.1), a mesma do áudio (texto grifado)
+  [].concat(arr || []).forEach((b, n) => {
+    if (b == null || b === false) return;
+    const k = 'b' + n, it = (i) => ({ 'data-trecho': `${k}.${i}` });
+    let e;
+    if (typeof b === 'string') e = h('p', rich(b));
+    else if (b.c != null) e = codeBlock(b.c, b.l, { run: b.run && opts.run ? (c) => opts.run(c, b.ent || []) : null, wrap: b.wrap, titulo: b.t });
+    else if (b.ul) e = h('ul', b.ul.map((x, i) => h('li', it(i), rich(x))));
+    else if (b.ol) e = h('ol', b.ol.map((x, i) => h('li', it(i), rich(x))));
+    else if (b.passos) e = h('ol.steps', b.passos.map((x, i) => h('li', it(i), h('span', String(i + 1)), h('div', rich(x)))));
+    else if (b.nota) e = h('div.callout.' + (b.tipo || 'dica'), h('span.rot', b.rot || ROTULOS[b.tipo || 'dica']), rich(b.nota));
+    else if (b.h) e = h('h3', b.h);
+    else if (b.tab) e = h('div.tblwrap', h('table.tbl', h('thead', h('tr', b.tab.h.map((x) => h('th', x)))), h('tbody', b.tab.r.map((r, i) => h('tr', it(i), r.map((x) => h('td', rich(x))))))));
+    if (!e) return;
+    if (!(b.ul || b.ol || b.passos || b.tab)) e.setAttribute('data-trecho', k);
+    box.append(e);
+  });
   return box;
 }
 

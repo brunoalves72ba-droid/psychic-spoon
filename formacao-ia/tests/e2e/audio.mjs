@@ -25,8 +25,11 @@ const erros = [];
 const ok = (c, m) => { console.log((c ? 'ok  ' : 'FALHOU  ') + m); if (!c) erros.push(m); };
 await ctx.route('**/audio/indice.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify(INDICE) }));
 await ctx.route('**/audio/aula-0.1.mp3', (r) => r.fulfill({ contentType: 'audio/mpeg', body: MP3 }));
+// tempos por parágrafo de teste: na Ideia (3 a 6 s), título 3,0; analogia 3,8; bloco 0 em 4,6; bloco 1 em 5,3
+await ctx.route('**/audio/tempos.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ '0.1': { 'passo-0': [['tit', 0], ['gancho', 1.2]], 'passo-1': [['tit', 3], ['analogia', 3.8], ['b0', 4.6], ['b1', 5.3]] } }) }));
 await ctx.route('**/js/data/videos.js', (r) => r.fulfill({ contentType: 'text/javascript', body: readFileSync(root + 'js/data/videos.js', 'utf8').replace("  // '0.1': 'https://youtu.be/XXXXXXXXXXX',", "  '0.1': 'https://youtu.be/abcdefghijk',") }));
 await ctx.route(/youtube(-nocookie)?\.com/, (r) => r.fulfill({ contentType: 'text/html', body: '<p>vídeo de teste</p>' }));
+await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
 const page = await ctx.newPage();
 page.on('pageerror', (e) => erros.push('erro na página: ' + e.message));
 page.on('console', (m) => { if (m.type() === 'error' && !/youtube/.test(m.text())) erros.push('console: ' + m.text()); });
@@ -83,6 +86,31 @@ try {
   await page.waitForTimeout(400);
   ok(/1 aulas com áudio · 0 já estão neste aparelho/.test(await page.locator('main, #view').first().innerText()), 'Ajustes conta os áudios');
   ok(await page.getByText('Leitura em voz alta').count() === 0, 'a voz do aparelho (Web Speech) saiu');
+  ok(await page.getByText('Texto grifado durante o áudio').count() === 1 && await page.locator('[aria-label="Texto grifado durante o áudio"] [aria-pressed=true]').innerText() === 'Ligado', 'Ajustes: texto grifado, ligado por padrão');
+  // 7. texto grifado: o parágrafo da vez em destaque, os outros em cinza; modo de conferência
+  await page.evaluate(() => { location.hash = '#/licao/0.1/conferir'; });
+  await page.locator('.segs.passos .pp').nth(1).waitFor({ timeout: 8000 });
+  await page.locator('.segs.passos .pp').nth(1).click(); // volta ao passo Ideia (a aula retoma onde parou)
+  await page.locator('.player-aula').waitFor({ timeout: 8000 });
+  await page.waitForTimeout(300);
+  if (!(await page.locator('.player-aula.tocando').count())) await page.locator('.player-aula .play').click(); // "tocar ao abrir" foi desligado antes
+  await page.waitForFunction(() => document.querySelector('.player-aula.tocando'), null, { timeout: 8000 });
+  await page.waitForFunction(() => { const e = document.querySelector('.passo.grifando .lendo'); return e && e.getAttribute('data-trecho') === 'b0'; }, null, { timeout: 8000 });
+  ok(true, 'grifo acompanha a voz: chegou ao bloco 0 da Ideia');
+  const cores = await page.evaluate(() => { const l = document.querySelector('.lendo'), o = document.querySelector('.passo.grifando [data-trecho="analogia"]'); return [getComputedStyle(l).color, getComputedStyle(o).color]; });
+  ok(cores[0] === 'rgb(241, 240, 245)' && cores[1] === 'rgb(167, 165, 179)', 'trecho da vez claro, os outros em cinza: ' + cores.join(' / '));
+  ok(await page.evaluate(() => getComputedStyle(document.querySelector('.grifo-barra')).backgroundColor) === 'rgb(212, 211, 219)', 'barra cinza-clara à esquerda (sem violeta)');
+  ok(/passo-1:b[01]/.test(await page.locator('.grifo-conferir').innerText()), 'modo de conferência mostra tempo e trecho: ' + await page.locator('.grifo-conferir').innerText());
+  const y0 = await page.evaluate(() => scrollY);
+  await page.waitForFunction(() => document.querySelector('.lendo') && document.querySelector('.lendo').getAttribute('data-trecho') === 'b1', null, { timeout: 8000 });
+  ok(await page.evaluate(() => scrollY) === y0, 'sem rolar a tela sozinho');
+  await page.waitForFunction(() => document.querySelector('.player-aula.terminou'), null, { timeout: 8000 });
+  ok(await page.locator('.passo.grifando').count() === 0, 'áudio parado: o texto volta ao normal');
+  // desligado nos Ajustes: sem grifo
+  await page.evaluate(async () => { const e = await import('./js/core/estado.js'); e.S['v2.leitura.grifado'] = { ligado: false }; e.salvar('v2.leitura.grifado'); });
+  await page.locator('.player-aula .play').click();
+  await page.waitForTimeout(1200);
+  ok(await page.locator('.passo.grifando').count() === 0, 'com o ajuste desligado, nada é grifado');
 } catch (e) { erros.push(String(e.message || e).split('\n')[0]); await page.screenshot({ path: root + 'tests/e2e/shots/audio-falha.png', fullPage: true }).catch(() => {}); }
 await browser.close(); server.kill();
 console.log(erros.length ? `\n${erros.length} problema(s):\n- ${erros.join('\n- ')}` : '\nTudo certo.');

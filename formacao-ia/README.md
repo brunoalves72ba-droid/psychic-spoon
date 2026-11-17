@@ -1,5 +1,7 @@
 # Formação IA Generativa
 
+> **Documentação completa para entender e recriar o app exatamente como está:** [docs/README.md](docs/README.md).
+
 App web instalável (PWA) para estudar a trilha de IA generativa (96 h de ementa, cerca de 120 h no app), pensado para **quem começa do zero** e para **quem tem TDAH**. Todo o texto é em português do Brasil.
 
 **© Bruno Moura.** App pessoal e não oficial: não é afiliado à escola que oferece o curso nem às empresas citadas nas lições.

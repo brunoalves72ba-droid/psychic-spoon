@@ -24,6 +24,7 @@ const server = spawn(process.execPath, [root + 'tools/serve.mjs', String(PORT)],
 await new Promise((r) => setTimeout(r, 500));
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: modoPC ? { width: 1366, height: 900 } : { width: W, height: H }, deviceScaleFactor: 1, hasTouch: !modoPC, isMobile: !modoPC, locale: 'pt-BR', colorScheme: dark ? 'dark' : 'light', acceptDownloads: true });
+await ctx.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; }); // os testes antigos pulam a pergunta do nome
 const page = await ctx.newPage();
 const errors = []; let atual = '';
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`[${atual}] console.${m.type()}: ${m.text()}`); });
@@ -37,7 +38,7 @@ let n = 0, falhas = 0;
 async function conferirTela(nome) {
   const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (over > 1) throw new Error(`rolagem horizontal de ${over}px`);
-  const pequenos = await page.evaluate(() => [...document.querySelectorAll('#view button, #view a.btn, #view a.item, #view .chip, .tabs a, #view input[type=range], #view select, .acao-bar button')]
+  const pequenos = await page.evaluate(() => [...document.querySelectorAll('#view button, #view a.btn, #view a.item, #view .chip, .tabs a, .menu-pc a, .menu-pc button, #view input[type=range], #view select, .acao-bar button')]
     .filter((e) => !e.closest('.jtree') && !e.closest('.hide')).filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && (r.height < 43.5 || r.width < 43.5); })
     .map((e) => `${e.tagName}.${e.className} "${(e.textContent || e.getAttribute('aria-label') || '').trim().slice(0, 20)}" ${Math.round(e.getBoundingClientRect().width)}×${Math.round(e.getBoundingClientRect().height)}`));
   if (pequenos.length) throw new Error(`alvos de toque menores que 44 px: ${pequenos.slice(0, 3).join(' | ')}`);
@@ -136,7 +137,7 @@ await cenario('progresso', () => ir('#/progresso'));
 await cenario('progresso-semana', async () => { await ir('#/progresso/semana'); await page.locator('input.inp').nth(0).fill('Fiz 10 lições'); await page.locator('input.inp').nth(4).fill('Terça, lição 3.4'); });
 await cenario('progresso-cronograma', async () => { await ir('#/progresso/cronograma'); await page.locator('button.item').first().click(); await page.waitForTimeout(150); });
 await cenario('progresso-conquistas', () => ir('#/progresso/conquistas'));
-for (const p of ['ficha', 'porque', 'ajustes', 'backup', 'pensamentos', 'lembretes', 'sync', 'instalar']) await cenario(`mais-${p}`, () => ir(`#/mais/${p}`));
+for (const p of ['ficha', 'porque', 'ajustes', 'backup', 'pensamentos', 'lembretes', 'sync', 'instalar', 'sobre']) await cenario(`mais-${p}`, () => ir(`#/mais/${p}`));
 await cenario('foco', async () => { await ir('#/foco/m0-pastas'); await page.getByRole('button', { name: 'Começar' }).click(); await page.waitForTimeout(300); });
 await cenario('foco-fim', async () => { await page.getByRole('button', { name: 'Terminei' }).click(); await page.waitForTimeout(200); });
 await cenario('labs', () => ir('#/labs'));

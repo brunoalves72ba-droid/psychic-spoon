@@ -4,7 +4,7 @@ import { h, clear, fmt } from '../core/ui.js';
 import { tokensAprox, contarPalavras } from '../core/texto.js';
 import { missao, semMissao } from './comum.js';
 
-const CORES = ['var(--m1)', 'var(--m3)', 'var(--m4)', 'var(--m5)', 'var(--m2)'];
+const CORES = ['var(--cat1)', 'var(--cat2)', 'var(--cat3)', 'var(--cat4)', 'var(--cat5)'];
 const EX = {
   pt: 'A compreensão automática de documentação técnica exige atenção.',
   en: 'Automatic understanding of technical documentation requires attention.',

@@ -113,6 +113,28 @@ export function mesclarKv(A, B) {
   }
   // a sequência semanal é recalculada a partir dos dias (quem chama faz isso); guarda a mais avançada por ora
   o.semana = (obj(b.semana).ult || '') > (obj(a.semana).ult || '') ? b.semana : a.semana || b.semana;
+  // check-in do dia: vale a data mais nova; no mesmo dia, a carinha do check-in feito primeiro e o tempo da última troca
+  const ca = obj(a['v2.checkin.dia']), cb = obj(b['v2.checkin.dia']);
+  if (ca.data || cb.data) {
+    if ((ca.data || '') !== (cb.data || '')) o['v2.checkin.dia'] = (ca.data || '') > (cb.data || '') ? ca : cb;
+    else {
+      const cedo = (cb.em || Infinity) < (ca.em || Infinity) ? cb : ca;
+      const tarde = (cb._t || 0) > (ca._t || 0) ? cb : ca;
+      o['v2.checkin.dia'] = { ...cedo, tempo: tarde.tempo ?? cedo.tempo, _t: Math.max(ca._t || 0, cb._t || 0) };
+    }
+  }
+  // histórico do check-in: união dos dias; no mesmo dia, o registro feito primeiro
+  if (a['v2.checkin.historico'] || b['v2.checkin.historico']) {
+    const hst = { ...obj(a['v2.checkin.historico']) };
+    for (const [k, v] of Object.entries(obj(b['v2.checkin.historico']))) if (!hst[k] || (obj(v).em || Infinity) < (obj(hst[k]).em || Infinity)) hst[k] = v;
+    o['v2.checkin.historico'] = hst;
+  }
+  // chaves que esta versão não conhece (ou novas sem regra própria): nada se perde; entre duas, vale a de _t mais recente
+  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if (k in o || k === 'local') continue;
+    const x = a[k], y = b[k];
+    o[k] = x === undefined ? y : y === undefined ? x : ((obj(y)._t || 0) > (obj(x)._t || 0) ? y : x);
+  }
   return o;
 }
 

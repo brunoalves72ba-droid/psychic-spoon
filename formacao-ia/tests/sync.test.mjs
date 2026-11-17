@@ -132,3 +132,59 @@ test('comparação estável: a ordem dos campos não conta como mudança', async
   assert.equal(estavel({ a: 1, b: { y: 2, x: [1, { q: 1, p: 2 }] } }), estavel({ b: { x: [1, { p: 2, q: 1 }], y: 2 }, a: 1 }));
   assert.notEqual(estavel({ a: 1 }), estavel({ a: 2 }));
 });
+
+test('mesclarKv preserva chaves que a versão não conhece (v2.*) e escolhe a mais recente por _t', () => {
+  const local = { perfil: { _t: 1 }, 'v2.nome': { nome: 'Bruno', _t: 200 }, 'v2.so.aqui': { x: 1 } };
+  const nuvemAntiga = { perfil: { _t: 2 } }; // pacote escrito por versão antiga: sem chaves v2.*
+  const m = mesclarKv(local, nuvemAntiga);
+  assert.deepEqual(m['v2.nome'], { nome: 'Bruno', _t: 200 });
+  assert.deepEqual(m['v2.so.aqui'], { x: 1 });
+  const m2 = mesclarKv({ 'v2.nome': { nome: 'A', _t: 5 } }, { 'v2.nome': { nome: 'B', _t: 9 } });
+  assert.equal(m2['v2.nome'].nome, 'B');
+  const m3 = mesclarKv({ 'v2.nome': { nome: 'A', _t: 9 } }, { 'v2.nome': { nome: 'B', _t: 5 } });
+  assert.equal(m3['v2.nome'].nome, 'A');
+  assert.ok(!('local' in mesclarKv({ local: { a: 1 } }, {})), 'a chave local nunca viaja');
+});
+
+test('check-in: no mesmo dia vale a carinha do primeiro; o tempo da última troca; histórico unido', () => {
+  const cel = { 'v2.checkin.dia': { data: '2026-11-17', humor: 'triste', tempo: 5, em: 100, _t: 300 }, 'v2.checkin.historico': { '2026-11-16': { h: 'feliz', em: 1 }, '2026-11-17': { h: 'triste', em: 100 } } };
+  const pc = { 'v2.checkin.dia': { data: '2026-11-17', humor: 'feliz', tempo: 30, em: 200, _t: 200 }, 'v2.checkin.historico': { '2026-11-15': { h: 'neutro', em: 0 }, '2026-11-17': { h: 'feliz', em: 200 } } };
+  for (const m of [mesclarKv(cel, pc), mesclarKv(pc, cel)]) {
+    assert.equal(m['v2.checkin.dia'].humor, 'triste');
+    assert.equal(m['v2.checkin.dia'].tempo, 5);
+    assert.deepEqual(Object.keys(m['v2.checkin.historico']).sort(), ['2026-11-15', '2026-11-16', '2026-11-17']);
+    assert.equal(m['v2.checkin.historico']['2026-11-17'].h, 'triste');
+  }
+  const ontem = { 'v2.checkin.dia': { data: '2026-11-16', humor: 'feliz', tempo: 15, em: 1, _t: 1 } };
+  assert.equal(mesclarKv(ontem, cel)['v2.checkin.dia'].data, '2026-11-17', 'vale o dia mais novo');
+});
+
+// A versão antiga do app só conhecia estas chaves: a mesclagem dela descartava o resto.
+const CHAVES_ANTIGAS = ['perfil', 'licoes', 'cartoes', 'meus', 'dias', 'semana', 'xpPor', 'apagados', 'conquistas', 'marcos', 'diario', 'pensamentos', 'missoes', 'ficha', 'prompts', 'fichaViva', 'semanais', 'andaime', 'desafios', 'mistura', 'sessao'];
+const versaoAntiga = (kv) => Object.fromEntries(Object.entries(kv).filter(([k]) => CHAVES_ANTIGAS.includes(k)));
+
+test('OBRIGATÓRIO: versão antiga grava, versão nova lê, nenhuma chave v2.* local se perde', async () => {
+  const token = 'ghp_teste_token_123';
+  const novoLocal = {
+    ...celular,
+    'v2.nome': { nome: 'Bruno', _t: 500 },
+    'v2.checkin.dia': { data: '2026-11-17', humor: 'feliz', tempo: 15, em: 10, _t: 10 },
+    'v2.checkin.historico': { '2026-11-17': { h: 'feliz', em: 10 } },
+    'v2.leitura.grifado': { ligado: false, _t: 20 },
+  };
+  // o aparelho antigo leu o pacote novo, mesclou do jeito antigo (sem as v2.*) e gravou de volta
+  const antigoGravou = await cifrar({ kv: versaoAntiga(mesclarKv(novoLocal, pc)), log: [], dispositivo: 'antigo', quando: 'x' }, token);
+  const lido = await decifrar(antigoGravou, token);
+  assert.equal(lido.versao, undefined, 'pacote da versão antiga não tem "versao"');
+  const m = mesclarKv(novoLocal, lido.kv);
+  for (const k of Object.keys(novoLocal).filter((x) => x.startsWith('v2.'))) assert.deepEqual(m[k], novoLocal[k], k);
+  // e o progresso que veio do aparelho antigo também entra
+  assert.ok(m.licoes['0.3'] || Object.keys(m.licoes).length >= Object.keys(celular.licoes).length);
+});
+
+test('pacote novo: versaoMinima no envelope e ainda legível do jeito antigo', async () => {
+  const p = await cifrar({ versao: 2, kv: {}, log: [] }, 'tk');
+  const o = JSON.parse(p);
+  assert.equal(o.app, 'formacao-ia'); assert.equal(o.v, 1); assert.equal(o.versaoMinima, 2); assert.ok(o.dados);
+  assert.equal((await decifrar(p, 'tk')).versao, 2);
+});

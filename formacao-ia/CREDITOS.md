@@ -2,10 +2,11 @@
 
 ## Fontes (SIL Open Font License 1.1)
 
-- **Atkinson Hyperlegible Next** e **Atkinson Hyperlegible Mono**: Braille Institute e The Atkinson Hyperlegible Next Project Authors. Licença em `assets/fonts/OFL-AtkinsonHyperlegibleNext.txt` e `OFL-AtkinsonHyperlegibleMono.txt`.
-- **Bricolage Grotesque**: The Bricolage Grotesque Project Authors. Licença em `assets/fonts/OFL-BricolageGrotesque.txt`.
+- **Manrope** (títulos): The Manrope Project Authors. Licença em `assets/fonts/OFL-Manrope.txt`.
+- **Inter** (texto): The Inter Project Authors. Licença em `assets/fonts/OFL-Inter.txt`.
+- **Atkinson Hyperlegible Mono** (código, laboratórios e Python): Braille Institute e The Atkinson Hyperlegible Next Project Authors. Licença em `assets/fonts/OFL-AtkinsonHyperlegibleMono.txt`.
 
-Arquivos obtidos dos pacotes npm `@fontsource-variable/*`, só o subconjunto latino.
+Arquivos obtidos dos pacotes npm `@fontsource-variable/*` (Manrope e Inter 5.3.0: subconjuntos latin e latin-ext; Atkinson Mono: latin).
 
 ## Fotos (Wikimedia Commons)
 

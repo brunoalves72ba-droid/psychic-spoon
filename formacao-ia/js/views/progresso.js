@@ -7,6 +7,7 @@ import { retencao } from '../core/srs.js';
 import { MODULOS, progressoModulo, progressoGeral } from '../data/curso.js';
 import { PROJETO, progressoProjeto } from '../data/projeto.js';
 import { CONQUISTAS } from '../core/conquistas.js';
+import { luz } from '../core/luz.js';
 
 const pct = (r) => (r.taxa == null ? '—' : `${Math.round(r.taxa * 100)}%`);
 
@@ -28,9 +29,10 @@ export default async function (el) {
   }
   const diasAtivos = Object.keys(S.dias).length;
 
+  let cardNivel;
   el.append(
     h('header', h('div.eyebrow', `Nível ${nv} · ${fmt(S.xp)} XP`), h('h1', 'Progresso')),
-    h('section.card.flat',
+    cardNivel = h('section.card.flat',
       h('div.stats', h('div.stat', h('b', `${g.feitas}/${g.total}`), h('span', 'lições concluídas')), h('div.stat', h('b', `${entregas}/7`), h('span', 'entregas do projeto')), h('div.stat', h('b', String(S.semana.seq)), h('span', S.semana.seq === 1 ? 'semana na meta' : 'semanas seguidas na meta'))),
       h('div', { style: { marginTop: '12px' } }, progressBar(dentro / XP_NIVEL, 'var(--ouro)'), h('div.small.muted', { style: { marginTop: '4px' } }, `${XP_NIVEL - dentro} XP para o nível ${nv + 1}`))),
     h('section.card.flat', h('div.eyebrow', 'Memória'),
@@ -53,4 +55,5 @@ export default async function (el) {
       h('a.item', { href: '#/mais/lembretes' }, h('span.n', '⏰'), h('span.t', h('b', 'Lembretes'), h('span', 'Horários de estudo no calendário do seu celular.')), h('span.chev', '›')),
       h('a.item', { href: '#/mais/porque' }, h('span.n', '?'), h('span.t', h('b', 'Por que o app é assim'), h('span', 'A ciência por trás de cada escolha, com o grau de evidência.')), h('span.chev', '›'))),
   );
+  luz(cardNivel, { aba: 'progresso' });
 }

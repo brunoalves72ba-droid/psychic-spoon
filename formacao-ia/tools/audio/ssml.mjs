@@ -41,6 +41,30 @@ export function pecasDaAula(L) {
   return p.filter(Boolean);
 }
 
+/**
+ * A mesma fala de pecasDaAula, quebrada em unidades (parágrafo, item de lista, linha de tabela), cada uma com
+ * a chave do trecho na tela (data-trecho) e a parte do áudio. Serve para calcular o tempo de cada parágrafo.
+ * Chaves: 'tit' (título falado da parte), 'gancho', 'analogia', 'b3' (bloco 3), 'b3.1' (item 1 do bloco 3),
+ * 'erro-t', 'erro-d' e 'fim' (frase final, sem trecho na tela).
+ */
+export function unidadesDaAula(L) {
+  const id = L.id.replace('.', ' ponto ');
+  const u = [];
+  const add = (parte, chave, ssml) => { if (ssml) u.push({ parte, chave, ssml }); };
+  const blocos = (parte, arr) => (arr || []).forEach((b, i) => {
+    const itens = typeof b === 'object' && b && (b.ul || b.ol || b.passos);
+    if (itens) { const ord = !b.ul; itens.forEach((it, k) => add(parte, `b${i}.${k}`, `<s>${ord ? `${ORDINAIS[k] || `Item ${k + 1}`}: ` : ''}${f(it)}</s>`)); return; }
+    if (typeof b === 'object' && b && b.tab) { b.tab.r.forEach((r, k) => add(parte, `b${i}.${k}`, `<s>${f(r[0])}: ${r.slice(1).map(f).join('; ')}</s>`)); return; }
+    add(parte, `b${i}`, bloco(b));
+  });
+  add('passo-0', 'tit', titulo(`Lição ${id}. ${f(L.t)}`, true)); add('passo-0', 'gancho', paragrafo(f(L.gancho)));
+  add('passo-1', 'tit', titulo('Ideia')); add('passo-1', 'analogia', paragrafo(`Analogia: ${f(L.analogia)}`)); blocos('passo-1', L.ideia);
+  add('passo-2', 'tit', titulo('Exemplo resolvido')); blocos('passo-2', L.exemplo);
+  add('passo-5', 'tit', titulo('Erro comum de iniciante')); add('passo-5', 'erro-t', paragrafo(f(L.erro.t) + '.')); add('passo-5', 'erro-d', paragrafo(f(L.erro.d)));
+  add('passo-5', 'fim', paragrafo('Fim da leitura. Agora faça o exercício e o quiz na tela.'));
+  return u;
+}
+
 /** SSML → formato aceito pela voz: 'ssml' (Neural2/WaveNet: tudo), 'chirp' (sem break/prosody/mark), 'texto' (ElevenLabs). */
 export function converter(ssml, modo) {
   if (modo === 'ssml') return ssml;

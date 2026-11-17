@@ -1,9 +1,10 @@
 // Formação IA Generativa — © Bruno Moura, único e exclusivo proprietário.
-// Ajustes: tema, meta de minutos, plano, backup e a parte de privacidade.
+// Ajustes: nome, celular e PC, áudio, meta de minutos, plano e dados. "Sobre o app" fica no menu lateral.
 import { h, top, seg, toast, confirmSheet } from '../core/ui.js';
+import { nomeUsuario, definirNome } from '../core/estado.js';
+import { grifoLigado } from '../core/grifo.js';
 import { baixados, baixarTodos } from '../core/audio.js';
 import { S, salvar, apagarTudo } from '../core/estado.js';
-import { aplicarTema, procurarAtualizacao, versaoAtual } from '../app.js';
 import { PLANOS } from '../core/plano.js';
 import { L } from '../core/estado.js';
 import { plataforma, escolher } from '../core/plataforma.js';
@@ -11,19 +12,22 @@ import * as nuvem from '../core/nuvem.js';
 
 export default async function (el) {
   const ns = nuvem.status();
-  const versao = h('p.small.muted');
   const qual = h('span.small.dim');
   const pintarQual = () => { qual.textContent = `Agora: ${plataforma() === 'pc' ? 'computador (menu lateral, duas colunas, atalhos de teclado)' : 'celular (abas embaixo, uma coluna, botões grandes)'}.`; };
   pintarQual();
+  const campoNome = h('input', { type: 'text', id: 'ajuste-nome', value: nomeUsuario(), maxLength: 40, autocomplete: 'given-name', autocapitalize: 'words' });
+  const erroNome = h('p.campo-erro', { 'aria-live': 'polite' });
   el.append(top('Ajustes'),
+    h('section.card.flat.col', h('h3', 'Seu nome'),
+      h('form.col', { novalidate: true, onsubmit: (e) => { e.preventDefault(); if (definirNome(campoNome.value)) { erroNome.textContent = ''; campoNome.value = nomeUsuario(); toast('Nome salvo.'); } else erroNome.textContent = 'Escreva um nome para salvar.'; } },
+        h('label.field', { for: 'ajuste-nome' }, h('span', 'Como você quer ser chamado'), campoNome), erroNome,
+        h('button.btn.block', { type: 'submit' }, 'Salvar nome'))),
     h('section.card.dest.col', h('h3', 'Celular e PC'),
       h('p.small.dim', ns.ligado ? `Sincronização ligada${ns.erro ? `, com problema: ${ns.erro}` : '.'}` : 'O progresso é salvo sozinho, mas só neste aparelho. Para continuar do mesmo ponto no outro, ligue a sincronização.'),
       h('a.btn.primary.block', { href: '#/mais/sync' }, ns.ligado ? 'Ver a sincronização' : 'Ligar a sincronização'),
       h('a.btn.block', { href: '#/mais/instalar' }, 'Instalar e salvar tudo no celular'),
       h('label.field', h('span', 'Este aparelho é'), seg([{ v: 'auto', label: 'Detectar sozinho' }, { v: 'pc', label: 'Computador' }, { v: 'celular', label: 'Celular' }], L.plataforma || 'auto', async (v) => { await escolher(v); pintarQual(); }, { wrap: true, label: 'Tipo de aparelho' })), qual),
     secaoVoz(),
-    h('section.card.flat.col', h('h3', 'Aparência'),
-      h('label.field', h('span', 'Tema'), seg([{ v: 'auto', label: 'Automático' }, { v: 'claro', label: 'Claro' }, { v: 'escuro', label: 'Escuro' }], S.perfil.tema || 'auto', (v) => { S.perfil.tema = v; salvar('perfil'); aplicarTema(v); }, { label: 'Tema' }))),
     h('section.card.flat.col', h('h3', 'Sessão'),
       h('label.field', h('span', 'Meta de minutos por sessão (o relógio só avisa, nunca interrompe)'), seg([5, 10, 15, 25].map((v) => ({ v, label: `${v} min` })), S.perfil.alvo, (v) => { S.perfil.alvo = v; salvar('perfil'); }, { wrap: true, label: 'Minutos' })),
       h('div.row.between', h('span.small', S.perfil.plano ? `${PLANOS[S.perfil.plano].nome}: ${PLANOS[S.perfil.plano].ritmo}` : 'Nenhum plano escolhido'), h('a.btn.small', { href: '#/progresso/cronograma' }, 'Cronograma'))),
@@ -32,23 +36,13 @@ export default async function (el) {
       h('a.btn.block', { href: '#/mais/backup' }, 'Backup: exportar e importar'),
       h('a.btn.block', { href: '#/mais/lembretes' }, 'Lembretes no calendário'),
       h('button.btn.danger.block', { type: 'button', onclick: async () => { if (await confirmSheet('Apagar todo o progresso, cartões, diário e prompts deste aparelho? Não dá para desfazer. Faça um backup antes.', 'Apagar tudo')) { await apagarTudo(); toast('Tudo apagado.'); location.hash = '#/hoje'; } } }, 'Apagar todos os dados')),
-    h('section.card.flat.col', h('h3', 'Sobre'),
-      h('p.small', 'Formação IA Generativa: app pessoal de estudo para a trilha de IA generativa, para quem começa do zero e para quem tem TDAH.'),
-      h('p.small.dim', 'App pessoal e não oficial: não é afiliado à escola que oferece o curso nem às empresas citadas nas lições. O conteúdo é formação geral; não é parecer jurídico nem tratamento clínico.'),
-      h('p.small.dim', '© Bruno Moura. Fontes Atkinson Hyperlegible e Bricolage Grotesque (SIL OFL 1.1). MicroPython (licença MIT).'),
-      versao,
-      h('button.btn.block', { type: 'button', onclick: async (e) => {
-        const b = e.currentTarget; b.disabled = true; b.textContent = 'Procurando…';
-        const r = await procurarAtualizacao();
-        toast(r === 'nova' ? 'Versão nova encontrada. Ela baixa em alguns segundos e aparece o botão Atualizar.' : r === 'atual' ? 'Você já está na versão mais nova.' : 'Sem internet agora. Tente de novo depois.');
-        b.disabled = false; b.textContent = 'Procurar atualização';
-      } }, 'Procurar atualização')));
-  versaoAtual().then((v) => { versao.textContent = v ? `Versão ${v}` : ''; });
+    h('a.btn.quiet.block', { href: '#/mais/sobre' }, 'Sobre o app e versão'));
 }
-
 /** Áudio das aulas (voz neural gerada uma vez): quantas têm áudio, quantas já estão no aparelho e baixar tudo. */
 function secaoVoz() {
-  const sec = h('section.card.flat.col', h('h3', 'Áudio das aulas'), h('p.small.dim', 'As aulas com áudio têm um player no topo, com voz neural natural. O áudio de cada aula é baixado na primeira vez que você toca e fica no aparelho.'));
+  const sec = h('section.card.flat.col', h('h3', 'Áudio das aulas'), h('p.small.dim', 'As aulas com áudio têm um player no topo, com voz neural natural. O áudio de cada aula é baixado na primeira vez que você toca e fica no aparelho.'),
+    h('label.field', h('span', 'Texto grifado durante o áudio'), seg([{ v: true, label: 'Ligado' }, { v: false, label: 'Desligado' }], grifoLigado(), (v) => { S['v2.leitura.grifado'] = { ligado: v }; salvar('v2.leitura.grifado'); }, { label: 'Texto grifado durante o áudio' })),
+    h('p.small.muted', 'Enquanto a voz lê, o parágrafo da vez fica em destaque e os outros em cinza. A tela não rola sozinha: se o trecho sair da tela, aparece o botão “Voltar ao trecho”.'));
   const info = h('p.small');
   const pintar = async () => {
     const b = await baixados();

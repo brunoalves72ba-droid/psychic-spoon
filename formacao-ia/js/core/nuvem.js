@@ -20,11 +20,14 @@ async function chave(token, sal) {
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(token), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: sal, iterations: 150000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
+/** Versão do formato dos dados (2 = chaves v2.*). O pacote continua legível pela versão antiga (v: 1). */
+export const VERSAO_DADOS = 2;
+
 export async function cifrar(dados, token) {
   const sal = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
   const k = await chave(token, sal);
   const c = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, new TextEncoder().encode(JSON.stringify(dados)));
-  return JSON.stringify({ app: 'formacao-ia', v: 1, sal: b64(sal), iv: b64(iv), dados: b64(c) });
+  return JSON.stringify({ app: 'formacao-ia', v: 1, versaoMinima: VERSAO_DADOS, sal: b64(sal), iv: b64(iv), dados: b64(c) });
 }
 export async function decifrar(texto, token) {
   const o = JSON.parse(texto);
@@ -90,11 +93,13 @@ export function sincronizar() {
         const txt = await conteudo(g, token);
         if (txt) remoto = await decifrar(txt, token);
       }
+      // pacote gravado pela versão antiga, no outro aparelho: as chaves v2.* daqui ficam (a mesclagem não perde nada) e o app avisa
+      L.nuvem.versaoAntiga = !!remoto && remoto.dispositivo !== L.dispositivo && !((remoto.versao || 1) >= VERSAO_DADOS);
       const kv = remoto ? mesclarKv(local.kv, remoto.kv) : local.kv;
       const log = remoto ? mesclarLog(local.log, remoto.log) : local.log;
       recebeu = !!remoto && (estavel(semDerivados(kv)) !== estavel(semDerivados(mesclarKv(local.kv, local.kv))) || log.length !== local.log.length);
       if (recebeu) { await aplicar(kv, log); }
-      const pacote = await cifrar({ kv, log, dispositivo: L.dispositivo, quando: new Date().toISOString() }, token);
+      const pacote = await cifrar({ versao: VERSAO_DADOS, kv, log, dispositivo: L.dispositivo, quando: new Date().toISOString() }, token);
       const files = { [ARQUIVO]: { content: pacote } };
       if (L.nuvem.gist) await gh(`/gists/${L.nuvem.gist}`, { metodo: 'PATCH', corpo: { files }, token });
       else { const g = await gh('/gists', { metodo: 'POST', corpo: { description: 'Formação IA: sincronização entre aparelhos (conteúdo cifrado)', public: false, files }, token }); L.nuvem.gist = g.id; }
