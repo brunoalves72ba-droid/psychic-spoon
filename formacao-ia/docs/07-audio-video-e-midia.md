@@ -73,3 +73,10 @@ sem internet, mostra “Esta aula tem um vídeo, mas ele precisa de internet.”
 
 22 fotos reais do Wikimedia Commons (licenças livres), 960×640 WebP, com texto alternativo, legenda e crédito na tela.
 Ficam na capa e na ideia de 33 lições e na faixa de cada módulo. Lista e créditos: Inventário e `CREDITOS.md`.
+
+## Texto grifado durante o áudio (versão 2)
+
+- `npm run audio:tempos` (ou `-- --modulo 1`, `-- --aula 1.3`) lê os MP3 existentes (ffmpeg), acha o começo de cada parte (mesma regra do app), divide o tempo pelos caracteres falados de cada parágrafo (`unidadesDaAula` em `tools/audio/ssml.mjs`, conferida contra o texto narrado nas 98 aulas) e puxa cada começo para a pausa mais próxima (até 1,5 s). Não gera áudio nem gasta crédito.
+- Saída `audio/tempos.json` (no pré-cache): `{ "1.1": { "passo-0": [["tit", 0], ["gancho", 5.56]], … } }`. Ajustes manuais em `audio/tempos-ajustes.json` (`{ "1.3": { "passo-1:b2": 45.1 } }`), aplicados por cima a cada rodada.
+- Chaves na tela (`data-trecho`): `tit`, `gancho`, `analogia`, `b<n>` (bloco), `b<n>.<i>` (item de lista ou linha de tabela), `erro-t`, `erro-d`.
+- App (`js/core/grifo.js`): só enquanto toca; trecho da vez em `--texto-primario` com barra `#D4D3DB` de 2 px; o resto em `--texto-secundario`; sem rolar sozinho; botão "Voltar ao trecho". Ajuste "Texto grifado durante o áudio" (chave `v2.leitura.grifado`, ligado por padrão). Os tempos do M1 foram conferidos de ouvido pelo dono do app.

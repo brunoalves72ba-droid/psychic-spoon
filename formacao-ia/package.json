@@ -23,6 +23,7 @@
     "e2e:contraste": "node tests/e2e/contraste.mjs && node tests/e2e/contraste.mjs --pc",
     "capturas": "node tests/e2e/capturas.mjs",
     "e2e:navegacao": "node tests/e2e/navegacao.mjs",
-    "audio:tempos": "node tools/audio/tempos.mjs"
+    "audio:tempos": "node tools/audio/tempos.mjs",
+    "e2e:acessibilidade": "node tests/e2e/acessibilidade.mjs"
   }
 }

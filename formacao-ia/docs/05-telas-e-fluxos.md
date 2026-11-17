@@ -62,3 +62,11 @@ com “Ajustes” no pé). Rotas, arquivos e o propósito de cada tela: [Invent�
 Botão de instalar (quando o navegador oferece), passo a passo para Android (Chrome › ⋮ › Instalar app) e iPhone
 (Safari › Compartilhar › Adicionar à Tela de Início), aviso de quando o link abre dentro do Sexteto, conferência de que
 todos os arquivos estão no aparelho e pedido de armazenamento permanente.
+
+## Mudanças da versão 2
+
+- **Primeira abertura:** "Como você quer ser chamado?" (não aceita vazio) → boas-vindas → Hoje. O nome muda em Ajustes.
+- **Hoje:** saudação com a mascote; check-in do dia logo acima do Próximo passo; a semana, a pergunta-relâmpago e o desafio continuam.
+- **Módulo (`#/trilha/m/<n>`):** duas pílulas ("X de Y lições" e "~N h com prática"; as horas da ementa saíram da tela, os dados ficam); título da aula só quando difere do módulo; a lição da vez vira um card com o único botão principal ("Continuar aqui" ou "Começar aqui").
+- **Lição:** mascote de óculos no topo; texto grifado durante o áudio; `#/licao/<id>/conferir` mostra o tempo e o trecho calculado.
+- **Menu lateral:** ver "Sistema visual" no doc 06. **Sobre o app** (`#/mais/sobre`): descrição, créditos, versão e "Procurar atualização" (saíram de Ajustes).

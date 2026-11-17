@@ -36,16 +36,28 @@ for (const [disp, vp] of [['celular', { width: 390, height: 844, isMobile: true,
     const c = await import('./js/data/curso.js');
     for (const id of [...c.idsDoModulo(0), '1.1']) { e.prog(id); e.registrarQuiz(id, 0, true); e.concluirLicao(id, c.licao(id).quiz.length); }
     e.irPasso('1.2', 1);
-    for (const n of ['nome', 'perfil']) void n;
     e.S.perfil.boasVindas = true; e.salvar('perfil');
+    e.definirNome('Bruno');
     await e.gravado();
     try { await (await import('./js/core/estado.js')).gravado(); } catch {}
   });
+  await p.goto(`http://localhost:${PORT}/index.html#/progresso`); await p.reload(); await p.waitForTimeout(500); // redesenha com o progresso
   for (const [t, h] of TELAS) {
     await p.goto(`http://localhost:${PORT}/index.html${h}`);
     await p.waitForTimeout(900);
     await p.screenshot({ path: `${dir}${disp}-${t}.png`, fullPage: disp === 'celular' && t !== 'licao' });
   }
+  // menu lateral aberto (celular) e boas-vindas
+  if (disp === 'celular') {
+    await p.goto(`http://localhost:${PORT}/index.html#/hoje`); await p.waitForSelector('button.saudacao');
+    await p.click('button.saudacao'); await p.waitForTimeout(500);
+    await p.screenshot({ path: `${dir}${disp}-menu.png` });
+    await p.keyboard.press('Escape'); await p.waitForTimeout(400);
+  }
+  await p.goto(`http://localhost:${PORT}/index.html#/hoje`); await p.waitForSelector('.saudacao');
+  await p.evaluate(async () => { (await import('./js/core/boasvindas.js')).mostrarBoasVindas({ forcar: true }); });
+  await p.waitForSelector('.bv-card'); await p.waitForTimeout(800);
+  await p.screenshot({ path: `${dir}${disp}-boasvindas.png` });
   await ctx.close();
 }
 await browser.close(); server.kill();

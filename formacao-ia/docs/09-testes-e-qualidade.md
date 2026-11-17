@@ -31,3 +31,10 @@ Constantes, Design e Manifesto.
 - Depois de mudar qualquer arquivo do app: `npm run precache` e `npm run docs`.
 - Em quiz e casos de escolha, a 1ª opção é a certa. Nunca escrever “null” na tela (use `put()` ou o `append` da página).
 - Toda tecla/toque precisa de alvo de 44 px; todo texto novo em português do Brasil, frases curtas.
+
+## Testes da versão 2
+
+- Unidade: `tests/abertura.test.mjs` (150 frases e sorteio), `tests/tempos.test.mjs` (unidades = texto narrado, tempos das 98 aulas em ordem), `tests/sync.test.mjs` (inclui o teste obrigatório: versão antiga grava, versão nova lê, nenhuma chave `v2.*` se perde).
+- Ponta a ponta: `npm run e2e:navegacao` (nome, saudação, menu, luz, check-in, mascote, boas-vindas), `node tests/e2e/acessibilidade.mjs` (zoom 130%, um botão principal por tela, fps com CPU 4x), `e2e:audio` (texto grifado).
+- Os testes antigos pulam o nome e as boas-vindas com `window.__FIA_SEM_ABERTURA = true` (script de início).
+- Capturas: `npm run capturas -- depois` → `docs/capturas/depois/` (comparar com `docs/capturas/antes/`).

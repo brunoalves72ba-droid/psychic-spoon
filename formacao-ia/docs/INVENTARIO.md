@@ -206,8 +206,9 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tests/abertura.test.mjs` | 33 | Boas-vindas: o banco tem as 150 frases sem numeração, e o sorteio não repete as últimas 10. | — |
 | `tests/audio.test.mjs` | 157 | Gerador de áudio (tools/audio): forma falada, SSML, divisão no limite da API, MP3 e o gerador inteiro contra uma API do Google de mentira (nenhuma chave real, nenhum caractere gasto). | — |
 | `tests/conteudo.test.mjs` | 147 | Valida o conteúdo: as 98 micro-lições do documento, cada uma com os 7 passos completos. | — |
+| `tests/e2e/acessibilidade.mjs` | 64 | Fase 9: zoom de 130% sem quebrar (sem rolagem lateral), no máximo UM botão principal por tela, e medição de fluidez com a CPU 4x mais lenta (rolar a lista do Módulo 1 e abrir o menu lateral). Uso: node tests/e2e/acessibilidade.mjs | — |
 | `tests/e2e/audio.mjs` | 118 | Player do áudio das aulas (voz neural), vídeo opcional e recompensas. Um MP3 de teste (feito com ffmpeg) faz o papel do áudio gerado; o índice e o arquivo de vídeos são trocados só neste teste. Uso: node tests/e2e/audio.mjs | — |
-| `tests/e2e/capturas.mjs` | 53 | Capturas de tela das telas principais, no celular (390×844) e no PC (1440×900), com um pouco de progresso já feito (para as telas não ficarem vazias). Uso: node tests/e2e/capturas.mjs <nome-da-pasta> Salva em docs/capturas/<nome>/ — usado para comparar o antes e o depois de uma mudança visual. | — |
+| `tests/e2e/capturas.mjs` | 65 | Capturas de tela das telas principais, no celular (390×844) e no PC (1440×900), com um pouco de progresso já feito (para as telas não ficarem vazias). Uso: node tests/e2e/capturas.mjs <nome-da-pasta> Salva em docs/capturas/<nome>/ — usado para comparar o antes e o depois de uma mudança visual. | — |
 | `tests/e2e/contraste.mjs` | 104 | Contraste medido nos pixels reais: esconde o texto, fotografa a tela, mede o fundo atrás de cada trecho de texto e compara com a cor do texto (WCAG: 4,5:1 normal; 3:1 para texto grande). Repete em várias posições de rolagem, porque o fundo é fixo e um card pode passar por cima da parte violeta da tela. Uso: node tests/e2e/contraste.mjs [--pc] | — |
 | `tests/e2e/navegacao.mjs` | 237 | Teste ponta a ponta da navegação: pergunta do nome na primeira abertura, saudação, menu lateral (abrir, foco, Esc, véu, arrastar, "voltar" do Android, itens) e a seção do menu no PC. Uso: node tests/e2e/navegacao.mjs | — |
 | `tests/e2e/offline.mjs` | 74 | Teste offline e de convivência: serve o repositório inteiro (Sexteto na raiz, este app em /formacao-ia/), instala primeiro o service worker do Sexteto, depois abre este app, corta a rede e confere que tudo abre, inclusive o Python embutido e os kits. Uso: node tests/e2e/offline.mjs | — |
@@ -705,3 +706,4 @@ Fontes: **Manrope** (`assets/fonts/manrope-latin-wght-normal.woff2`), **Manrope*
 | `npm run capturas` | `node tests/e2e/capturas.mjs` |
 | `npm run e2e:navegacao` | `node tests/e2e/navegacao.mjs` |
 | `npm run audio:tempos` | `node tools/audio/tempos.mjs` |
+| `npm run e2e:acessibilidade` | `node tests/e2e/acessibilidade.mjs` |

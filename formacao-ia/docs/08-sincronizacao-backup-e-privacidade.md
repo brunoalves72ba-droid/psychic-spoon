@@ -41,3 +41,10 @@ Sem servidor do app, sem conta, sem analytics, sem chave de IA no navegador.
 
 Os kits Python (`kits/`) usam a chave do **Groq** num `.env` do computador da pessoa; o app nunca vê essa chave.
 O gerador de áudio usa a chave do Google em `tools/audio/.env` (no `.gitignore`), também só no computador.
+
+## Chaves da versão 2
+
+- Sincronizam: `v2.nome`, `v2.checkin.dia` (no mesmo dia vale a carinha do check-in feito primeiro e o tempo da última troca), `v2.checkin.historico` (120 dias, união), `v2.leitura.grifado`.
+- Só no aparelho (dentro de `local`): `v2.boasvindas.ultimas` (índices das últimas 10 frases), `v2.curiosidade.dispensada`. Em `localStorage`: `fia-saiu-em` (regra dos 30 min).
+- A mesclagem preserva qualquer chave que não conhece (vale a de `_t` mais recente), então nada se perde entre versões.
+- O pacote ganhou `versaoMinima: 2` no envelope (continua `v: 1`, legível pela versão antiga) e `versao: 2` dentro dos dados. Se o pacote veio de outro aparelho numa versão antiga, a tela Sincronizar avisa: "Atualize o app no outro aparelho". **Atualize os dois aparelhos antes de sincronizar.**
