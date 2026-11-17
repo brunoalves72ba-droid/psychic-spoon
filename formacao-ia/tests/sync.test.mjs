@@ -158,3 +158,33 @@ test('check-in: no mesmo dia vale a carinha do primeiro; o tempo da última troc
   const ontem = { 'v2.checkin.dia': { data: '2026-11-16', humor: 'feliz', tempo: 15, em: 1, _t: 1 } };
   assert.equal(mesclarKv(ontem, cel)['v2.checkin.dia'].data, '2026-11-17', 'vale o dia mais novo');
 });
+
+// A versão antiga do app só conhecia estas chaves: a mesclagem dela descartava o resto.
+const CHAVES_ANTIGAS = ['perfil', 'licoes', 'cartoes', 'meus', 'dias', 'semana', 'xpPor', 'apagados', 'conquistas', 'marcos', 'diario', 'pensamentos', 'missoes', 'ficha', 'prompts', 'fichaViva', 'semanais', 'andaime', 'desafios', 'mistura', 'sessao'];
+const versaoAntiga = (kv) => Object.fromEntries(Object.entries(kv).filter(([k]) => CHAVES_ANTIGAS.includes(k)));
+
+test('OBRIGATÓRIO: versão antiga grava, versão nova lê, nenhuma chave v2.* local se perde', async () => {
+  const token = 'ghp_teste_token_123';
+  const novoLocal = {
+    ...celular,
+    'v2.nome': { nome: 'Bruno', _t: 500 },
+    'v2.checkin.dia': { data: '2026-11-17', humor: 'feliz', tempo: 15, em: 10, _t: 10 },
+    'v2.checkin.historico': { '2026-11-17': { h: 'feliz', em: 10 } },
+    'v2.leitura.grifado': { ligado: false, _t: 20 },
+  };
+  // o aparelho antigo leu o pacote novo, mesclou do jeito antigo (sem as v2.*) e gravou de volta
+  const antigoGravou = await cifrar({ kv: versaoAntiga(mesclarKv(novoLocal, pc)), log: [], dispositivo: 'antigo', quando: 'x' }, token);
+  const lido = await decifrar(antigoGravou, token);
+  assert.equal(lido.versao, undefined, 'pacote da versão antiga não tem "versao"');
+  const m = mesclarKv(novoLocal, lido.kv);
+  for (const k of Object.keys(novoLocal).filter((x) => x.startsWith('v2.'))) assert.deepEqual(m[k], novoLocal[k], k);
+  // e o progresso que veio do aparelho antigo também entra
+  assert.ok(m.licoes['0.3'] || Object.keys(m.licoes).length >= Object.keys(celular.licoes).length);
+});
+
+test('pacote novo: versaoMinima no envelope e ainda legível do jeito antigo', async () => {
+  const p = await cifrar({ versao: 2, kv: {}, log: [] }, 'tk');
+  const o = JSON.parse(p);
+  assert.equal(o.app, 'formacao-ia'); assert.equal(o.v, 1); assert.equal(o.versaoMinima, 2); assert.ok(o.dados);
+  assert.equal((await decifrar(p, 'tk')).versao, 2);
+});

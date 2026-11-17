@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 157 (versão 8f5ef0dffd85) |
+| Arquivos no pré-cache do app | 157 (versão 522afdce8c52) |
 
 ## Telas (rotas)
 
@@ -87,7 +87,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/core/mascote.js` | 95 | A mascote: personagem original e simples (uma gotinha com antena de faísca), em SVG inline. Um acessório por aba (camadas que entram e saem por opacidade e transform), pisca a cada 6–10 s e coloca os óculos ao entrar numa lição. Decorativa: aria-hidden. | `ACESSORIO`, `mascote`, `pular`, `_ultimoAcessorio` |
 | `js/core/menu.js` | 132 | Saudação ("Oi, nome") e menu lateral: no celular, uma gaveta que abre da esquerda; no PC, os mesmos itens numa seção do menu fixo, abaixo das cinco abas. | `itensMenu`, `saudacao`, `menuAberto`, `abrirMenu`, `fechar`, `montarMenuPC` |
 | `js/core/mesclar.js` | 149 | Mesclagem de dois estados (celular e PC) sem perder progresso. Funções puras, testadas. Regra geral: progresso só avança (lição concluída, cartão revisto, missão marcada nunca “desfazem”), e o que foi editado por inteiro (perfil, ficha técnica, prompt) fica com a versão mais recente. | `idDiario`, `idEvento`, `mesclarKv`, `mesclarLog` |
-| `js/core/nuvem.js` | 142 | Sincronização entre aparelhos por um Gist secreto do GitHub, com o conteúdo cifrado. - O token (permissão só de “gist”) fica apenas neste aparelho; o mesmo token no outro aparelho acha o mesmo Gist. - O conteúdo é cifrado (AES-GCM) com uma chave derivada do token: quem só tiver o link do Gist não consegue ler. | `API`, `ARQUIVO`, `LINK_TOKEN`, `estavel`, `cifrar`, `decifrar`, `status`, `aoMudar`, `quandoReceber`, `sincronizar`, `agendar`, `conectar`, `desconectar`, `recomecarNuvem`, `iniciar` |
+| `js/core/nuvem.js` | 147 | Sincronização entre aparelhos por um Gist secreto do GitHub, com o conteúdo cifrado. - O token (permissão só de “gist”) fica apenas neste aparelho; o mesmo token no outro aparelho acha o mesmo Gist. - O conteúdo é cifrado (AES-GCM) com uma chave derivada do token: quem só tiver o link do Gist não consegue ler. | `API`, `ARQUIVO`, `LINK_TOKEN`, `estavel`, `VERSAO_DADOS`, `cifrar`, `decifrar`, `status`, `aoMudar`, `quandoReceber`, `sincronizar`, `agendar`, `conectar`, `desconectar`, `recomecarNuvem`, `iniciar` |
 | `js/core/pensamento.js` | 15 | Captura de distração: anotar o pensamento intruso sem sair de onde está. | `capturar` |
 | `js/core/plano.js` | 39 | Cronograma: Plano A (4–5 h/semana, ≈26 semanas) e Plano B (2–3 h/semana, ≈48 semanas). Se uma semana for ruim, as datas são recalculadas a partir de hoje, sem cobrança. Funções puras. | `PLANOS`, `calendario`, `situacao`, `recalcular` |
 | `js/core/plataforma.js` | 36 | Reconhece se o app está num computador ou num celular e adapta a tela. Automático: mouse/trackpad (ponteiro fino com hover) e tela larga = PC. Dá para forçar nos Ajustes. | `detectar`, `plataforma`, `ehPC`, `aoTrocar`, `aplicarPlataforma`, `escolher` |
@@ -116,7 +116,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/views/mais-pensamentos.js` | 20 | Pensamentos guardados durante o estudo, para resolver depois. | `default` |
 | `js/views/mais-porque.js` | 36 | Por que o app é assim: cada escolha de desenho, com o grau de evidência e a leitura honesta. | `default` |
 | `js/views/mais-sobre.js` | 24 | Sobre o app: o que é, de quem é, versão e a busca de atualização. | `default` |
-| `js/views/mais-sync.js` | 51 | Sincronização entre celular e PC: configuração passo a passo e situação atual. | `default` |
+| `js/views/mais-sync.js` | 52 | Sincronização entre celular e PC: configuração passo a passo e situação atual. | `default` |
 | `js/views/progresso-conquistas.js` | 14 | Conquistas: cada uma marca uma habilidade, não tempo de tela. | `default` |
 | `js/views/progresso-cronograma.js` | 38 | Cronograma: Plano A (≈26 semanas) ou B (≈48 semanas). Se uma semana for ruim, as datas são recalculadas, sem cobrança. | `default` |
 | `js/views/progresso-semana.js` | 47 | Revisão da semana: 3 vitórias, 1 dificuldade e o plano em 3 linhas. E o desafio surpresa da quinzena. | `default` |
@@ -216,7 +216,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tests/labs.test.mjs` | 68 | Testes das regras dos laboratórios (partes puras, sem tela). | — |
 | `tests/motores.test.mjs` | 254 | Testes dos motores puros: datas, revisão espaçada, sequência semanal, andaime, plano, JSON e texto. | — |
 | `tests/python.test.mjs` | 45 | Roda a solução de cada exercício de Python no mesmo MicroPython do app e confere com os testes da lição. | — |
-| `tests/sync.test.mjs` | 161 | Sincronização: a mesclagem não perde progresso, e a cifra só abre com o mesmo token. | — |
+| `tests/sync.test.mjs` | 191 | Sincronização: a mesclagem não perde progresso, e a cifra só abre com o mesmo token. | — |
 | `tests/tempos.test.mjs` | 64 | Texto grifado: as unidades faladas são exatamente o texto narrado; os tempos do M1 existem, crescem e apontam para trechos que existem na tela; o cálculo puxa o começo para as pausas. | — |
 
 ### Recursos estáticos
