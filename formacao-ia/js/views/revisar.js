@@ -5,6 +5,7 @@ import { S, revs, filaDeHoje, vencidosHoje } from '../core/estado.js';
 import { hoje, addDays, dow, DIAS } from '../core/dia.js';
 import { ESCADA, TETO, previsao, retencao, resumo } from '../core/srs.js';
 import { progressoGeral } from '../data/curso.js';
+import { luz } from '../core/luz.js';
 
 const pct = (r) => (r.taxa == null ? '—' : `${Math.round(r.taxa * 100)}%`);
 
@@ -15,6 +16,7 @@ export default async function (el) {
   const res = resumo(S.cartoes);
   const feitosHoje = (S.dias[d] && S.dias[d].c) || 0;
   el.append(h('header', h('div.eyebrow', `${fmt(res.total)} cartões no baralho`), h('h1', 'Revisar')));
+  const inicio = el.children.length;
 
   if (!res.total) {
     el.append(h('section.card.flat', h('h3', 'Ainda não há cartões'), h('p.dim', 'Eles nascem sozinhos: cada lição concluída vira 2 ou 3 cartões, que voltam amanhã, depois em 3, 7 e 21 dias.'), h('a.btn.primary.block', { href: '#/hoje/comecar', style: { marginTop: '10px' } }, 'Fazer a primeira lição')));
@@ -30,6 +32,7 @@ export default async function (el) {
       h('p.dim', { style: { marginTop: '6px' } }, feitosHoje >= TETO && venc ? `Você respondeu ${feitosHoje} cartões hoje. Os ${venc} restantes esperam sem problema.` : k < 0 ? 'Nenhum cartão vence nos próximos 7 dias.' : `Os próximos ${plural(prox[k], 'cartão vence', 'cartões vencem')} ${k === 0 ? 'amanhã' : `em ${k + 1} dias`}.`),
       venc ? h('a.btn.small', { href: '#/revisar/cartoes/mais', style: { marginTop: '8px' } }, 'Estou no embalo: mais 5') : null));
   }
+  luz(el.children[inicio], { aba: 'revisar' });
 
   if (res.total) {
     const r7 = retencao(revs, 7), r21 = retencao(revs, 21);

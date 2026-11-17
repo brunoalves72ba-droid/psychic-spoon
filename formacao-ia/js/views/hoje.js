@@ -13,6 +13,7 @@ import { faixa, fotoDoModulo } from '../core/fotos.js';
 import * as nuvem from '../core/nuvem.js';
 import { instalado } from '../core/instalar.js';
 import { licao as licaoDe } from '../data/curso.js';
+import { luz } from '../core/luz.js';
 
 let avisouSemana = false;
 
@@ -39,18 +40,19 @@ export default async function (el, args) {
 
   // ---- o próximo passo ----
   const L = proxId && licao(proxId);
+  let destaque = null;
   if (L) {
     const st = S.licoes[proxId] || {};
     const andando = st.p > 0 && !st.feita;
     const m = modulo(moduloDe(proxId));
-    esq.append(h('section.card.dest.proximo', { css: { '--c': m.cor } },
+    esq.append(destaque = h('section.card.dest.proximo', { css: { '--c': m.cor } },
       faixa(fotoDoModulo(m.n), h('div.eyebrow', andando ? 'Você parou aqui' : 'Próximo passo'),
         h('h2', `${L.id} ${L.t}`),
         h('p.small', `Módulo ${m.n} · ${m.t} · ${L.min} min${andando ? ` · passo ${st.p + 1} de 7 (${PASSOS[st.p]})` : ''}`)),
       h('a.btn.primary.big.block', { href: `#/licao/${proxId}`, id: 'comecar', style: { marginTop: '12px' } }, icon('play'), andando ? 'Continuar' : `Começar ${S.perfil.alvo} min`),
       pc ? h('p.small.muted.atalho', 'No computador: Enter avança, ← volta, 1 a 3 respondem o quiz, N anota um pensamento.') : null));
   } else {
-    esq.append(h('section.card.dest', h('div.eyebrow', 'Trilha concluída'), h('h2', { style: { margin: '4px 0' } }, 'Todas as lições feitas'),
+    esq.append(destaque = h('section.card.dest', h('div.eyebrow', 'Trilha concluída'), h('h2', { style: { margin: '4px 0' } }, 'Todas as lições feitas'),
       h('p.small.dim', 'Agora é manter a revisão em dia e fechar o projeto.'), h('a.btn.primary.big.block', { href: '#/projeto' }, 'Ir para o projeto')));
   }
 
@@ -160,4 +162,5 @@ export default async function (el, args) {
   if (dow(d) >= 5 && !S.semanais.some((x) => x.semana === semanaAtual(S.dias, d).start)) extras.append(h('a.item', { href: '#/progresso/semana' }, icon('lampada'), h('span.t', h('b', 'Revisão da semana'), h('span', '3 vitórias, 1 dificuldade e o plano em 3 linhas.')), h('span.chev', '›')));
   if (extras.children.length) dir.append(extras);
   el.append(h('div.grade-pc', esq, dir));
+  luz(destaque, { aba: 'hoje' });
 }

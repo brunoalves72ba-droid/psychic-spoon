@@ -106,6 +106,38 @@ try {
   ok(!erros.length, 'sem erros no console: ' + erros.join(' | '));
   await ctx.close();
 
+  // ---------- luz do card de destaque ----------
+  {
+    const c3 = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
+    await c3.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; });
+    const r = await c3.newPage();
+    await r.goto(URL0 + '#/hoje'); await r.waitForSelector('.proximo > .luz');
+    ok(await r.evaluate(() => document.querySelectorAll('.luz').length === 1), 'Hoje: uma luz só, no Próximo passo');
+    await r.waitForFunction(() => document.querySelector('.proximo .luz-giro').getAnimations().length > 0, null, { timeout: 2000 }).catch(() => {});
+    ok(await r.evaluate(() => { const a = document.querySelector('.proximo .luz-giro').getAnimations()[0]; return a && a.effect.getTiming().duration === 2400; }), 'Hoje: uma volta de 2,4 s ao entrar');
+    const props = await r.evaluate(() => { const a = document.querySelector('.proximo .luz-giro').getAnimations()[0]; return [...new Set(a.effect.getKeyframes().flatMap((k) => Object.keys(k).filter((x) => !['offset', 'easing', 'composite', 'computedOffset'].includes(x))))]; });
+    ok(props.every((x) => x === 'transform' || x === 'opacity'), 'só transform e opacity animam: ' + props.join(','));
+    await r.click('.proximo .eyebrow');
+    ok(await r.evaluate(() => document.querySelector('.proximo .luz-brilho').getAnimations().length === 1 && document.querySelector('.proximo .luz-giro').getAnimations().length === 1), 'toque no card: nova volta + brilho (sem acumular)');
+    await r.click('.proximo .eyebrow'); await r.click('.proximo .eyebrow');
+    ok(await r.evaluate(() => document.querySelector('.proximo .luz-giro').getAnimations().length === 1), 'toques repetidos reiniciam sem acumular');
+    await r.evaluate(() => { document.querySelector('.proximo .btn.primary').addEventListener('click', (e) => e.preventDefault(), { once: true }); });
+    await r.click('.proximo .btn.primary');
+    ok(await r.evaluate(() => document.querySelector('.proximo .luz-flash').getAnimations().length === 1 && document.querySelector('.proximo .luz-giro').getAnimations().length === 0), 'botão principal: flash do contorno, sem a volta');
+    for (const [aba, sel] of [['trilha', '.ilha.atual > .luz'], ['revisar', '.card > .luz'], ['projeto', '.item > .luz'], ['progresso', '.card > .luz']]) {
+      await r.goto(URL0 + '#/' + aba); await r.waitForSelector(sel, { timeout: 3000 }).catch(() => {});
+      ok(!!(await r.$(sel)) && await r.evaluate(() => document.querySelectorAll('.luz').length === 1), `${aba}: uma luz só no card de destaque`);
+    }
+    await r.evaluate(() => { location.hash = '#/hoje'; }); await r.waitForSelector('.proximo > .luz'); await r.waitForTimeout(150);
+    ok(await r.evaluate(() => document.querySelector('.proximo .luz-giro').getAnimations().length === 0), 'segunda visita na sessão: sem volta de entrada');
+    await c3.close();
+    const c4 = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
+    await c4.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; });
+    const s4 = await c4.newPage(); await s4.goto(URL0 + '#/hoje'); await s4.waitForSelector('.proximo > .luz'); await s4.waitForTimeout(150);
+    ok(await s4.evaluate(() => document.querySelector('.proximo .luz-giro').getAnimations().length === 0), 'reduzir movimento: sem giro');
+    await c4.close();
+  }
+
   // ---------- PC ----------
   const c2 = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block', locale: 'pt-BR' });
   await c2.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; });

@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 147 (versão 4ad927368f74) |
+| Arquivos no pré-cache do app | 148 (versão 76f55904cdd9) |
 
 ## Telas (rotas)
 
@@ -79,6 +79,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/core/fotos.js` | 27 | Fotos reais (Wikimedia Commons, licenças livres) com crédito visível em cada uma. | `foto`, `fotoDaLicao`, `fotoDoModulo`, `credito`, `figura`, `faixa` |
 | `js/core/instalar.js` | 63 | Instalação como app próprio (ícone separado do Sexteto) e tudo guardado no aparelho para usar sem internet. | `aoMudar`, `instalado`, `podeInstalar`, `ehIOS`, `instalar`, `situacaoOffline`, `guardarTudo` |
 | `js/core/json-pt.js` | 158 | Leitor de JSON com mensagens de erro em português, pensadas para quem está começando. analisar(texto) → { ok: true, valor } ou { ok: false, pos, linha, col, msg, dica }. | `analisar`, `conferirFormato` |
+| `js/core/luz.js` | 66 | Luz em volta do card de destaque (um por tela): uma volta de 2,4 s ao entrar na aba pela primeira vez na sessão; toque no card = nova volta + brilho difuso atrás; toque no botão principal = flash do contorno. Só transform e opacity animam. Com "reduzir movimento": sem giro, o toque só acende um pouco a borda. | `luz`, `_reiniciarLuz` |
 | `js/core/menu.js` | 123 | Saudação ("Oi, nome") e menu lateral: no celular, uma gaveta que abre da esquerda; no PC, os mesmos itens numa seção do menu fixo, abaixo das cinco abas. | `itensMenu`, `saudacao`, `menuAberto`, `abrirMenu`, `fechar`, `montarMenuPC` |
 | `js/core/mesclar.js` | 133 | Mesclagem de dois estados (celular e PC) sem perder progresso. Funções puras, testadas. Regra geral: progresso só avança (lição concluída, cartão revisto, missão marcada nunca “desfazem”), e o que foi editado por inteiro (perfil, ficha técnica, prompt) fica com a versão mais recente. | `idDiario`, `idEvento`, `mesclarKv`, `mesclarLog` |
 | `js/core/nuvem.js` | 142 | Sincronização entre aparelhos por um Gist secreto do GitHub, com o conteúdo cifrado. - O token (permissão só de “gist”) fica apenas neste aparelho; o mesmo token no outro aparelho acha o mesmo Gist. - O conteúdo é cifrado (AES-GCM) com uma chave derivada do token: quem só tiver o link do Gist não consegue ler. | `API`, `ARQUIVO`, `LINK_TOKEN`, `estavel`, `cifrar`, `decifrar`, `status`, `aoMudar`, `quandoReceber`, `sincronizar`, `agendar`, `conectar`, `desconectar`, `recomecarNuvem`, `iniciar` |
@@ -97,7 +98,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | Arquivo | Linhas | O que é | Exporta |
 |---|---:|---|---|
 | `js/views/foco.js` | 56 | Modo foco: tela limpa, relógio visível de 10, 15 ou 25 min e a opção de continuar no fluxo. O relógio avisa, mas nunca interrompe: quem está em hiperfoco decide se segue. | `default` |
-| `js/views/hoje.js` | 164 | Hoje: um botão grande para começar, uma pergunta-relâmpago e a semana. O resto fica quieto. | `default` |
+| `js/views/hoje.js` | 167 | Hoje: um botão grande para começar, uma pergunta-relâmpago e a semana. O resto fica quieto. | `default` |
 | `js/views/labs-x.js` | 15 | Um laboratório aberto em modo livre (sem missão). | `default` |
 | `js/views/labs.js` | 11 | Laboratórios: simuladores para mexer e ver acontecer. | `default` |
 | `js/views/licao.js` | 253 | Player da micro-lição: sempre os mesmos 7 passos, um conceito, uma tela por vez. Gancho → ideia com analogia → exemplo resolvido → exercício → quiz → erro comum → fim com o próximo passo pronto. Dá para voltar a qualquer passo já visto (tocando nos passos do topo, no botão Voltar ou na seta ←) | `default` |
@@ -113,20 +114,20 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/views/progresso-conquistas.js` | 14 | Conquistas: cada uma marca uma habilidade, não tempo de tela. | `default` |
 | `js/views/progresso-cronograma.js` | 38 | Cronograma: Plano A (≈26 semanas) ou B (≈48 semanas). Se uma semana for ruim, as datas são recalculadas, sem cobrança. | `default` |
 | `js/views/progresso-semana.js` | 47 | Revisão da semana: 3 vitórias, 1 dificuldade e o plano em 3 linhas. E o desafio surpresa da quinzena. | `default` |
-| `js/views/progresso.js` | 57 | Progresso: o que foi aprendido e o que ficou na memória. Minutos de tela não entram na conta. | `default` |
+| `js/views/progresso.js` | 60 | Progresso: o que foi aprendido e o que ficou na memória. Minutos de tela não entram na conta. | `default` |
 | `js/views/projeto-diario.js` | 26 | Diário de bordo: uma frase por sessão. É a primeira entrega do projeto (Módulo 0). | `default`, `diarioMarkdown` |
 | `js/views/projeto-ficha.js` | 55 | Ficha técnica do APE-IA (entrega do Módulo 1): objetivo, 2 modelos, 5 regras e um teste de alucinação. | `default`, `fichaMarkdown` |
 | `js/views/projeto-kits.js` | 30 | Kits de código do projeto: arquivos prontos para baixar e rodar no computador. | `default` |
 | `js/views/projeto-m.js` | 43 | Missões do projeto em um módulo: passos pequenos, de 10 a 25 minutos, com lista de conferência. | `default` |
 | `js/views/projeto-pendencias.js` | 27 | Práticas “mão na massa” guardadas para quando você estiver no computador. | `default` |
 | `js/views/projeto-prompts.js` | 60 | Biblioteca de prompts (entrega do Módulo 2): variáveis {assim}, versões, exemplo e rubrica de 4 pontos. | `default` |
-| `js/views/projeto.js` | 37 | Projeto: o APE-IA (Assistente Pessoal de Estudos com IA), montado módulo a módulo. | `default` |
+| `js/views/projeto.js` | 41 | Projeto: o APE-IA (Assistente Pessoal de Estudos com IA), montado módulo a módulo. | `default` |
 | `js/views/revisar-cartoes.js` | 97 | Sessão de cartões: tentar lembrar, ver a resposta, dizer como foi. Quem errou revê no fim da sessão. | `default` |
 | `js/views/revisar-importar.js` | 54 | Importar cartões: JSON [{frente, verso}] ou CSV (frente;verso), inclusive os gerados pela Fábrica de flashcards. | `default`, `lerCartoes` |
 | `js/views/revisar-mistura.js` | 42 | Revisão misturada: perguntas de módulos diferentes, embaralhadas (intercalação). | `default`, `sortear` |
-| `js/views/revisar.js` | 56 | Revisar: cartões espaçados (1, 3, 7 e 21 dias, com teto de 15 por dia) e revisão misturada. | `default` |
+| `js/views/revisar.js` | 59 | Revisar: cartões espaçados (1, 3, 7 e 21 dias, com teto de 15 por dia) e revisão misturada. | `default` |
 | `js/views/trilha-m.js` | 39 | Página de um módulo: aulas, micro-lições, missão do projeto e recursos externos. | `default` |
-| `js/views/trilha.js` | 30 | Mapa da trilha: 7 ilhas (M0 a M6) e o APE-IA crescendo a cada módulo concluído. | `default` |
+| `js/views/trilha.js` | 33 | Mapa da trilha: 7 ilhas (M0 a M6) e o APE-IA crescendo a cada módulo concluído. | `default` |
 
 ### Laboratórios (`js/labs`)
 
@@ -199,7 +200,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tests/e2e/audio.mjs` | 91 | Player do áudio das aulas (voz neural), vídeo opcional e recompensas. Um MP3 de teste (feito com ffmpeg) faz o papel do áudio gerado; o índice e o arquivo de vídeos são trocados só neste teste. Uso: node tests/e2e/audio.mjs | — |
 | `tests/e2e/capturas.mjs` | 53 | Capturas de tela das telas principais, no celular (390×844) e no PC (1440×900), com um pouco de progresso já feito (para as telas não ficarem vazias). Uso: node tests/e2e/capturas.mjs <nome-da-pasta> Salva em docs/capturas/<nome>/ — usado para comparar o antes e o depois de uma mudança visual. | — |
 | `tests/e2e/contraste.mjs` | 104 | Contraste medido nos pixels reais: esconde o texto, fotografa a tela, mede o fundo atrás de cada trecho de texto e compara com a cor do texto (WCAG: 4,5:1 normal; 3:1 para texto grande). Repete em várias posições de rolagem, porque o fundo é fixo e um card pode passar por cima da parte violeta da tela. Uso: node tests/e2e/contraste.mjs [--pc] | — |
-| `tests/e2e/navegacao.mjs` | 125 | Teste ponta a ponta da navegação: pergunta do nome na primeira abertura, saudação, menu lateral (abrir, foco, Esc, véu, arrastar, "voltar" do Android, itens) e a seção do menu no PC. Uso: node tests/e2e/navegacao.mjs | — |
+| `tests/e2e/navegacao.mjs` | 157 | Teste ponta a ponta da navegação: pergunta do nome na primeira abertura, saudação, menu lateral (abrir, foco, Esc, véu, arrastar, "voltar" do Android, itens) e a seção do menu no PC. Uso: node tests/e2e/navegacao.mjs | — |
 | `tests/e2e/offline.mjs` | 73 | Teste offline e de convivência: serve o repositório inteiro (Sexteto na raiz, este app em /formacao-ia/), instala primeiro o service worker do Sexteto, depois abre este app, corta a rede e confere que tudo abre, inclusive o Python embutido e os kits. Uso: node tests/e2e/offline.mjs | — |
 | `tests/e2e/run.mjs` | 156 | Teste ponta a ponta: abre o app a 390×844 no Chromium, conclui lições com cada tipo de exercício, percorre todas as telas e falha em erro de console, requisição externa, rolagem horizontal ou alvo de toque < 44 px. Uso: node tests/e2e/run.mjs [--dark] [--w=360] | — |
 | `tests/e2e/sync.mjs` | 138 | Sincronização de ponta a ponta com dois aparelhos simulados (celular e PC) e uma API de Gist falsa. Confere: ligar com o mesmo token, levar progresso de um para o outro, estudar nos dois sem perder nada, exclusões chegarem ao outro lado, dados cifrados na nuvem e o layout de PC/celular. | — |

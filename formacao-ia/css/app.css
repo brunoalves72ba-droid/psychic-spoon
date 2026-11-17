@@ -613,3 +613,12 @@ body.com-gaveta{overflow:hidden}
 .campo-erro:empty{min-height:0}
 @media (prefers-reduced-motion:reduce){.gaveta,.gaveta-veu,.abertura{transition:none}}
 .tabs .menu-pc span{white-space:normal;overflow:visible;line-height:1.25;padding:6px 0}
+
+/* ===== Fase 3: luz em volta do card de destaque ===== */
+.com-luz{position:relative;isolation:isolate}
+.com-luz>.luz{position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1px;pointer-events:none;overflow:hidden;background:rgba(139,108,242,.15);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.com-luz>.luz>.luz-giro{position:absolute;left:50%;top:50%;width:max(160%,160vh);aspect-ratio:1;opacity:0;transform:translate(-50%,-50%);
+  background:conic-gradient(from 0deg,transparent 0deg,transparent 200deg,rgba(139,108,242,.12) 270deg,rgba(139,108,242,.5) 330deg,#C4B5FD 360deg)}
+.com-luz>.luz>.luz-flash{position:absolute;inset:0;background:#C4B5FD;opacity:0}
+.com-luz>.luz-brilho{position:absolute;inset:-1px;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 60%,rgba(139,108,242,.55),rgba(139,108,242,0) 70%)}
