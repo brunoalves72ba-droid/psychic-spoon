@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 157 (versão 7513bde69288) |
+| Arquivos no pré-cache do app | 157 (versão 8f5ef0dffd85) |
 
 ## Telas (rotas)
 
@@ -132,7 +132,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/views/revisar-importar.js` | 54 | Importar cartões: JSON [{frente, verso}] ou CSV (frente;verso), inclusive os gerados pela Fábrica de flashcards. | `default`, `lerCartoes` |
 | `js/views/revisar-mistura.js` | 42 | Revisão misturada: perguntas de módulos diferentes, embaralhadas (intercalação). | `default`, `sortear` |
 | `js/views/revisar.js` | 59 | Revisar: cartões espaçados (1, 3, 7 e 21 dias, com teto de 15 por dia) e revisão misturada. | `default` |
-| `js/views/trilha-m.js` | 39 | Página de um módulo: aulas, micro-lições, missão do projeto e recursos externos. | `default` |
+| `js/views/trilha-m.js` | 44 | Página de um módulo: aulas, micro-lições, missão do projeto e recursos externos. | `default` |
 | `js/views/trilha.js` | 33 | Mapa da trilha: 7 ilhas (M0 a M6) e o APE-IA crescendo a cada módulo concluído. | `default` |
 
 ### Laboratórios (`js/labs`)
