@@ -32,8 +32,8 @@ test('chaves das unidades batem com os blocos da tela', () => {
   }
 });
 
-test('tempos do Módulo 1: todas as aulas, todas as partes, em ordem crescente', () => {
-  const m1 = ORDEM.filter((id) => moduloDe(id) === 1);
+test('tempos das 98 aulas: todas as partes, em ordem crescente', () => {
+  const m1 = ORDEM;
   for (const id of m1) {
     assert.ok(tempos[id], id);
     const uni = unidadesDaAula(licao(id));

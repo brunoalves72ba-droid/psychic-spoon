@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 157 (versão 115e8dbfc91d) |
+| Arquivos no pré-cache do app | 157 (versão 7513bde69288) |
 
 ## Telas (rotas)
 
@@ -228,7 +228,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `assets/fotos` | 22 arquivos | 1.6 MB |
 | `assets/micropython` | `micropython.mjs`, `micropython.wasm` | 547 KB |
 | `kits` | `env.example.txt`, `gitignore.txt`, `m3/mini_rag.py`, `m3/requirements.txt`, `m5/fabrica_flashcards.py`, `m5/requirements.txt`, `m6/agente.py`, `m6/app.py`, `m6/requirements.txt`, `m6/secrets.toml.txt` | 16 KB |
-| `audio` | 101 arquivos | 54.2 MB |
+| `audio` | 101 arquivos | 54.3 MB |
 
 ## Trilha: módulos, aulas e lições
 
