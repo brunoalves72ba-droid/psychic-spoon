@@ -98,7 +98,7 @@ try {
   await page.waitForFunction(() => { const e = document.querySelector('.passo.grifando .lendo'); return e && e.getAttribute('data-trecho') === 'b0'; }, null, { timeout: 8000 });
   ok(true, 'grifo acompanha a voz: chegou ao bloco 0 da Ideia');
   const cores = await page.evaluate(() => { const l = document.querySelector('.lendo'), o = document.querySelector('.passo.grifando [data-trecho="analogia"]'); return [getComputedStyle(l).color, getComputedStyle(o).color]; });
-  ok(cores[0] === 'rgb(241, 240, 245)' && cores[1] === 'rgb(167, 165, 179)', 'trecho da vez claro, os outros em cinza: ' + cores.join(' / '));
+  ok(cores[0] === 'rgb(241, 240, 245)' && cores[1] === 'rgb(163, 174, 199)', 'trecho da vez claro, os outros em cinza: ' + cores.join(' / '));
   ok(await page.evaluate(() => getComputedStyle(document.querySelector('.grifo-barra')).backgroundColor) === 'rgb(212, 211, 219)', 'barra cinza-clara à esquerda (sem violeta)');
   ok(/passo-1:b[01]/.test(await page.locator('.grifo-conferir').innerText()), 'modo de conferência mostra tempo e trecho: ' + await page.locator('.grifo-conferir').innerText());
   const y0 = await page.evaluate(() => scrollY);

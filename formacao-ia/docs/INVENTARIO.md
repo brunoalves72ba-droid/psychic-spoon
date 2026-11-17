@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 157 (versão 522afdce8c52) |
+| Arquivos no pré-cache do app | 158 (versão 4512584e33c4) |
 
 ## Telas (rotas)
 
@@ -545,20 +545,20 @@ Um tema só (escuro). Os nomes antigos (`--bg`, `--ink`, `--acao`…) apontam pa
 
 | Variável | Valor |
 |---|---|
-| `--bg-base` | `#0B0B0D` |
-| `--bg-violeta-meio` | `#1E1238` |
-| `--bg-violeta-base` | `#4A2A85` |
+| `--bg-base` | `#000000` |
+| `--bg-violeta-meio` | `#1B2550` |
+| `--bg-violeta-base` | `#2E2A6E` |
 | `--texto-primario` | `#F1F0F5` |
-| `--texto-secundario` | `#A7A5B3` |
-| `--texto-apagado` | `#6E6C7A` |
-| `--divisor` | `#2A2A31` |
-| `--acento` | `#8B6CF2` |
-| `--acento-claro` | `#C4B5FD` |
-| `--acento-texto-ativo` | `#D9CCFF` |
-| `--acento-fundo-ativo` | `rgba(139,108,242,.22)` |
-| `--botao-topo` | `#7656DC` |
-| `--botao-base` | `#3A2470` |
-| `--vidro-fundo` | `rgba(22,22,26,.20)` |
+| `--texto-secundario` | `#A3AEC7` |
+| `--texto-apagado` | `#6E7385` |
+| `--divisor` | `#2C2D31` |
+| `--acento` | `#6E8FE8` |
+| `--acento-claro` | `#A9BEF5` |
+| `--acento-texto-ativo` | `#C9D6FF` |
+| `--acento-fundo-ativo` | `rgba(83,127,224,.22)` |
+| `--botao-topo` | `#4A6FD0` |
+| `--botao-base` | `#3E3B9F` |
+| `--vidro-fundo` | `rgba(28,29,32,.20)` |
 | `--vidro-borda` | `rgba(255,255,255,.08)` |
 | `--vidro-blur` | `14px` |
 | `--raio-card` | `12px` |
@@ -567,37 +567,37 @@ Um tema só (escuro). Os nomes antigos (`--bg`, `--ink`, `--acao`…) apontam pa
 | `--certo-bg` | `rgba(91,214,138,.16)` |
 | `--errado` | `#FF8A80` |
 | `--errado-bg` | `rgba(255,138,128,.16)` |
-| `--cat1` | `#8B6CF2` |
-| `--cat2` | `#C4B5FD` |
-| `--cat3` | `#A7A5B3` |
-| `--cat4` | `#6F58C9` |
-| `--cat5` | `#E2DAFF` |
+| `--cat1` | `#6E8FE8` |
+| `--cat2` | `#A9BEF5` |
+| `--cat3` | `#A3AEC7` |
+| `--cat4` | `#4C46A4` |
+| `--cat5` | `#D6E0FF` |
 | `--curva-ios` | `cubic-bezier(.32,.72,0,1)` |
 | `--curva-ok` | `cubic-bezier(.2,.8,.2,1)` |
 | `--t-toque` | `120ms` |
 | `--t-painel` | `300ms` |
 | `--bg` | `var(--bg-base)` |
-| `--bg2` | `rgba(22,22,26,.55)` |
+| `--bg2` | `rgba(28,29,32,.55)` |
 | `--bg3` | `rgba(255,255,255,.06)` |
 | `--line` | `var(--divisor)` |
 | `--line2` | `#3B3A45` |
 | `--ink` | `var(--texto-primario)` |
-| `--ink2` | `#BDBBC8` |
+| `--ink2` | `#BEC6D8` |
 | `--ink3` | `var(--texto-secundario)` |
 | `--acao` | `var(--acento)` |
 | `--acao-ink` | `#0B0B0D` |
 | `--acao-tint` | `var(--acento-fundo-ativo)` |
 | `--ok` | `var(--acento-claro)` |
-| `--ok-bg` | `rgba(139,108,242,.18)` |
+| `--ok-bg` | `rgba(83,127,224,.18)` |
 | `--quase` | `#F2B35E` |
 | `--quase-bg` | `rgba(242,179,94,.14)` |
 | `--ouro` | `var(--acento-claro)` |
-| `--ouro-bg` | `rgba(139,108,242,.18)` |
-| `--info-bg` | `rgba(139,108,242,.12)` |
+| `--ouro-bg` | `rgba(83,127,224,.18)` |
+| `--info-bg` | `rgba(83,127,224,.12)` |
 | `--code-bg` | `#0E0E12` |
 | `--code-ink` | `#edeff7` |
 | `--code-dim` | `#9aa3bd` |
-| `--code-ac` | `#C4B5FD` |
+| `--code-ac` | `#A9BEF5` |
 | `--c` | `var(--acento)` |
 | `--on-c` | `#0B0B0D` |
 | `--shadow` | `0 8px 24px -12px rgba(0,0,0,.7)` |
@@ -628,8 +628,8 @@ Fontes: **Manrope** (`assets/fonts/manrope-latin-wght-normal.woff2`), **Manrope*
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0B0B0D",
-  "theme_color": "#0B0B0D",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "categories": [
     "education",
     "productivity"

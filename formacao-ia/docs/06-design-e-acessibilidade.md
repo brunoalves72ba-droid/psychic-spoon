@@ -73,3 +73,9 @@ Vale por cima do que estiver diferente acima. Tudo vem dos tokens em `:root` de 
 - **Boas-vindas** (`js/core/boasvindas.js`): ao abrir a frio (não se o app saiu há menos de 30 min), com uma das 150 frases de `js/data/mensagens.json` sem repetir as últimas 10.
 - **Movimento:** só `transform` e `opacity` animam (exceções: o check desenhado do check-in). Laços infinitos só no círculo do check-in e no piscar da mascote. Com "reduzir movimento": sem giro, sem pulo, sem piscar; os estados finais continuam aparecendo.
 - **Medido (CPU 4x mais lenta, Chromium headless):** rolar a lista do Módulo 1 e abrir/fechar o menu a 60 fps, 0 quadros longos.
+
+### Fase 10: paleta aurora e imagem de fundo (vale por cima das cores acima)
+
+- **Fundo:** imagem `assets/fundo-aurora.webp` (720×1290, ~10 KB; índigo → azul → turquesa sobre preto), fixa, `cover`, com véu preto por cima (66% no alto, ~50% no meio, 72% embaixo; 72% inteiro na lição). Fundo base `#000000`; `theme-color` e manifest `#000000`.
+- **Cores:** acento `#6E8FE8` (azul), acento claro `#A9BEF5`, texto da aba ativa `#C9D6FF`, fundo ativo `rgba(83,127,224,.22)`, botão principal `#4A6FD0 → #3E3B9F`, texto secundário `#A3AEC7`, apagado `#6E7385`, divisor `#2C2D31`. Superfícies em grafite `rgba(28,29,32,.80)`; cards de destaque com brilho petróleo/índigo saindo da borda de baixo. Verde e vermelho das respostas não mudam.
+- Contraste medido de novo em pixel sobre a imagem: 0 falhas no celular e no PC.
