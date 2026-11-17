@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 151 (versão 026f0883c6e6) |
+| Arquivos no pré-cache do app | 151 (versão 70807ed3dabc) |
 
 ## Telas (rotas)
 
