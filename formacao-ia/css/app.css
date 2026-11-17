@@ -622,3 +622,38 @@ body.com-gaveta{overflow:hidden}
   background:conic-gradient(from 0deg,transparent 0deg,transparent 200deg,rgba(139,108,242,.12) 270deg,rgba(139,108,242,.5) 330deg,#C4B5FD 360deg)}
 .com-luz>.luz>.luz-flash{position:absolute;inset:0;background:#C4B5FD;opacity:0}
 .com-luz>.luz-brilho{position:absolute;inset:-1px;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 60%,rgba(139,108,242,.55),rgba(139,108,242,0) 70%)}
+
+/* ===== Fase 4: check-in do dia ===== */
+.topo-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.topo-linha .saudacao{margin-bottom:0}
+.topo-rosto{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(139,108,242,.18);color:var(--acento-claro)}
+.topo-rosto:empty{display:none}
+.rosto{fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.rosto .olho{fill:currentColor;stroke:none}
+.checkin{display:flex;flex-direction:column;gap:14px}
+.ck-tit{font:500 1.125rem/1.3 var(--display);margin:0;text-align:center}
+.ck-centro{display:grid;justify-items:center;gap:14px}
+.ck-circulo{width:56px;height:56px;color:var(--acento-claro)}
+.ck-circulo svg{display:block}
+.ck-circulo .aro{fill:none;stroke:currentColor;stroke-width:1.5}
+.ck-circulo .traco{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30}
+.ck-circulo.feito .traco{stroke-dashoffset:0}
+.ck-circulo.feito .aro{fill:rgba(139,108,242,.18)}
+.ck-circulo.pulsa{animation:ck-pulso 1.6s ease-in-out infinite}
+@keyframes ck-pulso{0%,100%{opacity:.4}50%{opacity:1}}
+.ck-rostos{display:flex;gap:14px;justify-content:center}
+.ck-rosto{width:52px;height:52px;padding:0;border-radius:50%;display:grid;place-items:center;border:1px solid var(--divisor);background:rgba(11,11,13,.55);color:var(--acento-claro);cursor:pointer;transition:opacity 200ms var(--curva-ok),transform var(--t-toque) var(--curva-ok)}
+.ck-rosto:active:not(:disabled){transform:scale(.94)}
+.ck-rosto[aria-pressed=true]{border-color:var(--acento);background:var(--acento-fundo-ativo)}
+.ck-rosto:disabled{cursor:default}
+.ck-rosto.apagado{opacity:.35}
+.ck-resto{gap:12px}
+.ck-resto:empty{display:none}
+.ck-tempo{gap:6px}
+.ck-pilulas{justify-content:flex-start}
+.ck-curiosidade{display:flex;align-items:flex-start;gap:8px;padding:12px 4px 0 2px;border-top:1px solid var(--divisor)}
+.ck-curiosidade p{margin:0;flex:1;color:var(--texto-secundario);line-height:1.5}
+.ck-dispensar{flex:none;width:44px;height:44px;margin:-10px -8px 0 0;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:var(--texto-apagado);cursor:pointer}
+.ck-dispensar .ic{width:18px;height:18px}
+@media (prefers-reduced-motion:reduce){.ck-circulo.pulsa{animation:none;opacity:1}}
+button.saudacao{min-width:44px}

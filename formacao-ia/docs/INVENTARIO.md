@@ -19,7 +19,7 @@
 | Fotos | 22 (em 33 lições e 7 módulos) |
 | Vídeos configurados | 0 |
 | Áudios das aulas | 98 (237 min, 54.2 MB) |
-| Arquivos no pré-cache do app | 148 (versão 76f55904cdd9) |
+| Arquivos no pré-cache do app | 151 (versão 026f0883c6e6) |
 
 ## Telas (rotas)
 
@@ -71,17 +71,19 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `js/core/andaime.js` | 48 | Exemplos "desbotados": o mesmo gabarito vira exemplo completo → falta 1 passo → faltam vários → do zero. O andaime sobe quando você acerta de primeira 80% das vezes e volta quando está difícil. Funções puras. | `parseMolde`, `solucao`, `aplicarNivel`, `maiorNivel`, `confere`, `novoAndaime`, `registrar` |
 | `js/core/audio.js` | 158 | Áudio das aulas: MP3 gerado uma vez com voz neural (tools/audio/gerar-audio.mjs) e tocado aqui. audio/indice.json diz quais aulas têm áudio (sem áudio, a aula aparece só com o texto, sem erro). O MP3 é baixado na primeira vez que a aula é tocada e fica guardado no aparelho (funciona sem internet). | `carregarIndice`, `infoAudio`, `baixados`, `baixarTodos`, `playerAula` |
 | `js/core/biblioteca.js` | 60 | Biblioteca de prompts do APE-IA (projeto do Módulo 2): prompts com variáveis, versão, exemplo e rubrica. | `RUBRICA`, `variaveis`, `nota`, `novoPrompt`, `atualizarPrompt`, `removerPrompt`, `exportarMarkdown`, `botaoSalvar` |
+| `js/core/cartao-checkin.js` | 108 | Card do check-in na tela Hoje: círculo que pisca, três carinhas, o check desenhado (leve, como o de carteira digital), a carinha indo para o canto ao lado da saudação, as pílulas de tempo, as sugestões e a curiosidade do dia. Sem pop-up, sem som. | `rostoNoCanto`, `cartaoCheckin` |
+| `js/core/checkin.js` | 73 | Check-in do dia: uma carinha (feliz, neutra, triste) e o tempo disponível (5, 15 ou 30 min). Um por dia (dia local). A carinha não muda no mesmo dia; o tempo muda. Sincroniza entre aparelhos. | `HUMORES`, `ENERGIA`, `ROTULO`, `TEMPOS`, `checkinHoje`, `registrarCheckin`, `mudarTempo`, `podarHistorico`, `curiosidadeDoDia`, `curiosidadeDispensada`, `dispensarCuriosidade`, `rosto` |
 | `js/core/conquistas.js` | 46 | Conquistas por habilidade: marcam coisas que você passou a saber fazer, não tempo de tela. | `CONQUISTAS`, `verificarConquistas` |
 | `js/core/cortes.js` | 55 | Pontos de corte entre as partes do áudio de uma aula (Começo, Ideia, Exemplo, Erro comum). Com vozes que não devolvem o tempo exato de cada parte (Chirp 3 HD, ElevenLabs), o gerador só estima onde cada parte começa. Aqui o app procura, perto de cada estimativa, a pausa de silêncio mais longa: | `energia`, `silencios`, `ajustarCortes` |
 | `js/core/dia.js` | 18 | Datas como chaves "AAAA-MM-DD" (dia local). Semana de segunda a domingo. Funções puras. | `dayKey`, `addDays`, `diffDays`, `dow`, `weekStart`, `weekDays`, `DIAS`, `hoje` |
-| `js/core/estado.js` | 263 | Estado do app em memória (carregado uma vez, gravado a cada mudança) e as ações de estudo. | `XP`, `XP_NIVEL`, `nivel`, `L`, `salvarLocal`, `uid`, `aoSalvar`, `S`, `revs`, `eventosSemana`, `salvar`, `gravado`, `nomeUsuario`, `definirNome`, `carregar`, `fecharSemanas`, `apagar`, `registrar`, `tocarDia`, `ganhar`, `marco`, `prog`, `irPasso`, `registrarQuiz`, `registrarExercicio`, `concluirLicao`, `marcarMao`, `pendencias`, `responderCartao`, `filaDeHoje`, `vencidosHoje`, `adicionarMeus`, `removerMeu`, `apagarDiario`, `apagarPensamento`, `anotarPensamento`, `escreverDiario`, `marcarMissao`, `exportar`, `importar`, `aplicar`, `lerTudo`, `apagarTudo` |
+| `js/core/estado.js` | 265 | Estado do app em memória (carregado uma vez, gravado a cada mudança) e as ações de estudo. | `XP`, `XP_NIVEL`, `nivel`, `L`, `salvarLocal`, `uid`, `aoSalvar`, `S`, `revs`, `eventosSemana`, `salvar`, `gravado`, `nomeUsuario`, `definirNome`, `carregar`, `fecharSemanas`, `apagar`, `registrar`, `tocarDia`, `ganhar`, `marco`, `prog`, `irPasso`, `registrarQuiz`, `registrarExercicio`, `concluirLicao`, `marcarMao`, `pendencias`, `responderCartao`, `filaDeHoje`, `vencidosHoje`, `adicionarMeus`, `removerMeu`, `apagarDiario`, `apagarPensamento`, `anotarPensamento`, `escreverDiario`, `marcarMissao`, `exportar`, `importar`, `aplicar`, `lerTudo`, `apagarTudo` |
 | `js/core/exercicios.js` | 286 | Exercícios das micro-lições, todos com resposta imediata. Cada um chama feito({ dePrimeira, tent, ajuda }) ao terminar. | `embaralhar`, `pergunta`, `TIPOS_EX`, `montarExercicio`, `gabarito` |
 | `js/core/fotos.js` | 27 | Fotos reais (Wikimedia Commons, licenças livres) com crédito visível em cada uma. | `foto`, `fotoDaLicao`, `fotoDoModulo`, `credito`, `figura`, `faixa` |
 | `js/core/instalar.js` | 63 | Instalação como app próprio (ícone separado do Sexteto) e tudo guardado no aparelho para usar sem internet. | `aoMudar`, `instalado`, `podeInstalar`, `ehIOS`, `instalar`, `situacaoOffline`, `guardarTudo` |
 | `js/core/json-pt.js` | 158 | Leitor de JSON com mensagens de erro em português, pensadas para quem está começando. analisar(texto) → { ok: true, valor } ou { ok: false, pos, linha, col, msg, dica }. | `analisar`, `conferirFormato` |
 | `js/core/luz.js` | 66 | Luz em volta do card de destaque (um por tela): uma volta de 2,4 s ao entrar na aba pela primeira vez na sessão; toque no card = nova volta + brilho difuso atrás; toque no botão principal = flash do contorno. Só transform e opacity animam. Com "reduzir movimento": sem giro, o toque só acende um pouco a borda. | `luz`, `_reiniciarLuz` |
-| `js/core/menu.js` | 123 | Saudação ("Oi, nome") e menu lateral: no celular, uma gaveta que abre da esquerda; no PC, os mesmos itens numa seção do menu fixo, abaixo das cinco abas. | `itensMenu`, `saudacao`, `menuAberto`, `abrirMenu`, `fechar`, `montarMenuPC` |
-| `js/core/mesclar.js` | 133 | Mesclagem de dois estados (celular e PC) sem perder progresso. Funções puras, testadas. Regra geral: progresso só avança (lição concluída, cartão revisto, missão marcada nunca “desfazem”), e o que foi editado por inteiro (perfil, ficha técnica, prompt) fica com a versão mais recente. | `idDiario`, `idEvento`, `mesclarKv`, `mesclarLog` |
+| `js/core/menu.js` | 130 | Saudação ("Oi, nome") e menu lateral: no celular, uma gaveta que abre da esquerda; no PC, os mesmos itens numa seção do menu fixo, abaixo das cinco abas. | `itensMenu`, `saudacao`, `menuAberto`, `abrirMenu`, `fechar`, `montarMenuPC` |
+| `js/core/mesclar.js` | 149 | Mesclagem de dois estados (celular e PC) sem perder progresso. Funções puras, testadas. Regra geral: progresso só avança (lição concluída, cartão revisto, missão marcada nunca “desfazem”), e o que foi editado por inteiro (perfil, ficha técnica, prompt) fica com a versão mais recente. | `idDiario`, `idEvento`, `mesclarKv`, `mesclarLog` |
 | `js/core/nuvem.js` | 142 | Sincronização entre aparelhos por um Gist secreto do GitHub, com o conteúdo cifrado. - O token (permissão só de “gist”) fica apenas neste aparelho; o mesmo token no outro aparelho acha o mesmo Gist. - O conteúdo é cifrado (AES-GCM) com uma chave derivada do token: quem só tiver o link do Gist não consegue ler. | `API`, `ARQUIVO`, `LINK_TOKEN`, `estavel`, `cifrar`, `decifrar`, `status`, `aoMudar`, `quandoReceber`, `sincronizar`, `agendar`, `conectar`, `desconectar`, `recomecarNuvem`, `iniciar` |
 | `js/core/pensamento.js` | 15 | Captura de distração: anotar o pensamento intruso sem sair de onde está. | `capturar` |
 | `js/core/plano.js` | 39 | Cronograma: Plano A (4–5 h/semana, ≈26 semanas) e Plano B (2–3 h/semana, ≈48 semanas). Se uma semana for ruim, as datas são recalculadas a partir de hoje, sem cobrança. Funções puras. | `PLANOS`, `calendario`, `situacao`, `recalcular` |
@@ -98,7 +100,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | Arquivo | Linhas | O que é | Exporta |
 |---|---:|---|---|
 | `js/views/foco.js` | 56 | Modo foco: tela limpa, relógio visível de 10, 15 ou 25 min e a opção de continuar no fluxo. O relógio avisa, mas nunca interrompe: quem está em hiperfoco decide se segue. | `default` |
-| `js/views/hoje.js` | 167 | Hoje: um botão grande para começar, uma pergunta-relâmpago e a semana. O resto fica quieto. | `default` |
+| `js/views/hoje.js` | 156 | Hoje: um botão grande para começar, uma pergunta-relâmpago e a semana. O resto fica quieto. | `default` |
 | `js/views/labs-x.js` | 15 | Um laboratório aberto em modo livre (sem missão). | `default` |
 | `js/views/labs.js` | 11 | Laboratórios: simuladores para mexer e ver acontecer. | `default` |
 | `js/views/licao.js` | 253 | Player da micro-lição: sempre os mesmos 7 passos, um conceito, uma tela por vez. Gancho → ideia com analogia → exemplo resolvido → exercício → quiz → erro comum → fim com o próximo passo pronto. Dá para voltar a qualquer passo já visto (tocando nos passos do topo, no botão Voltar ou na seta ←) | `default` |
@@ -156,6 +158,7 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 
 | Arquivo | Linhas | O que é | Exporta |
 |---|---:|---|---|
+| `js/data/curiosidades.js` | 8 | Frases curtas que aparecem depois do check-in, uma por dia, em rodízio. Para ampliar, é só acrescentar. | `CURIOSIDADES` |
 | `js/data/curso.js` | 82 | Estrutura da trilha: 7 módulos (M0 a M6), aulas e a ordem das 98 micro-lições. | `MODULOS`, `TODAS`, `ORDEM`, `PASSOS`, `licao`, `moduloDe`, `modulo`, `idsDoModulo`, `aulaDe`, `proxima`, `seguinte`, `progressoModulo`, `progressoGeral`, `moduloAtual`, `cartao` |
 | `js/data/desafios.js` | 44 | Desafio surpresa: a cada 2 semanas, uma tarefa curta e diferente. A novidade ajuda a manter o interesse. | `DESAFIOS`, `desafioDaVez` |
 | `js/data/ficha.js` | 24 | Ficha viva: o que muda rápido (modelos, cotas, preços, regras de hospedagem, regulação). Verificado em novembro de 2026, a partir do documento de currículo. Revise a cada trimestre. | `VERIFICADO`, `REVISAR_DIAS`, `FICHA` |
@@ -200,14 +203,14 @@ Abas: **Hoje** (`hoje`) · **Trilha** (`trilha`) · **Revisar** (`revisar`) · *
 | `tests/e2e/audio.mjs` | 91 | Player do áudio das aulas (voz neural), vídeo opcional e recompensas. Um MP3 de teste (feito com ffmpeg) faz o papel do áudio gerado; o índice e o arquivo de vídeos são trocados só neste teste. Uso: node tests/e2e/audio.mjs | — |
 | `tests/e2e/capturas.mjs` | 53 | Capturas de tela das telas principais, no celular (390×844) e no PC (1440×900), com um pouco de progresso já feito (para as telas não ficarem vazias). Uso: node tests/e2e/capturas.mjs <nome-da-pasta> Salva em docs/capturas/<nome>/ — usado para comparar o antes e o depois de uma mudança visual. | — |
 | `tests/e2e/contraste.mjs` | 104 | Contraste medido nos pixels reais: esconde o texto, fotografa a tela, mede o fundo atrás de cada trecho de texto e compara com a cor do texto (WCAG: 4,5:1 normal; 3:1 para texto grande). Repete em várias posições de rolagem, porque o fundo é fixo e um card pode passar por cima da parte violeta da tela. Uso: node tests/e2e/contraste.mjs [--pc] | — |
-| `tests/e2e/navegacao.mjs` | 157 | Teste ponta a ponta da navegação: pergunta do nome na primeira abertura, saudação, menu lateral (abrir, foco, Esc, véu, arrastar, "voltar" do Android, itens) e a seção do menu no PC. Uso: node tests/e2e/navegacao.mjs | — |
+| `tests/e2e/navegacao.mjs` | 202 | Teste ponta a ponta da navegação: pergunta do nome na primeira abertura, saudação, menu lateral (abrir, foco, Esc, véu, arrastar, "voltar" do Android, itens) e a seção do menu no PC. Uso: node tests/e2e/navegacao.mjs | — |
 | `tests/e2e/offline.mjs` | 73 | Teste offline e de convivência: serve o repositório inteiro (Sexteto na raiz, este app em /formacao-ia/), instala primeiro o service worker do Sexteto, depois abre este app, corta a rede e confere que tudo abre, inclusive o Python embutido e os kits. Uso: node tests/e2e/offline.mjs | — |
 | `tests/e2e/run.mjs` | 156 | Teste ponta a ponta: abre o app a 390×844 no Chromium, conclui lições com cada tipo de exercício, percorre todas as telas e falha em erro de console, requisição externa, rolagem horizontal ou alvo de toque < 44 px. Uso: node tests/e2e/run.mjs [--dark] [--w=360] | — |
 | `tests/e2e/sync.mjs` | 138 | Sincronização de ponta a ponta com dois aparelhos simulados (celular e PC) e uma API de Gist falsa. Confere: ligar com o mesmo token, levar progresso de um para o outro, estudar nos dois sem perder nada, exclusões chegarem ao outro lado, dados cifrados na nuvem e o layout de PC/celular. | — |
 | `tests/labs.test.mjs` | 68 | Testes das regras dos laboratórios (partes puras, sem tela). | — |
 | `tests/motores.test.mjs` | 254 | Testes dos motores puros: datas, revisão espaçada, sequência semanal, andaime, plano, JSON e texto. | — |
 | `tests/python.test.mjs` | 45 | Roda a solução de cada exercício de Python no mesmo MicroPython do app e confere com os testes da lição. | — |
-| `tests/sync.test.mjs` | 148 | Sincronização: a mesclagem não perde progresso, e a cifra só abre com o mesmo token. | — |
+| `tests/sync.test.mjs` | 161 | Sincronização: a mesclagem não perde progresso, e a cifra só abre com o mesmo token. | — |
 
 ### Recursos estáticos
 

@@ -145,3 +145,16 @@ test('mesclarKv preserva chaves que a versão não conhece (v2.*) e escolhe a ma
   assert.equal(m3['v2.nome'].nome, 'A');
   assert.ok(!('local' in mesclarKv({ local: { a: 1 } }, {})), 'a chave local nunca viaja');
 });
+
+test('check-in: no mesmo dia vale a carinha do primeiro; o tempo da última troca; histórico unido', () => {
+  const cel = { 'v2.checkin.dia': { data: '2026-11-17', humor: 'triste', tempo: 5, em: 100, _t: 300 }, 'v2.checkin.historico': { '2026-11-16': { h: 'feliz', em: 1 }, '2026-11-17': { h: 'triste', em: 100 } } };
+  const pc = { 'v2.checkin.dia': { data: '2026-11-17', humor: 'feliz', tempo: 30, em: 200, _t: 200 }, 'v2.checkin.historico': { '2026-11-15': { h: 'neutro', em: 0 }, '2026-11-17': { h: 'feliz', em: 200 } } };
+  for (const m of [mesclarKv(cel, pc), mesclarKv(pc, cel)]) {
+    assert.equal(m['v2.checkin.dia'].humor, 'triste');
+    assert.equal(m['v2.checkin.dia'].tempo, 5);
+    assert.deepEqual(Object.keys(m['v2.checkin.historico']).sort(), ['2026-11-15', '2026-11-16', '2026-11-17']);
+    assert.equal(m['v2.checkin.historico']['2026-11-17'].h, 'triste');
+  }
+  const ontem = { 'v2.checkin.dia': { data: '2026-11-16', humor: 'feliz', tempo: 15, em: 1, _t: 1 } };
+  assert.equal(mesclarKv(ontem, cel)['v2.checkin.dia'].data, '2026-11-17', 'vale o dia mais novo');
+});

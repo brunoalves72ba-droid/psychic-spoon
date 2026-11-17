@@ -14,6 +14,7 @@ import * as nuvem from '../core/nuvem.js';
 import { instalado } from '../core/instalar.js';
 import { licao as licaoDe } from '../data/curso.js';
 import { luz } from '../core/luz.js';
+import { cartaoCheckin } from '../core/cartao-checkin.js';
 
 let avisouSemana = false;
 
@@ -88,7 +89,7 @@ export default async function (el, args) {
   };
   if (f.length) { pintarRelampago(); esq.append(relampago); }
 
-  // ---- check-in de energia ----
+  // ---- check-in do dia (carinha + tempo) e as sugestões ----
   const ate = (() => { const ma = moduloAtual(S.licoes); return progressoModulo(ma, S.licoes).frac >= 0.5 ? ma : ma - 1; })();
   const mis = ate >= 0 ? proximaMissao(S.missoes, ate) : null;
   const nCards = f.length;
@@ -106,20 +107,8 @@ export default async function (el, args) {
     else { out.push(itemMis || itemLic || itemCards); if (t >= 15 && itemMis) out.push(itemLic); if (t >= 30) out.push(itemCards); }
     return out.filter(Boolean).slice(0, 3);
   };
-  let en = null, tp = 5;
-  const sug = h('div.col.hide');
-  const pintarSug = () => {
-    if (!en) return;
-    const itens = planoPara(en, tp);
-    clear(sug); sug.classList.remove('hide');
-    if (!itens.length) { sug.append(h('p.small.muted', 'Nada pendente agora. Aproveite o descanso.')); return; }
-    sug.append(h('div.small.muted', en === 'baixa' ? 'Energia baixa pede tarefa leve:' : en === 'media' ? 'Energia média combina com uma lição:' : 'Energia alta é hora de construir:'));
-    itens.forEach((it, i) => sug.append(h('a.item' + (i === 0 ? '.now' : ''), { href: it.href }, h('span.n', String(i + 1)), h('span.t', h('b', it.t), h('span', it.sub)), h('span.chev', '›'))));
-  };
-  esq.append(h('section.card.flat', h('div.eyebrow', 'Escolher pelo meu estado'),
-    h('label.field', { style: { marginTop: '8px' } }, h('span', 'Como está a energia?'), seg([{ v: 'baixa', label: 'Baixa' }, { v: 'media', label: 'Média' }, { v: 'alta', label: 'Alta' }], null, (v) => { en = v; pintarSug(); }, { label: 'Energia' })),
-    h('label.field', h('span', 'Quanto tempo você tem?'), seg([5, 15, 30].map((v) => ({ v, label: `${v} min` })), tp, (v) => { tp = v; pintarSug(); }, { label: 'Tempo' })),
-    sug));
+  // check-in logo acima do Próximo passo
+  esq.prepend(cartaoCheckin(planoPara));
 
   // ---- a semana ----
   const semana = h('section.card.flat');

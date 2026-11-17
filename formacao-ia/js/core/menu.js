@@ -6,6 +6,7 @@ import { capturar } from './pensamento.js';
 import { instalado } from './instalar.js';
 import { nomeUsuario } from './estado.js';
 import { ehPC } from './plataforma.js';
+import { checkinHoje, rosto, ROTULO } from './checkin.js';
 
 /** Os seis itens, na ordem combinada. "Instalar" some quando o app já está instalado. */
 export const itensMenu = () => [
@@ -21,10 +22,16 @@ const textoOi = () => { const n = nomeUsuario(); return n ? `Oi, ${n}` : 'Oi'; }
 
 /** Saudação do topo das cinco abas. No celular é o botão que abre o menu; no PC, só o nome. */
 export function saudacao() {
-  if (ehPC()) return h('div.saudacao', h('span.oi', textoOi()));
-  const b = h('button.saudacao', { type: 'button', id: 'saudacao', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'menu-lateral' }, h('span.oi', textoOi()));
-  b.addEventListener('click', () => abrirMenu(b));
-  return b;
+  let s;
+  if (ehPC()) s = h('div.saudacao', h('span.oi', textoOi()));
+  else {
+    s = h('button.saudacao', { type: 'button', id: 'saudacao', 'aria-haspopup': 'dialog', 'aria-expanded': 'false', 'aria-controls': 'menu-lateral' }, h('span.oi', textoOi()));
+    s.addEventListener('click', () => abrirMenu(s));
+  }
+  // canto direito: a carinha do check-in de hoje (some na virada do dia)
+  const c = checkinHoje();
+  const canto = h('span.topo-rosto', c ? { role: 'img', 'aria-label': `Check-in de hoje: ${ROTULO[c.humor].toLowerCase()}`, title: `Check-in de hoje: ${ROTULO[c.humor].toLowerCase()}` } : null, c ? rosto(c.humor, 20) : null);
+  return h('div.topo-linha', s, canto);
 }
 
 // ---------------- gaveta (celular) ----------------

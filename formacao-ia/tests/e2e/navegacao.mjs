@@ -138,6 +138,51 @@ try {
     await c4.close();
   }
 
+  // ---------- check-in do dia ----------
+  {
+    const c5 = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'block' });
+    await c5.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; });
+    await c5.clock.install({ time: new Date('2026-11-17T10:00:00') });
+    await c5.clock.resume();
+    const k = await c5.newPage(); const ek = []; k.on('pageerror', (e) => ek.push(String(e)));
+    await k.goto(URL0 + '#/hoje'); await k.waitForSelector('.ck-rosto');
+    ok(await k.evaluate(() => { const ck = document.querySelector('.checkin'), px = document.querySelector('.proximo'); return ck.nextElementSibling === px; }), 'check-in logo acima do Próximo passo');
+    ok(await k.$$eval('.ck-rosto', (b) => b.length === 3 && b.every((x) => x.getAttribute('aria-pressed') === 'false' && x.getBoundingClientRect().width >= 44)), 'três carinhas, alvo ≥ 44 px, aria-pressed=false');
+    ok(!!(await k.$('.ck-circulo.pulsa')), 'círculo piscando antes da escolha');
+    await k.click('.ck-rosto[data-humor=neutro]');
+    ok(await k.getAttribute('.ck-rosto[data-humor=neutro]', 'aria-pressed') === 'true', 'carinha escolhida marcada');
+    ok(await k.$$eval('.ck-rosto', (b) => b.every((x) => x.disabled) && b.filter((x) => x.classList.contains('apagado')).length === 2), 'as outras apagadas e desabilitadas');
+    ok((await k.textContent('.checkin .sr[aria-live]')).trim() === 'Check-in registrado', 'aviso para leitor de tela: Check-in registrado');
+    await k.waitForSelector('.ck-pilulas', { timeout: 2000 });
+    ok(!!(await k.$('.topo-rosto svg')), 'carinha no canto, ao lado da saudação');
+    ok(await k.getAttribute('.ck-pilulas button:nth-child(2)', 'aria-pressed') === 'true', '15 min já escolhido');
+    ok(await k.$$eval('.ck-sug a.item', (x) => x.length >= 1 && x.length <= 3), 'até 3 sugestões, sem botão de confirmar');
+    ok(!(await k.$('.checkin .btn.primary')), 'nenhum botão principal no check-in');
+    await k.click('.ck-pilulas button:nth-child(3)'); await k.waitForTimeout(250);
+    ok(!!(await k.$('.ck-curiosidade')), 'curiosidade do dia aparece');
+    const frase1 = await k.textContent('.ck-curiosidade p');
+    await k.click('.ck-dispensar[aria-label="Dispensar"]');
+    ok(!(await k.$('.ck-curiosidade')), 'curiosidade dispensada');
+    await k.waitForTimeout(300); // a gravação no aparelho é assíncrona
+    await k.reload(); await k.waitForSelector('.checkin');
+    ok(!(await k.$('.ck-circulo')) && await k.getAttribute('.ck-rosto[data-humor=neutro]', 'aria-pressed') === 'true', 'mesmo dia: mostra a carinha, sem pedir de novo');
+    ok(await k.$$eval('.ck-rosto', (b) => b.every((x) => x.disabled)), 'mesmo dia: carinha não muda');
+    ok(await k.getAttribute('.ck-pilulas button:nth-child(3)', 'aria-pressed') === 'true', 'mesmo dia: tempo trocado (30 min) foi salvo');
+    ok(!(await k.$('.ck-curiosidade')), 'curiosidade dispensada não volta no mesmo dia');
+    await k.goto(URL0 + '#/trilha'); await k.waitForSelector('.ilha');
+    ok(!!(await k.$('.topo-rosto svg')), 'carinha no canto também nas outras abas');
+    // virada do dia
+    await c5.clock.setSystemTime(new Date('2026-11-18T08:00:00'));
+    await k.goto(URL0 + '#/progresso'); await k.goto(URL0 + '#/hoje'); await k.reload(); await k.waitForSelector('.checkin');
+    ok(!!(await k.$('.ck-circulo')) && !(await k.$('.topo-rosto svg')), 'dia seguinte: o rosto some e o check-in volta');
+    await k.click('.ck-rosto[data-humor=feliz]'); await k.waitForSelector('.ck-curiosidade', { timeout: 2000 });
+    ok((await k.textContent('.ck-curiosidade p')) !== frase1, 'curiosidade diferente da de ontem');
+    const hist = await k.evaluate(async () => (await import('./js/core/estado.js')).S['v2.checkin.historico']);
+    ok(hist['2026-11-17'].h === 'neutro' && hist['2026-11-18'].h === 'feliz', 'histórico guarda data e humor');
+    ok(!ek.length, 'check-in sem erros: ' + ek.join(' | '));
+    await c5.close();
+  }
+
   // ---------- PC ----------
   const c2 = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block', locale: 'pt-BR' });
   await c2.addInitScript(() => { window.__FIA_SEM_ABERTURA = true; });
