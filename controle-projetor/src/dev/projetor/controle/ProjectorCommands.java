@@ -27,10 +27,15 @@ public final class ProjectorCommands {
     public static final int KEY_VOLUME_DOWN = 25;
     public static final int KEY_MENU = 82;
     public static final int KEY_PLAY_PAUSE = 85;
+    public static final int KEY_NEXT = 87;
+    public static final int KEY_PREVIOUS = 88;
     public static final int KEY_REWIND = 89;
     public static final int KEY_FAST_FORWARD = 90;
     public static final int KEY_SLEEP = 223;
     public static final int KEY_WAKEUP = 224;
+
+    /** Active media sessions: which app plays what, and whether it is playing. */
+    public static final String MEDIA_QUERY = "dumpsys media_session";
 
     public static final String VOLUME_QUERY = "dumpsys audio | grep -A 9 '^- STREAM_MUSIC'";
 
@@ -51,6 +56,7 @@ public final class ProjectorCommands {
     private static final Pattern MAX = Pattern.compile("Max:\\s*(\\d+)");
     private static final Pattern STREAM_VOLUME = Pattern.compile("streamVolume:\\s*(\\d+)");
     private static final Pattern CURRENT = Pattern.compile("Current:[^:]*:\\s*(\\d+)");
+    private static final Pattern STATE = Pattern.compile("state=PlaybackState \\{state=(\\d+)");
     private static final Pattern COMPONENT = Pattern.compile("[\\w.]+/[\\w.$]+");
 
     private static final Map<String, String> LABELS = new LinkedHashMap<>();
@@ -98,6 +104,82 @@ public final class ProjectorCommands {
             this.component = component;
             this.label = label;
         }
+    }
+
+    /** What the projector is playing, from {@link #MEDIA_QUERY}. */
+    public static final class NowPlaying {
+        public final String packageName;
+        public final String title;
+        public final String subtitle;
+        /** PlaybackState: 3 playing, 2 paused, 6 buffering, 1 stopped. */
+        public final int state;
+
+        NowPlaying(String packageName, String title, String subtitle, int state) {
+            this.packageName = packageName;
+            this.title = title;
+            this.subtitle = subtitle;
+            this.state = state;
+        }
+
+        public boolean isPlaying() {
+            return state == 3 || state == 6;
+        }
+
+        public String appLabel() {
+            return label(packageName);
+        }
+    }
+
+    /**
+     * Picks the session that is playing (else paused) from `dumpsys media_session`. Each session block
+     * has "package=", "active=", "state=PlaybackState {state=N, ..." and "metadata: ..., description=
+     * title, subtitle, description". Returns null when nothing is playing or paused.
+     */
+    public static NowPlaying parseNowPlaying(String out) {
+        if (out == null) return null;
+        NowPlaying best = null;
+        String pkg = null;
+        boolean active = false;
+        int state = 0;
+        String title = "";
+        String subtitle = "";
+        String[] lines = (out + "\npackage=").split("\n");
+        for (String raw : lines) {
+            String line = raw.trim();
+            if (line.startsWith("package=")) {
+                if (pkg != null && active && (state == 3 || state == 6 || state == 2)) {
+                    NowPlaying np = new NowPlaying(pkg, title, subtitle, state);
+                    if (best == null || (np.isPlaying() && !best.isPlaying())) best = np;
+                }
+                pkg = line.substring(8).trim();
+                active = false;
+                state = 0;
+                title = "";
+                subtitle = "";
+            } else if (line.startsWith("active=")) {
+                active = line.equals("active=true");
+            } else if (line.startsWith("state=PlaybackState {state=")) {
+                Matcher m = STATE.matcher(line);
+                if (m.find()) state = Integer.parseInt(m.group(1));
+            } else if (line.startsWith("metadata:") && line.contains("description=")) {
+                String d = line.substring(line.indexOf("description=") + 12);
+                // MediaDescription.toString(): "title, subtitle, description"
+                int last = d.lastIndexOf(", ");
+                int prev = last > 0 ? d.lastIndexOf(", ", last - 1) : -1;
+                if (prev >= 0) {
+                    title = clean(d.substring(0, prev));
+                    subtitle = clean(d.substring(prev + 2, last));
+                } else {
+                    title = clean(d);
+                }
+            }
+        }
+        return best;
+    }
+
+    private static String clean(String s) {
+        String t = s.trim();
+        return t.equals("null") ? "" : t;
     }
 
     public static String key(int keycode) {

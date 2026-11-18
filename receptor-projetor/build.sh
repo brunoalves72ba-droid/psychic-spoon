@@ -6,8 +6,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION_CODE=1
-VERSION_NAME=1.0
+VERSION_CODE=2
+VERSION_NAME=1.1
 MAVEN_REPO=${MAVEN_REPO:-https://repo1.maven.org/maven2}
 KEYSTORE=${KEYSTORE:-../controle-projetor/signing/controle-ir.jks}
 KEYSTORE_PASS=${KEYSTORE_PASS:-controle-projetor}

@@ -63,9 +63,9 @@ public class TouchpadView extends View {
         density = context.getResources().getDisplayMetrics().density;
         border.setStyle(Paint.Style.STROKE);
         border.setStrokeWidth(1.5f * density);
-        border.setColor(0x553D8BFF);
-        dot.setColor(0x283D8BFF);
-        strip.setColor(0xFF1B2440);
+        border.setColor(0x1FFFFFFF);
+        dot.setColor(0x17FFFFFF);
+        strip.setColor(0xFF242426);
         arrow.setStyle(Paint.Style.STROKE);
         arrow.setStrokeWidth(3f * density);
         arrow.setStrokeCap(Paint.Cap.ROUND);
@@ -74,10 +74,12 @@ public class TouchpadView extends View {
         hint.setColor(0x99F1F4F8);
         hint.setTextAlign(Paint.Align.CENTER);
         hint.setTextSize(15 * density);
+        hint.setTypeface(Style.semibold);
         hintSmall.setColor(0x668C96A6);
         hintSmall.setTextAlign(Paint.Align.CENTER);
         hintSmall.setTextSize(12.5f * density);
-        touchGlow.setColor(0x333D8BFF);
+        hintSmall.setTypeface(Style.regular);
+        touchGlow.setColor(0x330A84FF);
         setContentDescription("Touchpad");
     }
 
@@ -95,7 +97,7 @@ public class TouchpadView extends View {
         rect.set(inset, inset, w - inset, h - inset);
         float stripW = 52 * density;
         stripRect.set(rect.right - stripW, rect.top, rect.right, rect.bottom);
-        pad.setShader(new LinearGradient(0, 0, 0, h, 0xFF1B2236, 0xFF101522, Shader.TileMode.CLAMP));
+        pad.setShader(new LinearGradient(0, 0, 0, h, 0xFF1F1F21, 0xFF161618, Shader.TileMode.CLAMP));
     }
 
     @Override

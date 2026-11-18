@@ -1,12 +1,31 @@
 # Controle Projetor: controle do projetor HY300 pelo celular
 
-App Android que controla o projetor HY300 pelo Wi-Fi, usando a depuração por rede (ADB) do projetor, e que liga e desliga o projetor pelo infravermelho do celular.
+App Android que controla o projetor HY300 pelo Wi-Fi, usando a depuração por rede (ADB) do projetor ou o receptor, e que liga e desliga o projetor pelo infravermelho do celular.
 
-- **Controle:** setas, OK, Voltar, Início, Menu, play/pausa, voltar e avançar, volume com barra e Sem som, e atalhos para os primeiros apps do projetor.
+A interface segue o estilo do iOS no modo escuro: título grande, pílulas de comando, barra de abas flutuante em cápsula, listas agrupadas como em Ajustes e a fonte Inter, parecida com a do iPhone. As animações usam molas e só mexem em posição, escala e transparência, que a GPU desenha sem refazer o layout.
+
+- **Topo:** status da conexão e as pílulas **Ligar** e **Desligar** (infravermelho) e **Buscar** (procura o projetor no Wi-Fi).
+- **Controle:**
+  - pílulas rápidas: Início, Voltar, Menu, Sem som e Apps;
+  - controle redondo como o da Apple TV: toque nas bordas (segurar repete), deslize para navegar (cada passo do dedo é uma seta) ou toque no centro para OK;
+  - botões Voltar, Início, Play/Pausa e Menu, e a tecla de volume em cápsula;
+  - abaixo, o "Tocando agora" resumido e os atalhos de apps.
+- **Mídia:**
+  - "Tocando agora" com o app, o título e o canal ou artista, e se está tocando ou pausado (lido do projetor pela depuração);
+  - botões anterior, voltar 10 s, play/pausa, avançar 10 s e próxima;
+  - volume em cápsula no estilo da Central de Controle: arrastar muda o nível sem pular, com um toque leve a cada nível.
 - **Touchpad:** move o cursor, clica e rola a tela do projetor.
-- **Apps:** lista os apps instalados no projetor e abre cada um com um toque.
-- **Mais:** digitar texto no projetor, telas de ajustes, Wi-Fi e Bluetooth, Dormir, Acordar e Reiniciar. Também tem o IP do projetor e o botão **Procurar o projetor no Wi-Fi**.
-- **Ligar e Desligar:** pelo infravermelho do celular, com o mesmo sinal do botão de energia do controle original.
+- **Apps:** grade de ícones como a tela inicial do iPhone, com busca por nome.
+- **Ajustes:** listas agrupadas com:
+  - telas do projetor, Dormir, Acordar e Reiniciar;
+  - digitar no projetor;
+  - IP e busca no Wi-Fi;
+  - receptor e pareamento;
+  - interruptor "Setas e OK pelo infravermelho";
+  - velocidade do cursor;
+  - estado do infravermelho do celular.
+
+No celular, a barra de abas flutua embaixo e a tela fica em pé. No tablet, a barra fica no alto, centralizada, e a tela gira. Com 720 dp de largura ou mais, a aba Controle se divide em duas colunas: o controle à esquerda e mídia, volume e atalhos à direita.
 
 ## Sem a depuração: o receptor
 
@@ -70,10 +89,13 @@ Abra `build/ControleProjetor.apk` no celular.
 - **Linux sem o SDK do Google:** `./build.sh`. Os pacotes necessários estão listados no início do script. Na primeira vez, ele baixa do Maven Central o android.jar completo (Robolectric android-all) e o Retrolambda, que converte as lambdas para o `dalvik-exchange`.
 
 `./build.sh test` testa:
+- a leitura do "Tocando agora" (`dumpsys media_session`);
 - o código infravermelho contra os 15 botões capturados do controle;
 - a busca na rede com projetores falsos;
 - o protocolo entre o celular e o receptor, com pareamento e cada comando.
 
 O `build.sh` também compila o receptor e o põe dentro do APK do celular. O `build.ps1` não faz isso.
+
+A fonte Inter (em `assets/fonts`, só com os caracteres latinos) é da SIL Open Font License; a licença está em `assets/fonts/OFL-Inter.txt`.
 
 A chave de assinatura (`signing/controle-ir.jks`) não vai para o Git. Um APK assinado com outra chave não instala por cima. Nesse caso, desinstale a versão anterior antes.

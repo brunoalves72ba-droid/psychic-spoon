@@ -189,6 +189,10 @@ public class ReceptorService extends AccessibilityService implements ReceiverSer
                 return media(KeyEvent.KEYCODE_MEDIA_REWIND);
             case "FAST_FORWARD":
                 return media(KeyEvent.KEYCODE_MEDIA_FAST_FORWARD);
+            case "NEXT":
+                return media(KeyEvent.KEYCODE_MEDIA_NEXT);
+            case "PREVIOUS":
+                return media(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
             case "VOLUME_UP":
                 audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
                 return true;

@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Typeface;
@@ -33,11 +35,10 @@ import android.view.WindowInsets;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.Space;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,8 +62,9 @@ public class MainActivity extends Activity {
 
     private static final int PORT = 5555;
     private static final String DEFAULT_HOST = "192.168.0.5";
-    private static final String[] TAB_NAMES = {"Controle", "Touchpad", "Apps", "Mais"};
-    private static final int[] TAB_ICONS = {R.drawable.ic_dpad, R.drawable.ic_mouse, R.drawable.ic_apps, R.drawable.ic_more};
+    private static final String[] TAB_NAMES = {"Controle", "Mídia", "Touchpad", "Apps", "Ajustes"};
+    private static final int[] TAB_ICONS = {R.drawable.ic_remote, R.drawable.ic_music, R.drawable.ic_mouse,
+            R.drawable.ic_apps, R.drawable.ic_settings};
     /** A touch that barely moves would register as a tap on the projector, so swipes start past this. */
     private static final int SWIPE_START_PX = 16;
     /** A full scan of the Wi-Fi takes a couple of seconds, so automatic ones are spaced out. */
@@ -137,12 +139,7 @@ public class MainActivity extends Activity {
 
     private View statusDot;
     private TextView statusText;
-    private final View[] pages = new View[4];
-    private final LinearLayout[] tabs = new LinearLayout[4];
-    private SeekBar volumeBar;
-    private TextView volumeLabel;
-    private ImageView muteIcon;
-    private TextView muteText;
+    private final View[] pages = new View[5];
     private LinearLayout appsGrid;
     private EditText textField;
     private EditText hostField;
@@ -156,6 +153,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         prefs = getSharedPreferences("controle", MODE_PRIVATE);
         host = prefs.getString("host", DEFAULT_HOST);
+        Style.init(this);
+        // phones stay upright; tablets turn freely and get the two-column layout when wide enough
+        if (getResources().getConfiguration().smallestScreenWidthDp < 600) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
         getWindow().setBackgroundDrawable(new ColorDrawable(Style.BG));
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
@@ -166,8 +168,46 @@ public class MainActivity extends Activity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         }
         setContentView(buildUi());
-        selectTab(prefs.getInt("tab", 0));
+        selectTab(prefs.getInt("tab", 0), false);
         watchWifi();
+    }
+
+    /** Rotation and window resizes rebuild the screen in place; the connection is kept. */
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        int tab = currentTab < 0 ? 0 : currentTab;
+        currentTab = -1;
+        setContentView(buildUi());
+        selectTab(tab, false);
+        showVolume();
+        showApps(lastApps);
+        if (hostField != null) hostField.setText(host);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        handler.removeCallbacks(mediaPoll);
+    }
+
+    /** While Controle or Mídia is showing, asks every 3 s what the projector is playing (ADB only). */
+    private final Runnable mediaPoll = new Runnable() {
+        @Override
+        public void run() {
+            handler.removeCallbacks(this);
+            if (connected && mode == MODE_ADB && (currentTab == 0 || currentTab == 1)) {
+                onWorker(MainActivity.this::loadNowPlaying);
+            }
+            handler.postDelayed(this, 3000);
+        }
+    };
+
+    private void loadNowPlaying() {
+        String out = runShell(ProjectorCommands.MEDIA_QUERY);
+        if (out == null) return;
+        nowPlaying = ProjectorCommands.parseNowPlaying(out);
+        runOnUiThread(this::showNowPlaying);
     }
 
     @Override
@@ -178,6 +218,8 @@ public class MainActivity extends Activity {
         worker.execute(() -> {
             if (ensureConnected() && loaded) loadVolume();
         });
+        handler.removeCallbacks(mediaPoll);
+        handler.postDelayed(mediaPoll, 800);
     }
 
     @Override
@@ -633,6 +675,8 @@ public class MainActivity extends Activity {
 
     private void setStatus(String text, int color) {
         runOnUiThread(() -> {
+            statusShown = text;
+            statusColor = color;
             statusText.setText(text);
             statusDot.setBackground(Style.oval(color));
         });
@@ -725,6 +769,8 @@ public class MainActivity extends Activity {
             case ProjectorCommands.KEY_HOME: return "HOME";
             case ProjectorCommands.KEY_MENU: return "MENU";
             case ProjectorCommands.KEY_PLAY_PAUSE: return "PLAY_PAUSE";
+            case ProjectorCommands.KEY_NEXT: return "NEXT";
+            case ProjectorCommands.KEY_PREVIOUS: return "PREVIOUS";
             case ProjectorCommands.KEY_REWIND: return "REWIND";
             case ProjectorCommands.KEY_FAST_FORWARD: return "FAST_FORWARD";
             case ProjectorCommands.KEY_VOLUME_UP: return "VOLUME_UP";
@@ -1088,12 +1134,14 @@ public class MainActivity extends Activity {
     }
 
     private void showVolume() {
-        volumeBar.setMax(maxVolume);
-        volumeBar.setProgress(Math.max(volume, 0));
-        volumeLabel.setText(volume < 0 ? "–" : volume + " / " + maxVolume);
+        for (PillSlider s : volumeSliders) {
+            s.setMax(maxVolume);
+            s.setValue(volume, true);
+        }
+        for (TextView t : volumeValues) t.setText(volume < 0 ? "–" : String.valueOf(volume));
         boolean muted = volume == 0;
-        muteIcon.setImageResource(muted ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
-        muteText.setText(muted ? "Ativar som" : "Sem som");
+        for (ImageView i : muteIcons) i.setImageResource(muted ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
+        for (TextView t : muteTexts) t.setText(muted ? "Ativar som" : "Sem som");
     }
 
     private void loadApps() {
@@ -1162,263 +1210,595 @@ public class MainActivity extends Activity {
         });
     }
 
-    // ---------------------------------------------------------------- UI
+    // ---------------------------------------------------------------- UI (iOS-style; phone and tablet)
 
-    private static final int[] TAB_COLORS = {Style.ACCENT, Style.TEAL, Style.ORANGE, Style.VIOLET};
+    /** One "Tocando agora" card; the wide layout shows two (Controle and Mídia), so they live in a list. */
+    private static final class NowPlayingViews {
+        TextView art;
+        TextView title;
+        TextView subtitle;
+        TextView state;
+        ImageView play;
+    }
+
+    private boolean tablet;
+    private boolean wide;
+    private PillTabBar tabBar;
+    private LinearLayout column;
+    private int currentTab = -1;
+    private final List<PillSlider> volumeSliders = new ArrayList<>();
+    private final List<TextView> volumeValues = new ArrayList<>();
+    private final List<ImageView> muteIcons = new ArrayList<>();
+    private final List<TextView> muteTexts = new ArrayList<>();
+    private final List<NowPlayingViews> nowPlayingViews = new ArrayList<>();
+    private final List<LinearLayout> shortcutRows = new ArrayList<>();
+    private final List<View> shortcutCards = new ArrayList<>();
+    private List<ProjectorCommands.App> lastApps = new ArrayList<>();
+    private volatile ProjectorCommands.NowPlaying nowPlaying;
+    private String appFilter = "";
+    private String statusShown = "Desconectado";
+    private int statusColor = Style.MUTED;
 
     private View buildUi() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackground(new Style.Backdrop());
-        root.setOnApplyWindowInsetsListener(this::applyInsets);
+        Configuration cfg = getResources().getConfiguration();
+        tablet = cfg.smallestScreenWidthDp >= 600;
+        wide = cfg.screenWidthDp >= 720;
+        volumeSliders.clear();
+        volumeValues.clear();
+        muteIcons.clear();
+        muteTexts.clear();
+        nowPlayingViews.clear();
+        shortcutRows.clear();
+        shortcutCards.clear();
 
-        root.addView(buildHeader(), matchWrap(dp(14), dp(8), dp(14), 0));
-        root.addView(buildPowerRow(), matchWrap(dp(10), dp(10), dp(10), 0));
-        root.addView(buildTabs(), matchWrap(dp(14), dp(10), dp(14), dp(4)));
+        FrameLayout root = new FrameLayout(this);
+        column = vertical();
+        root.addView(column, new FrameLayout.LayoutParams(-1, -1));
+        column.addView(buildHeader(), matchWrap(dp(tablet ? 32 : 20), dp(10), dp(tablet ? 32 : 20), 0));
+
+        tabBar = new PillTabBar(this, TAB_NAMES, TAB_ICONS, tablet ? 58 : 62);
+        tabBar.setListener(this::selectTab);
 
         FrameLayout content = new FrameLayout(this);
         pages[0] = scrolling(buildControlPage());
-        pages[1] = buildTouchpadPage();
-        pages[2] = scrolling(buildAppsPage());
-        pages[3] = scrolling(buildMorePage());
-        for (View p : pages) content.addView(p, new FrameLayout.LayoutParams(-1, -1));
-        root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1f));
+        pages[1] = scrolling(buildMediaPage());
+        pages[2] = buildTouchpadPage();
+        pages[3] = scrolling(buildAppsPage());
+        pages[4] = scrolling(buildSettingsPage());
+        for (View p : pages) {
+            p.setVisibility(View.GONE);
+            content.addView(p, new FrameLayout.LayoutParams(-1, -1));
+        }
+
+        if (tablet) {
+            // iPadOS: the tab bar floats at the top, centred
+            LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(dp(Math.min(600, cfg.screenWidthDp - 48)), -2);
+            tp.gravity = Gravity.CENTER_HORIZONTAL;
+            tp.topMargin = dp(16);
+            tp.bottomMargin = dp(4);
+            column.addView(tabBar, tp);
+            column.addView(content, new LinearLayout.LayoutParams(-1, 0, 1f));
+        } else {
+            column.addView(content, new LinearLayout.LayoutParams(-1, 0, 1f));
+            FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+            bp.setMargins(dp(14), 0, dp(14), dp(10));
+            root.addView(tabBar, bp);
+        }
+        root.setOnApplyWindowInsetsListener(this::applyInsets);
         return root;
     }
 
+    @SuppressWarnings("deprecation")
     private WindowInsets applyInsets(View v, WindowInsets insets) {
         int left;
         int top;
         int right;
         int bottom;
+        int ime = 0;
         if (Build.VERSION.SDK_INT >= 30) {
             Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-            Insets ime = insets.getInsets(WindowInsets.Type.ime());
             left = bars.left;
             top = bars.top;
             right = bars.right;
-            bottom = Math.max(bars.bottom, ime.bottom);
+            bottom = bars.bottom;
+            ime = insets.getInsets(WindowInsets.Type.ime()).bottom;
         } else {
             left = insets.getSystemWindowInsetLeft();
             top = insets.getSystemWindowInsetTop();
             right = insets.getSystemWindowInsetRight();
             bottom = insets.getSystemWindowInsetBottom();
         }
-        v.setPadding(left, top, right, bottom);
+        boolean typing = ime > bottom;
+        column.setPadding(left, top, right, tablet || typing ? Math.max(bottom, ime) : 0);
+        if (!tablet) {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) tabBar.getLayoutParams();
+            lp.leftMargin = left + dp(14);
+            lp.rightMargin = right + dp(14);
+            lp.bottomMargin = bottom + dp(10);
+            tabBar.setLayoutParams(lp);
+            // like iOS, the tab bar steps aside while the keyboard is up
+            tabBar.setVisibility(typing ? View.INVISIBLE : View.VISIBLE);
+        }
         return insets;
     }
 
-    /** Gradient card with the projector, its connection status and a shortcut to the settings tab. */
+    /** Large title, connection status in a capsule, and the power command pills. */
     private View buildHeader() {
-        LinearLayout hero = new LinearLayout(this);
-        hero.setGravity(Gravity.CENTER_VERTICAL);
-        hero.setBackground(new Style.Hero(dp(26), dp(1)));
-        hero.setElevation(dp(8));
-        hero.setPadding(dp(14), dp(14), dp(12), dp(14));
-
-        FrameLayout bubble = new FrameLayout(this);
-        bubble.setBackground(Style.oval(0x33FFFFFF));
-        bubble.addView(icon(R.drawable.ic_projector, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(32), dp(32), Gravity.CENTER));
-        hero.addView(bubble, new LinearLayout.LayoutParams(dp(58), dp(58)));
+        LinearLayout header = vertical();
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER_VERTICAL);
 
         LinearLayout titles = vertical();
-        titles.addView(text("Projetor HY300", 22, 0xFFFFFFFF, true));
-        titles.addView(text("Wi-Fi + infravermelho", 12.5f, 0xD9FFFFFF, false));
+        TextView eyebrow = text("HY300", 13, Style.TEXT2, Style.semibold);
+        eyebrow.setLetterSpacing(0.08f);
+        titles.addView(eyebrow);
+        TextView title = text("Projetor", 34, Style.TEXT, Style.bold);
+        title.setPadding(0, dp(2), 0, 0);
+        titles.addView(title);
+
         LinearLayout chip = new LinearLayout(this);
         chip.setGravity(Gravity.CENTER_VERTICAL);
-        chip.setBackground(Style.rounded(0x47000000, dp(14)));
-        chip.setPadding(dp(10), dp(5), dp(12), dp(5));
+        chip.setBackground(Style.capsule(Style.FILL4));
+        chip.setPadding(dp(11), dp(6), dp(13), dp(6));
         statusDot = new View(this);
-        statusDot.setBackground(Style.oval(Style.MUTED));
-        chip.addView(statusDot, new LinearLayout.LayoutParams(dp(9), dp(9)));
-        statusText = text("Desconectado", 12.5f, 0xFFFFFFFF, true);
+        statusDot.setBackground(Style.oval(statusColor));
+        chip.addView(statusDot, new LinearLayout.LayoutParams(dp(8), dp(8)));
+        statusText = text(statusShown, 13, 0xD9EBEBF5, Style.medium);
         statusText.setMaxLines(2);
         statusText.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams stp = new LinearLayout.LayoutParams(-2, -2);
         stp.leftMargin = dp(7);
         chip.addView(statusText, stp);
         LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, -2);
-        cp.topMargin = dp(8);
+        cp.topMargin = dp(10);
         titles.addView(chip, cp);
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, -2, 1f);
-        tp.leftMargin = dp(12);
-        tp.rightMargin = dp(6);
-        hero.addView(titles, tp);
+        top.addView(titles, new LinearLayout.LayoutParams(0, -2, 1f));
 
-        hero.addView(roundButton(R.drawable.ic_settings, 44, Style.ripple(Style.oval(0x33FFFFFF)),
-                0xFFFFFFFF, "Ajustes", () -> selectTab(3)));
-        return hero;
+        if (tablet) {
+            top.addView(powerPills());
+        } else {
+            top.addView(circleButton(R.drawable.ic_settings, 40, Style.FILL3, Style.TEXT, "Ajustes", () -> selectTab(4)));
+        }
+        header.addView(top);
+        if (!tablet) header.addView(powerPills(), matchWrap(0, dp(14), 0, 0));
+        return header;
     }
 
-    private View buildPowerRow() {
+    /** Command pills: Ligar and Desligar (infrared) and Procurar (Wi-Fi). */
+    private View powerPills() {
         LinearLayout row = new LinearLayout(this);
-        row.addView(powerButton("Ligar", Style.GREEN, Style.GREEN2, this::powerOn), weighted(dp(4)));
-        row.addView(powerButton("Desligar", Style.RED, Style.RED2, this::powerOff), weighted(dp(4)));
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(commandPill(R.drawable.ic_power, "Ligar", Style.GREEN, this::powerOn), pillParams(!tablet));
+        row.addView(commandPill(R.drawable.ic_power, "Desligar", Style.RED, this::powerOff), pillParams(!tablet));
+        row.addView(commandPill(R.drawable.ic_search, tablet ? "Procurar" : "Buscar", Style.BLUE, this::searchNetwork), pillParams(!tablet));
         return row;
     }
 
-    private View powerButton(String title, int from, int to, Runnable action) {
-        LinearLayout p = new LinearLayout(this);
-        p.setGravity(Gravity.CENTER_VERTICAL);
-        p.setBackground(Style.ripple(Style.gradient(from, to, dp(22))));
-        p.setElevation(dp(6));
-        p.setPadding(dp(12), dp(12), dp(10), dp(12));
-        p.setContentDescription(title + " o projetor por infravermelho");
-        FrameLayout bubble = new FrameLayout(this);
-        bubble.setBackground(Style.oval(0x38FFFFFF));
-        bubble.addView(icon(R.drawable.ic_power, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER));
-        p.addView(bubble, new LinearLayout.LayoutParams(dp(44), dp(44)));
-        LinearLayout t = vertical();
-        t.addView(text(title, 18, 0xFFFFFFFF, true));
-        LinearLayout ir = new LinearLayout(this);
-        ir.setGravity(Gravity.CENTER_VERTICAL);
-        ir.addView(icon(R.drawable.ic_ir, 0xD9FFFFFF), new LinearLayout.LayoutParams(dp(13), dp(13)));
-        TextView sub = text("infravermelho", 11.5f, 0xD9FFFFFF, false);
-        sub.setPadding(dp(3), 0, 0, 0);
-        ir.addView(sub);
-        t.addView(ir);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-        lp.leftMargin = dp(10);
-        p.addView(t, lp);
-        onTap(p, action);
-        return p;
-    }
-
-    private View buildTabs() {
-        LinearLayout bar = new LinearLayout(this);
-        bar.setBackground(Style.outlined(0xE6121828, dp(22), dp(1)));
-        bar.setElevation(dp(4));
-        bar.setPadding(dp(5), dp(5), dp(5), dp(5));
-        for (int i = 0; i < 4; i++) {
-            final int index = i;
-            LinearLayout tab = new LinearLayout(this);
-            tab.setOrientation(LinearLayout.VERTICAL);
-            tab.setGravity(Gravity.CENTER);
-            tab.setPadding(0, dp(8), 0, dp(8));
-            tab.addView(icon(TAB_ICONS[i], TAB_COLORS[i]), new LinearLayout.LayoutParams(dp(23), dp(23)));
-            TextView label = text(TAB_NAMES[i], 12, Style.SOFT, true);
-            label.setGravity(Gravity.CENTER);
-            label.setPadding(0, dp(3), 0, 0);
-            tab.addView(label);
-            tab.setOnClickListener(v -> {
-                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-                selectTab(index);
-            });
-            tabs[i] = tab;
-            bar.addView(tab, new LinearLayout.LayoutParams(0, -2, 1f));
-        }
-        return bar;
+    private LinearLayout.LayoutParams pillParams(boolean fill) {
+        LinearLayout.LayoutParams lp = fill ? new LinearLayout.LayoutParams(0, dp(42), 1f) : new LinearLayout.LayoutParams(-2, dp(42));
+        lp.setMargins(dp(4), 0, dp(4), 0);
+        return lp;
     }
 
     private void selectTab(int index) {
-        if (index < 0 || index > 3) index = 0;
-        for (int i = 0; i < 4; i++) {
-            boolean on = i == index;
-            pages[i].setVisibility(on ? View.VISIBLE : View.GONE);
-            tabs[i].setBackground(on ? Style.gradient(TAB_COLORS[i], Style.mix(TAB_COLORS[i], Style.VIOLET, 0.55f), dp(17)) : null);
-            tabs[i].setElevation(on ? dp(3) : 0);
-            ((ImageView) tabs[i].getChildAt(0)).setImageTintList(ColorStateList.valueOf(on ? 0xFFFFFFFF : TAB_COLORS[i]));
-            ((TextView) tabs[i].getChildAt(1)).setTextColor(on ? 0xFFFFFFFF : Style.SOFT);
+        selectTab(index, true);
+    }
+
+    /** Shows a tab: the old page fades, the new one rises in a little, both on hardware layers. */
+    private void selectTab(int index, boolean animate) {
+        if (index < 0 || index >= pages.length) index = 0;
+        final int previous = currentTab;
+        currentTab = index;
+        tabBar.select(index, animate);
+        for (int i = 0; i < pages.length; i++) {
+            if (i != index && i != previous) pages[i].setVisibility(View.GONE);
+        }
+        View in = pages[index];
+        in.animate().cancel();
+        if (animate && previous >= 0 && previous != index) {
+            final View out = pages[previous];
+            out.animate().cancel();
+            out.animate().alpha(0f).setDuration(110).withLayer().withEndAction(() -> {
+                if (currentTab != previous) out.setVisibility(View.GONE);
+                out.setAlpha(1f);
+            }).start();
+            in.setVisibility(View.VISIBLE);
+            in.setAlpha(0f);
+            in.setTranslationX(dp(index > previous ? 22 : -22));
+            in.animate().alpha(1f).translationX(0f).setStartDelay(40).setDuration(420)
+                    .setInterpolator(Style.SPRING_SOFT).withLayer().start();
+        } else {
+            in.setVisibility(View.VISIBLE);
+            in.setAlpha(1f);
+            in.setTranslationX(0f);
         }
         prefs.edit().putInt("tab", index).apply();
+        if (index <= 1) {
+            handler.removeCallbacks(mediaPoll);
+            handler.post(mediaPoll);
+        }
     }
+
+    // -- Controle
 
     private View buildControlPage() {
+        if (wide) {
+            LinearLayout cols = new LinearLayout(this);
+            cols.setPadding(dp(32), dp(8), dp(32), dp(40));
+            LinearLayout left = vertical();
+            left.addView(remoteColumn(400));
+            LinearLayout right = vertical();
+            right.addView(nowPlayingCard(false), matchWrap(0, dp(4), 0, 0));
+            right.addView(volumeCard(), matchWrap(0, dp(16), 0, 0));
+            right.addView(shortcutsCard(), matchWrap(0, dp(16), 0, 0));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
+            lp.rightMargin = dp(16);
+            cols.addView(left, lp);
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -2, 1f);
+            rp.leftMargin = dp(16);
+            cols.addView(right, rp);
+            return cols;
+        }
         LinearLayout page = page();
-
-        LinearLayout nav = new LinearLayout(this);
-        nav.setGravity(Gravity.CENTER);
-        nav.addView(labeled(roundButton(R.drawable.ic_back, 62, Style.ripple(Style.ovalGradient(Style.TEAL, Style.TEAL2)),
-                0xFFFFFFFF, "Voltar", () -> sendKey(ProjectorCommands.KEY_BACK)), "Voltar", 88), weighted(0));
-        nav.addView(labeled(roundButton(R.drawable.ic_home, 80, Style.ripple(Style.ovalGradient(Style.ACCENT, Style.VIOLET)),
-                0xFFFFFFFF, "Início", () -> sendKey(ProjectorCommands.KEY_HOME)), "Início", 88), weighted(0));
-        nav.addView(labeled(roundButton(R.drawable.ic_menu, 62, Style.ripple(Style.ovalGradient(Style.ORANGE, Style.PINK)),
-                0xFFFFFFFF, "Menu", () -> sendKey(ProjectorCommands.KEY_MENU)), "Menu", 88), weighted(0));
-        page.addView(nav, matchWrap(0, dp(6), 0, 0));
-
-        DpadView dpad = new DpadView(this);
-        dpad.setListener(this::sendKey);
-        page.addView(dpad, matchWrap(0, dp(6), 0, 0));
-
-        LinearLayout media = card(page, "Mídia", R.drawable.ic_play_pause, Style.PINK);
-        LinearLayout mediaRow = new LinearLayout(this);
-        mediaRow.setGravity(Gravity.CENTER);
-        mediaRow.addView(labeled(roundButton(R.drawable.ic_rewind, 56, Style.ripple(Style.tinted(Style.VIOLET, dp(28), dp(1))),
-                0xFFC4B5FD, "Voltar vídeo", () -> sendKey(ProjectorCommands.KEY_REWIND)), "Voltar", 76), weighted(0));
-        mediaRow.addView(labeled(roundButton(R.drawable.ic_play_pause, 68, Style.ripple(Style.ovalGradient(Style.PINK, Style.ORANGE)),
-                0xFFFFFFFF, "Play ou pausa", () -> sendKey(ProjectorCommands.KEY_PLAY_PAUSE)), "Play / Pausa", 76), weighted(0));
-        mediaRow.addView(labeled(roundButton(R.drawable.ic_fast_forward, 56, Style.ripple(Style.tinted(Style.VIOLET, dp(28), dp(1))),
-                0xFFC4B5FD, "Avançar vídeo", () -> sendKey(ProjectorCommands.KEY_FAST_FORWARD)), "Avançar", 76), weighted(0));
-        media.addView(mediaRow);
-
-        LinearLayout vol = card(page, "Volume", R.drawable.ic_volume_up, Style.ACCENT);
-        LinearLayout volHeader = (LinearLayout) vol.getChildAt(0);
-        volumeLabel = text("–", 14, 0xFFFFFFFF, true);
-        volumeLabel.setBackground(Style.gradient(Style.ACCENT, Style.VIOLET, dp(12)));
-        volumeLabel.setPadding(dp(12), dp(4), dp(12), dp(4));
-        volHeader.addView(volumeLabel);
-        volumeBar = new SeekBar(this);
-        volumeBar.setMax(maxVolume);
-        volumeBar.setProgressDrawable(Style.track(dp(10)));
-        volumeBar.setThumb(Style.thumb(dp(26), dp(4)));
-        volumeBar.setSplitTrack(false);
-        volumeBar.setPadding(dp(18), dp(16), dp(18), dp(16));
-        volumeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
-                if (fromUser) volumeLabel.setText(progress + " / " + maxVolume);
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar bar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar bar) {
-                setVolume(bar.getProgress());
-            }
-        });
-        vol.addView(volumeBar);
-        LinearLayout volButtons = new LinearLayout(this);
-        volButtons.setGravity(Gravity.CENTER_VERTICAL);
-        volButtons.addView(roundButton(R.drawable.ic_volume_down, 56, Style.ripple(Style.ovalGradient(Style.SKY, Style.ACCENT)),
-                0xFFFFFFFF, "Diminuir volume",
-                () -> stepVolume(ProjectorCommands.KEY_VOLUME_DOWN, -1)), new LinearLayout.LayoutParams(-2, -2));
-        LinearLayout mute = pill(R.drawable.ic_volume_off, "Sem som",
-                Style.ripple(Style.tinted(Style.RED, dp(28), dp(1))), this::toggleMute);
-        muteIcon = (ImageView) mute.getChildAt(0);
-        muteIcon.setImageTintList(ColorStateList.valueOf(0xFFFDA4AF));
-        muteText = (TextView) mute.getChildAt(1);
-        muteText.setTextSize(15);
-        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, dp(56), 1f);
-        mp.setMargins(dp(10), 0, dp(10), 0);
-        volButtons.addView(mute, mp);
-        volButtons.addView(roundButton(R.drawable.ic_volume_up, 56, Style.ripple(Style.ovalGradient(Style.ACCENT, Style.VIOLET)),
-                0xFFFFFFFF, "Aumentar volume",
-                () -> stepVolume(ProjectorCommands.KEY_VOLUME_UP, 1)), new LinearLayout.LayoutParams(-2, -2));
-        vol.addView(volButtons);
-
-        shortcutsCard = card(page, "Atalhos", R.drawable.ic_apps, Style.ORANGE);
-        shortcutsRow = new LinearLayout(this);
-        shortcutsCard.addView(shortcutsRow, matchWrap(-dp(2), 0, -dp(2), 0));
-        shortcutsCard.setVisibility(View.GONE);
-        return page;
+        page.addView(remoteColumn(tablet ? 400 : 330));
+        page.addView(nowPlayingMini(), matchWrap(0, dp(22), 0, 0));
+        page.addView(shortcutsCard(), matchWrap(0, dp(16), 0, 0));
+        return constrained(page, 620);
     }
 
-    private View buildTouchpadPage() {
-        LinearLayout page = new LinearLayout(this);
-        page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(14), dp(8), dp(14), dp(14));
+    /** Quick pills, the clickpad and the round buttons with the volume rocker, like the Siri Remote. */
+    private View remoteColumn(int padDp) {
+        LinearLayout col = vertical();
+        HorizontalScrollView quickScroll = new HorizontalScrollView(this);
+        quickScroll.setHorizontalScrollBarEnabled(false);
+        quickScroll.setClipToPadding(false);
+        LinearLayout quick = new LinearLayout(this);
+        quick.addView(quickPill(R.drawable.ic_home, "Início", () -> sendKey(ProjectorCommands.KEY_HOME)), quickParams());
+        quick.addView(quickPill(R.drawable.ic_chevron_back, "Voltar", () -> sendKey(ProjectorCommands.KEY_BACK)), quickParams());
+        quick.addView(quickPill(R.drawable.ic_menu_lines, "Menu", () -> sendKey(ProjectorCommands.KEY_MENU)), quickParams());
+        View mute = quickPill(R.drawable.ic_volume_off, "Sem som", this::toggleMute);
+        muteIcons.add((ImageView) ((ViewGroup) mute).getChildAt(0));
+        muteTexts.add((TextView) ((ViewGroup) mute).getChildAt(1));
+        quick.addView(mute, quickParams());
+        quick.addView(quickPill(R.drawable.ic_apps, "Apps", () -> selectTab(3)), quickParams());
+        quickScroll.addView(quick);
+        col.addView(quickScroll, matchWrap(-dp(4), dp(10), -dp(4), 0));
 
+        ClickpadView pad = new ClickpadView(this);
+        pad.setMaxSize(dp(padDp));
+        pad.setListener(this::sendKey);
+        col.addView(pad, matchWrap(0, dp(22), 0, 0));
+        TextView hint = text("Toque nas bordas, deslize para navegar ou toque no centro para OK", 12.5f, Style.TEXT3, Style.regular);
+        hint.setGravity(Gravity.CENTER);
+        col.addView(hint, matchWrap(dp(12), dp(10), dp(12), 0));
+
+        // round buttons on the left, volume rocker on the right
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setGravity(Gravity.CENTER);
+        LinearLayout grid = vertical();
+        LinearLayout r1 = new LinearLayout(this);
+        r1.addView(remoteButton(R.drawable.ic_chevron_back, "Voltar", () -> sendKey(ProjectorCommands.KEY_BACK)));
+        r1.addView(withLeft(remoteButton(R.drawable.ic_tv, "Início", () -> sendKey(ProjectorCommands.KEY_HOME)), dp(18)));
+        LinearLayout r2 = new LinearLayout(this);
+        r2.addView(remoteButton(R.drawable.ic_play_pause, "Play ou pausa", this::playPause));
+        r2.addView(withLeft(remoteButton(R.drawable.ic_menu_lines, "Menu", () -> sendKey(ProjectorCommands.KEY_MENU)), dp(18)));
+        grid.addView(r1);
+        LinearLayout.LayoutParams r2p = new LinearLayout.LayoutParams(-2, -2);
+        r2p.topMargin = dp(18);
+        grid.addView(r2, r2p);
+        buttons.addView(grid);
+        buttons.addView(volumeRocker(), spaced(dp(26)));
+        col.addView(buttons, matchWrap(0, dp(24), 0, 0));
+        return col;
+    }
+
+    private View remoteButton(int icon, String description, Runnable action) {
+        View b = circleButton(icon, 68, Style.CELL2, Style.TEXT, description, action);
+        b.setElevation(dp(2));
+        return b;
+    }
+
+    /** Volume capsule with + on top and − below, each half lights up while pressed. */
+    private View volumeRocker() {
+        LinearLayout rocker = vertical();
+        rocker.setBackground(Style.capsule(Style.CELL2));
+        rocker.setClipToOutline(true);
+        rocker.setElevation(dp(2));
+        rocker.addView(rockerHalf(R.drawable.ic_plus, "Aumentar volume", () -> stepVolume(ProjectorCommands.KEY_VOLUME_UP, 1)),
+                new LinearLayout.LayoutParams(dp(68), dp(77)));
+        View line = new View(this);
+        line.setBackgroundColor(0x24FFFFFF);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(26), Math.max(1, dp(0.7f)));
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        rocker.addView(line, lp);
+        rocker.addView(rockerHalf(R.drawable.ic_minus, "Diminuir volume", () -> stepVolume(ProjectorCommands.KEY_VOLUME_DOWN, -1)),
+                new LinearLayout.LayoutParams(dp(68), dp(77)));
+        return rocker;
+    }
+
+    private View rockerHalf(int icon, String description, Runnable action) {
+        FrameLayout half = new FrameLayout(this);
+        half.setBackground(Style.rowBackground());
+        half.setContentDescription(description);
+        half.addView(icon(icon, Style.TEXT), new FrameLayout.LayoutParams(dp(24), dp(24), Gravity.CENTER));
+        onTap(half, action);
+        return half;
+    }
+
+    // -- Mídia
+
+    private View buildMediaPage() {
+        LinearLayout page = page();
+        page.addView(sectionTitle("Mídia"), matchWrap(dp(4), dp(6), 0, dp(12)));
+        page.addView(nowPlayingCard(true));
+        page.addView(volumeCard(), matchWrap(0, dp(16), 0, 0));
+        TextView note = text("Os botões funcionam no app que estiver tocando no projetor: SmartTube, Netflix, música e outros. "
+                + "Voltar e avançar 10 s pulam dentro do vídeo; anterior e próxima trocam de faixa.", 13, Style.TEXT2, Style.regular);
+        note.setLineSpacing(dp(2), 1f);
+        page.addView(note, matchWrap(dp(16), dp(12), dp(16), 0));
+        return constrained(page, 680);
+    }
+
+    /** "Tocando agora" with artwork, title and the transport controls. */
+    private View nowPlayingCard(boolean large) {
+        LinearLayout card = vertical();
+        card.setBackground(Style.vertical(0xFF26262A, Style.CELL, dp(26)));
+        card.setPadding(dp(18), dp(18), dp(18), dp(20));
+        card.setElevation(dp(2));
+        NowPlayingViews v = new NowPlayingViews();
+
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        int art = large ? 84 : 68;
+        v.art = text("♪", art * 0.36f, 0xFFFFFFFF, Style.bold);
+        v.art.setGravity(Gravity.CENTER);
+        v.art.setElevation(dp(6));
+        top.addView(v.art, new LinearLayout.LayoutParams(dp(art), dp(art)));
+        LinearLayout texts = vertical();
+        v.state = text("PROJETOR", 12, Style.TEXT2, Style.semibold);
+        v.state.setLetterSpacing(0.06f);
+        texts.addView(v.state);
+        v.title = text("Nada tocando", large ? 21 : 18, Style.TEXT, Style.semibold);
+        v.title.setMaxLines(2);
+        v.title.setEllipsize(TextUtils.TruncateAt.END);
+        v.title.setPadding(0, dp(5), 0, 0);
+        texts.addView(v.title);
+        v.subtitle = text("", 15, Style.TEXT2, Style.regular);
+        v.subtitle.setMaxLines(1);
+        v.subtitle.setEllipsize(TextUtils.TruncateAt.END);
+        v.subtitle.setPadding(0, dp(3), 0, 0);
+        texts.addView(v.subtitle);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, -2, 1f);
+        tp.leftMargin = dp(16);
+        top.addView(texts, tp);
+        card.addView(top);
+
+        LinearLayout transport = new LinearLayout(this);
+        transport.setGravity(Gravity.CENTER);
+        transport.addView(transportButton(R.drawable.ic_prev, 50, "Anterior", () -> sendKey(ProjectorCommands.KEY_PREVIOUS)), weighted(0));
+        transport.addView(skipButton(false), weighted(0));
+        FrameLayout play = new FrameLayout(this);
+        play.setBackground(Style.oval(0xFFFFFFFF));
+        play.setContentDescription("Play ou pausa");
+        play.setElevation(dp(8));
+        v.play = icon(R.drawable.ic_play, 0xFF000000);
+        play.addView(v.play, new FrameLayout.LayoutParams(dp(34), dp(34), Gravity.CENTER));
+        onTap(play, this::playPause);
+        Style.press(play, 0.9f);
+        FrameLayout playWrap = new FrameLayout(this);
+        int playSize = large ? 76 : 68;
+        playWrap.addView(play, new FrameLayout.LayoutParams(dp(playSize), dp(playSize), Gravity.CENTER));
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(dp(playSize + 12), dp(playSize + 12));
+        transport.addView(playWrap, pp);
+        transport.addView(skipButton(true), weighted(0));
+        transport.addView(transportButton(R.drawable.ic_next, 50, "Próxima", () -> sendKey(ProjectorCommands.KEY_NEXT)), weighted(0));
+        card.addView(transport, matchWrap(0, dp(large ? 26 : 20), 0, 0));
+
+        nowPlayingViews.add(v);
+        showNowPlaying(v);
+        return card;
+    }
+
+    /** Compact card on the phone's Controle tab; opens the Mídia tab. */
+    private View nowPlayingMini() {
+        LinearLayout card = new LinearLayout(this);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setBackground(Style.rounded(Style.CELL, dp(22)));
+        card.setPadding(dp(12), dp(12), dp(10), dp(12));
+        NowPlayingViews v = new NowPlayingViews();
+        v.art = text("♪", 20, 0xFFFFFFFF, Style.bold);
+        v.art.setGravity(Gravity.CENTER);
+        card.addView(v.art, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        LinearLayout texts = vertical();
+        v.state = text("PROJETOR", 11, Style.TEXT2, Style.semibold);
+        v.state.setLetterSpacing(0.06f);
+        texts.addView(v.state);
+        v.title = text("Nada tocando", 16, Style.TEXT, Style.semibold);
+        v.title.setMaxLines(1);
+        v.title.setEllipsize(TextUtils.TruncateAt.END);
+        v.title.setPadding(0, dp(3), 0, 0);
+        texts.addView(v.title);
+        v.subtitle = text("", 13, Style.TEXT2, Style.regular);
+        v.subtitle.setMaxLines(1);
+        v.subtitle.setEllipsize(TextUtils.TruncateAt.END);
+        texts.addView(v.subtitle);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, -2, 1f);
+        tp.leftMargin = dp(12);
+        card.addView(texts, tp);
+        FrameLayout play = new FrameLayout(this);
+        play.setContentDescription("Play ou pausa");
+        v.play = icon(R.drawable.ic_play, Style.TEXT);
+        play.addView(v.play, new FrameLayout.LayoutParams(dp(26), dp(26), Gravity.CENTER));
+        onTap(play, this::playPause);
+        Style.press(play, 0.85f);
+        card.addView(play, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        card.addView(transportButton(R.drawable.ic_next, 44, "Próxima", () -> sendKey(ProjectorCommands.KEY_NEXT)));
+        onTap(card, () -> selectTab(1));
+        Style.press(card, 0.97f);
+        nowPlayingViews.add(v);
+        showNowPlaying(v);
+        return card;
+    }
+
+    private View transportButton(int icon, int sizeDp, String description, Runnable action) {
+        FrameLayout b = new FrameLayout(this);
+        b.setContentDescription(description);
+        b.addView(icon(icon, Style.TEXT), new FrameLayout.LayoutParams(dp(sizeDp * 0.56f), dp(sizeDp * 0.56f), Gravity.CENTER));
+        onTap(b, action);
+        Style.press(b, 0.86f);
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.addView(b, new FrameLayout.LayoutParams(dp(sizeDp), dp(sizeDp), Gravity.CENTER));
+        return wrap;
+    }
+
+    /** Circular arrow with "10" inside: back 10 s, or forward when mirrored. */
+    private View skipButton(boolean forward) {
+        FrameLayout b = new FrameLayout(this);
+        b.setContentDescription(forward ? "Avançar 10 segundos" : "Voltar 10 segundos");
+        ImageView arrow = icon(R.drawable.ic_replay, Style.TEXT);
+        if (forward) arrow.setScaleX(-1f);
+        b.addView(arrow, new FrameLayout.LayoutParams(dp(34), dp(34), Gravity.CENTER));
+        TextView ten = text("10", 10, Style.TEXT, Style.bold);
+        FrameLayout.LayoutParams tl = new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER);
+        tl.topMargin = dp(2);
+        b.addView(ten, tl);
+        onTap(b, () -> sendKey(forward ? ProjectorCommands.KEY_FAST_FORWARD : ProjectorCommands.KEY_REWIND));
+        Style.press(b, 0.86f);
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.addView(b, new FrameLayout.LayoutParams(dp(56), dp(56), Gravity.CENTER));
+        return wrap;
+    }
+
+    private void playPause() {
+        sendKey(ProjectorCommands.KEY_PLAY_PAUSE);
+        ProjectorCommands.NowPlaying np = nowPlaying;
+        if (np != null) {
+            nowPlaying = new ProjectorCommands.NowPlaying(np.packageName, np.title, np.subtitle, np.isPlaying() ? 2 : 3);
+            showNowPlaying();
+        }
+    }
+
+    private void showNowPlaying() {
+        for (NowPlayingViews v : nowPlayingViews) showNowPlaying(v);
+    }
+
+    private void showNowPlaying(NowPlayingViews v) {
+        ProjectorCommands.NowPlaying np = nowPlaying;
+        int artPx = v.art.getLayoutParams() != null ? v.art.getLayoutParams().width : dp(68);
+        if (np == null) {
+            v.art.setText("♪");
+            v.art.setBackground(Style.appIcon(Style.INDIGO, artPx));
+            v.state.setText(mode == MODE_RECEIVER ? "SEM DEPURAÇÃO" : "PROJETOR");
+            v.state.setTextColor(Style.TEXT2);
+            v.title.setText(mode == MODE_RECEIVER ? "Controle de mídia" : "Nada tocando");
+            v.subtitle.setText(mode == MODE_RECEIVER ? "Os botões controlam o player aberto" : "Abra um vídeo ou música no projetor");
+            v.play.setImageResource(R.drawable.ic_play);
+            return;
+        }
+        String app = appLabel(np.packageName);
+        Object[] brand = BRANDS.get(np.packageName);
+        int color = brand != null ? (Integer) brand[0] : Style.INDIGO;
+        v.art.setText(brand != null ? (String) brand[1] : app.substring(0, 1).toUpperCase());
+        v.art.setBackground(Style.appIcon(color, artPx));
+        v.state.setText(np.isPlaying() ? "TOCANDO" : "PAUSADO");
+        v.state.setTextColor(np.isPlaying() ? Style.GREEN : Style.ORANGE);
+        v.title.setText(np.title.isEmpty() ? app : np.title);
+        v.subtitle.setText(np.subtitle.isEmpty() ? app : np.subtitle + " · " + app);
+        v.play.setImageResource(np.isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
+    }
+
+    private String appLabel(String pkg) {
+        for (ProjectorCommands.App a : lastApps) if (a.packageName.equals(pkg)) return a.label;
+        String last = pkg.substring(pkg.lastIndexOf('.') + 1);
+        ProjectorCommands.NowPlaying np = nowPlaying;
+        if (np != null && np.packageName.equals(pkg)) return np.appLabel();
+        return last.isEmpty() ? pkg : Character.toUpperCase(last.charAt(0)) + last.substring(1);
+    }
+
+    /** Volume like the Control Center: capsule slider, the level, and −, Sem som, +. */
+    private View volumeCard() {
+        LinearLayout card = vertical();
+        card.setBackground(Style.rounded(Style.CELL, dp(26)));
+        card.setPadding(dp(18), dp(16), dp(18), dp(18));
+        LinearLayout head = new LinearLayout(this);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(text("Volume", 17, Style.TEXT, Style.semibold), new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView value = text(volume < 0 ? "–" : String.valueOf(volume), 15, Style.TEXT2, Style.semibold);
+        value.setFontFeatureSettings("tnum");
+        volumeValues.add(value);
+        head.addView(value);
+        card.addView(head);
+
+        PillSlider slider = new PillSlider(this, false);
+        slider.setIcons(R.drawable.ic_volume_down, R.drawable.ic_volume_up);
+        slider.setMax(maxVolume);
+        slider.setValue(volume, false);
+        slider.setListener((v, done) -> {
+            for (TextView t : volumeValues) t.setText(String.valueOf(v));
+            if (done) setVolume(v);
+        });
+        volumeSliders.add(slider);
+        card.addView(slider, new LinearLayout.LayoutParams(-1, dp(56)) {{ topMargin = dp(14); }});
+
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setGravity(Gravity.CENTER_VERTICAL);
+        buttons.addView(circleButton(R.drawable.ic_minus, 48, Style.FILL3, Style.TEXT, "Diminuir volume",
+                () -> stepVolume(ProjectorCommands.KEY_VOLUME_DOWN, -1)));
+        LinearLayout mute = new LinearLayout(this);
+        mute.setGravity(Gravity.CENTER);
+        mute.setBackground(Style.capsule(Style.FILL3));
+        ImageView muteIcon = icon(R.drawable.ic_volume_off, Style.TEXT);
+        mute.addView(muteIcon, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView muteText = text("Sem som", 15, Style.TEXT, Style.semibold);
+        muteText.setPadding(dp(8), 0, 0, 0);
+        mute.addView(muteText);
+        muteIcons.add(muteIcon);
+        muteTexts.add(muteText);
+        onTap(mute, this::toggleMute);
+        Style.press(mute, 0.96f);
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, dp(48), 1f);
+        mp.setMargins(dp(10), 0, dp(10), 0);
+        buttons.addView(mute, mp);
+        buttons.addView(circleButton(R.drawable.ic_plus, 48, Style.FILL3, Style.TEXT, "Aumentar volume",
+                () -> stepVolume(ProjectorCommands.KEY_VOLUME_UP, 1)));
+        card.addView(buttons, matchWrap(0, dp(14), 0, 0));
+        return card;
+    }
+
+    /** First apps of the projector as icons; "Ver todos" opens the Apps tab. */
+    private View shortcutsCard() {
+        LinearLayout card = vertical();
+        card.setBackground(Style.rounded(Style.CELL, dp(26)));
+        card.setPadding(dp(16), dp(14), dp(16), dp(16));
+        LinearLayout head = new LinearLayout(this);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(text("Atalhos", 17, Style.TEXT, Style.semibold), new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView all = text("Ver todos", 15, Style.BLUE, Style.medium);
+        onTap(all, () -> selectTab(3));
+        head.addView(all);
+        card.addView(head);
+        LinearLayout row = new LinearLayout(this);
+        card.addView(row, matchWrap(-dp(4), dp(12), -dp(4), 0));
+        shortcutRows.add(row);
+        shortcutCards.add(card);
+        renderShortcuts(row, card);
+        return card;
+    }
+
+    // -- Touchpad
+
+    private View buildTouchpadPage() {
+        LinearLayout page = vertical();
+        page.setPadding(dp(tablet ? 32 : 16), dp(8), dp(tablet ? 32 : 16), dp(tablet ? 24 : 96));
         LinearLayout tips = new LinearLayout(this);
-        tips.addView(chip(R.drawable.ic_mouse, "1 dedo move", Style.ACCENT), weighted(dp(3)));
-        tips.addView(chip(R.drawable.ic_click, "Toque clica", Style.TEAL), weighted(dp(3)));
-        tips.addView(chip(R.drawable.ic_dpad, "2 dedos rolam", Style.ORANGE), weighted(dp(3)));
-        page.addView(tips, matchWrap(-dp(3), 0, -dp(3), dp(8)));
+        tips.setGravity(Gravity.CENTER);
+        tips.addView(tipPill("Um dedo move"), wrapped(dp(3)));
+        tips.addView(tipPill("Toque clica"), wrapped(dp(3)));
+        tips.addView(tipPill("Dois dedos rolam"), wrapped(dp(3)));
+        page.addView(tips, matchWrap(0, dp(6), 0, dp(12)));
 
         touchpad = new TouchpadView(this);
         touchpad.setSensitivity(sensitivityFromPrefs());
-        touchpad.setElevation(dp(4));
         touchpad.setListener(new TouchpadView.Listener() {
             @Override
             public void onMove(int dx, int dy) {
@@ -1442,229 +1822,294 @@ public class MainActivity extends Activity {
         });
         page.addView(touchpad, new LinearLayout.LayoutParams(-1, 0, 1f));
         LinearLayout row = new LinearLayout(this);
-        row.addView(pill(R.drawable.ic_click, "Clique", Style.ripple(Style.gradient(Style.ACCENT, Style.VIOLET, dp(18))),
-                this::click), weighted(dp(4)));
-        row.addView(pill(R.drawable.ic_back, "Voltar", Style.ripple(Style.gradient(Style.TEAL, Style.TEAL2, dp(18))),
-                () -> sendKey(ProjectorCommands.KEY_BACK)), weighted(dp(4)));
-        row.addView(pill(R.drawable.ic_home, "Início", Style.ripple(Style.gradient(Style.VIOLET, Style.PINK, dp(18))),
-                () -> sendKey(ProjectorCommands.KEY_HOME)), weighted(dp(4)));
-        page.addView(row, matchWrap(-dp(4), dp(10), -dp(4), 0));
-        return page;
+        row.addView(actionPill(R.drawable.ic_click, "Clique", Style.BLUE, 0xFFFFFFFF, this::click), weighted(dp(5)));
+        row.addView(actionPill(R.drawable.ic_chevron_back, "Voltar", Style.CELL2, Style.TEXT, () -> sendKey(ProjectorCommands.KEY_BACK)), weighted(dp(5)));
+        row.addView(actionPill(R.drawable.ic_home, "Início", Style.CELL2, Style.TEXT, () -> sendKey(ProjectorCommands.KEY_HOME)), weighted(dp(5)));
+        page.addView(row, matchWrap(-dp(5), dp(12), -dp(5), 0));
+        if (!tablet) return page;
+        FrameLayout box = new FrameLayout(this);
+        box.addView(page, new FrameLayout.LayoutParams(Math.min(dp(760), getResources().getDisplayMetrics().widthPixels), -1, Gravity.CENTER_HORIZONTAL));
+        return box;
     }
+
+    // -- Apps
 
     private View buildAppsPage() {
         LinearLayout page = page();
-        LinearLayout card = card(page, "Apps do projetor", R.drawable.ic_apps, Style.ORANGE);
-        LinearLayout header = (LinearLayout) card.getChildAt(0);
-        appsCount = text("", 12.5f, 0xFFFFD7B5, true);
-        appsCount.setBackground(Style.tinted(Style.ORANGE, dp(12), dp(1)));
-        appsCount.setPadding(dp(10), dp(3), dp(10), dp(3));
+        LinearLayout head = new LinearLayout(this);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(sectionTitle("Apps"), new LinearLayout.LayoutParams(0, -2, 1f));
+        appsCount = text("", 13, Style.TEXT2, Style.semibold);
+        appsCount.setBackground(Style.capsule(Style.FILL4));
+        appsCount.setPadding(dp(10), dp(4), dp(10), dp(4));
         appsCount.setVisibility(View.GONE);
-        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-2, -2);
-        ap.rightMargin = dp(8);
-        header.addView(appsCount, ap);
-        header.addView(roundButton(R.drawable.ic_refresh, 40, Style.ripple(Style.tinted(Style.ORANGE, dp(20), dp(1))),
-                0xFFFFB27A, "Atualizar lista", () -> worker.execute(this::loadApps)));
-        appsGrid = new LinearLayout(this);
-        appsGrid.setOrientation(LinearLayout.VERTICAL);
-        appsGrid.addView(text("Conecte ao projetor para ver os apps.", 14, Style.MUTED, false));
-        card.addView(appsGrid);
-        return page;
+        head.addView(appsCount);
+        head.addView(withLeft(circleButton(R.drawable.ic_refresh, 36, Style.FILL3, Style.TEXT, "Atualizar lista",
+                () -> worker.execute(this::loadApps)), dp(10)));
+        page.addView(head, matchWrap(dp(4), dp(6), 0, dp(12)));
+
+        LinearLayout search = new LinearLayout(this);
+        search.setGravity(Gravity.CENTER_VERTICAL);
+        search.setBackground(Style.rounded(Style.FILL4, dp(12)));
+        search.setPadding(dp(10), 0, dp(10), 0);
+        search.addView(icon(R.drawable.ic_search, Style.TEXT2), new LinearLayout.LayoutParams(dp(18), dp(18)));
+        EditText query = new EditText(this);
+        query.setHint("Buscar");
+        query.setSingleLine(true);
+        query.setBackground(null);
+        query.setTextColor(Style.TEXT);
+        query.setHintTextColor(Style.TEXT2);
+        Style.type(query, 17, Style.regular);
+        query.setPadding(dp(8), 0, 0, 0);
+        query.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int a, int b, int c) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int a, int b, int c) {
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable e) {
+                appFilter = e.toString().trim();
+                renderApps();
+            }
+        });
+        search.addView(query, new LinearLayout.LayoutParams(0, dp(42), 1f));
+        page.addView(search, matchWrap(0, 0, 0, dp(18)));
+
+        appsGrid = vertical();
+        page.addView(appsGrid);
+        renderApps();
+        return constrained(page, 900);
     }
 
     private void showApps(List<ProjectorCommands.App> apps) {
-        appsGrid.removeAllViews();
-        shortcutsRow.removeAllViews();
-        if (apps.isEmpty()) {
-            appsGrid.addView(text("Nenhum app encontrado. Toque em atualizar.", 14, Style.MUTED, false));
-            appsCount.setVisibility(View.GONE);
-            shortcutsCard.setVisibility(View.GONE);
-            return;
-        }
+        lastApps = apps;
         appsCount.setText(apps.size() == 1 ? "1 app" : apps.size() + " apps");
-        appsCount.setVisibility(View.VISIBLE);
-        LinearLayout row = null;
-        for (int i = 0; i < apps.size(); i++) {
-            if (i % 3 == 0) {
-                row = new LinearLayout(this);
-                appsGrid.addView(row);
-            }
-            row.addView(appTile(apps.get(i), 60), cell(dp(4)));
-        }
-        for (int i = apps.size() % 3; i != 0 && i < 3; i++) row.addView(new Space(this), cell(dp(4)));
-
-        int shortcuts = Math.min(4, apps.size());
-        for (int i = 0; i < shortcuts; i++) shortcutsRow.addView(appTile(apps.get(i), 48), cell(dp(3)));
-        for (int i = shortcuts; i < 4; i++) shortcutsRow.addView(new Space(this), cell(dp(3)));
-        shortcutsCard.setVisibility(View.VISIBLE);
+        appsCount.setVisibility(apps.isEmpty() ? View.GONE : View.VISIBLE);
+        renderApps();
+        for (int i = 0; i < shortcutRows.size(); i++) renderShortcuts(shortcutRows.get(i), shortcutCards.get(i));
+        showNowPlaying();
     }
 
-    private View appTile(ProjectorCommands.App app, int badgeDp) {
-        Object[] brand = BRANDS.get(app.packageName);
-        int color = brand != null ? (Integer) brand[0] : 0xFF000000 | (app.packageName.hashCode() & 0x7F7F7F) | 0x303030;
-        String mark = brand != null ? (String) brand[1] : app.label.substring(0, 1).toUpperCase();
+    private void renderApps() {
+        if (appsGrid == null) return;
+        appsGrid.removeAllViews();
+        List<ProjectorCommands.App> shown = new ArrayList<>();
+        String f = appFilter.toLowerCase();
+        for (ProjectorCommands.App a : lastApps) if (f.isEmpty() || a.label.toLowerCase().contains(f)) shown.add(a);
+        if (shown.isEmpty()) {
+            TextView empty = text(lastApps.isEmpty() ? "Conecte ao projetor para ver os apps." : "Nenhum app com esse nome.",
+                    15, Style.TEXT2, Style.regular);
+            empty.setGravity(Gravity.CENTER);
+            appsGrid.addView(empty, matchWrap(0, dp(30), 0, 0));
+            return;
+        }
+        int widthDp = Math.min(900, getResources().getConfiguration().screenWidthDp) - (tablet ? 64 : 32);
+        int columns = Math.max(4, widthDp / (tablet ? 116 : 88));
+        LinearLayout row = null;
+        for (int i = 0; i < shown.size(); i++) {
+            if (i % columns == 0) {
+                row = new LinearLayout(this);
+                appsGrid.addView(row, matchWrap(0, 0, 0, dp(18)));
+            }
+            row.addView(appTile(shown.get(i), tablet ? 68 : 60), cell(0));
+        }
+        for (int i = shown.size() % columns; i != 0 && i < columns; i++) row.addView(new Space(this), cell(0));
+    }
 
-        LinearLayout tile = new LinearLayout(this);
-        tile.setOrientation(LinearLayout.VERTICAL);
+    private void renderShortcuts(LinearLayout row, View card) {
+        row.removeAllViews();
+        int n = Math.min(wide ? 5 : 4, lastApps.size());
+        for (int i = 0; i < n; i++) row.addView(appTile(lastApps.get(i), 54), cell(0));
+        for (int i = n; i < (wide ? 5 : 4); i++) row.addView(new Space(this), cell(0));
+        card.setVisibility(n == 0 ? View.GONE : View.VISIBLE);
+    }
+
+    /** App icon like the iOS home screen: squircle with the brand colour and a label below. */
+    private View appTile(ProjectorCommands.App app, int sizeDp) {
+        Object[] brand = BRANDS.get(app.packageName);
+        int color = brand != null ? (Integer) brand[0] : Style.mix(0xFF000000 | (app.packageName.hashCode() & 0xFFFFFF), Style.GRAY2, 0.35f);
+        String mark = brand != null ? (String) brand[1] : app.label.substring(0, 1).toUpperCase();
+        LinearLayout tile = vertical();
         tile.setGravity(Gravity.CENTER_HORIZONTAL);
-        tile.setPadding(dp(4), dp(10), dp(4), dp(10));
-        tile.setBackground(Style.ripple(Style.tinted(color, dp(18), dp(1))));
-        TextView badge = text(mark, badgeDp * 0.32f, 0xFFFFFFFF, true);
+        tile.setContentDescription(app.label);
+        TextView badge = text(mark, sizeDp * 0.34f, 0xFFFFFFFF, Style.bold);
         badge.setGravity(Gravity.CENTER);
-        badge.setBackground(Style.badge(color, dp(badgeDp * 0.3f)));
+        badge.setBackground(Style.appIcon(color, dp(sizeDp)));
         badge.setElevation(dp(3));
-        tile.addView(badge, new LinearLayout.LayoutParams(dp(badgeDp), dp(badgeDp)));
-        TextView label = text(app.label, badgeDp < 56 ? 11.5f : 12.5f, Style.TEXT, false);
+        tile.addView(badge, new LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp)));
+        TextView label = text(app.label, 12, 0xE6FFFFFF, Style.medium);
         label.setGravity(Gravity.CENTER);
         label.setMaxLines(2);
         label.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.topMargin = dp(7);
         tile.addView(label, lp);
-        tile.setOnClickListener(v -> {
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        onTap(tile, () -> {
             launchApp(app);
             Toast.makeText(this, "Abrindo " + app.label, Toast.LENGTH_SHORT).show();
         });
+        Style.press(tile, 0.9f);
         return tile;
     }
 
-    private View buildMorePage() {
-        LinearLayout page = page();
+    // -- Ajustes (grouped lists, like iOS Settings)
 
-        LinearLayout typing = card(page, "Digitar no projetor", R.drawable.ic_send, Style.ACCENT);
+    private View buildSettingsPage() {
+        LinearLayout page = page();
+        page.addView(sectionTitle("Ajustes"), matchWrap(dp(4), dp(6), 0, dp(4)));
+
+        LinearLayout proj = section(page, "Projetor", null);
+        row(proj, R.drawable.ic_tune, Style.BLUE, "Ajustes do projetor", null,
+                () -> openScreen("PROJECTOR_SETTINGS", ProjectorCommands.OPEN_PROJECTOR_SETTINGS));
+        row(proj, R.drawable.ic_settings, Style.GRAY2, "Configurações", null, () -> openScreen("SETTINGS", ProjectorCommands.OPEN_SETTINGS));
+        row(proj, R.drawable.ic_wifi, Style.BLUE, "Wi-Fi", null, () -> openScreen("WIFI", ProjectorCommands.OPEN_WIFI));
+        row(proj, R.drawable.ic_bluetooth, Style.BLUE, "Bluetooth", null, () -> openScreen("BLUETOOTH", ProjectorCommands.OPEN_BLUETOOTH));
+
+        LinearLayout power = section(page, "Energia", "Ligar e Desligar ficam no topo e usam o infravermelho do celular.");
+        row(power, R.drawable.ic_moon, Style.INDIGO, "Dormir", null, () -> sendKey(ProjectorCommands.KEY_SLEEP));
+        row(power, R.drawable.ic_sun, Style.ORANGE, "Acordar", null, () -> sendKey(ProjectorCommands.KEY_WAKEUP));
+        row(power, R.drawable.ic_restart, Style.RED, "Reiniciar", null, this::confirmReboot);
+
+        LinearLayout typing = section(page, "Digitar no projetor", "Selecione antes um campo de busca no projetor.");
         LinearLayout inputRow = new LinearLayout(this);
         inputRow.setGravity(Gravity.CENTER_VERTICAL);
-        textField = field("Ex.: nome de um filme", InputType.TYPE_CLASS_TEXT);
+        inputRow.setPadding(dp(16), dp(6), dp(8), dp(6));
+        textField = field("Nome de um filme, música…", InputType.TYPE_CLASS_TEXT);
+        textField.setBackground(null);
+        textField.setPadding(0, 0, 0, 0);
         textField.setImeOptions(EditorInfo.IME_ACTION_SEND);
         textField.setOnEditorActionListener((v, actionId, event) -> {
             sendTypedText();
             return true;
         });
-        inputRow.addView(textField, new LinearLayout.LayoutParams(0, dp(54), 1f));
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-2, -2);
-        sp.leftMargin = dp(8);
-        inputRow.addView(roundButton(R.drawable.ic_send, 54,
-                Style.ripple(Style.ovalGradient(Style.ACCENT, Style.VIOLET)), 0xFFFFFFFF, "Enviar texto",
-                this::sendTypedText), sp);
+        inputRow.addView(textField, new LinearLayout.LayoutParams(0, dp(46), 1f));
+        inputRow.addView(circleButton(R.drawable.ic_send, 38, Style.BLUE, 0xFFFFFFFF, "Enviar texto", this::sendTypedText));
         typing.addView(inputRow);
-        LinearLayout keys = new LinearLayout(this);
-        keys.addView(pill(R.drawable.ic_backspace, "Apagar", Style.ripple(Style.tinted(Style.RED, dp(16), dp(1))),
-                () -> sendKey(ProjectorCommands.KEY_DEL)), weighted(dp(4)));
-        keys.addView(pill(R.drawable.ic_enter, "Enter", Style.ripple(Style.tinted(Style.GREEN, dp(16), dp(1))),
-                () -> sendKey(ProjectorCommands.KEY_ENTER)), weighted(dp(4)));
-        typing.addView(keys, matchWrap(-dp(4), dp(8), -dp(4), 0));
-        TextView typingHint = text("Selecione antes um campo de busca no projetor. Acentos são enviados sem acento.",
-                12, Style.MUTED, false);
-        typingHint.setPadding(dp(2), dp(8), dp(2), 0);
-        typing.addView(typingHint);
+        row(typing, R.drawable.ic_backspace, Style.RED, "Apagar", null, () -> sendKey(ProjectorCommands.KEY_DEL));
+        row(typing, R.drawable.ic_enter, Style.GREEN, "Enter", null, () -> sendKey(ProjectorCommands.KEY_ENTER));
 
-        LinearLayout proj = card(page, "Projetor", R.drawable.ic_tune, Style.VIOLET);
-        Object[][] items = {
-                {R.drawable.ic_tune, "Ajustes do projetor", Style.ACCENT, (Runnable) () -> openScreen("PROJECTOR_SETTINGS", ProjectorCommands.OPEN_PROJECTOR_SETTINGS)},
-                {R.drawable.ic_settings, "Configurações", Style.VIOLET, (Runnable) () -> openScreen("SETTINGS", ProjectorCommands.OPEN_SETTINGS)},
-                {R.drawable.ic_wifi, "Wi-Fi", Style.TEAL, (Runnable) () -> openScreen("WIFI", ProjectorCommands.OPEN_WIFI)},
-                {R.drawable.ic_bluetooth, "Bluetooth", Style.SKY, (Runnable) () -> openScreen("BLUETOOTH", ProjectorCommands.OPEN_BLUETOOTH)},
-                {R.drawable.ic_moon, "Dormir", Style.INDIGO, (Runnable) () -> sendKey(ProjectorCommands.KEY_SLEEP)},
-                {R.drawable.ic_sun, "Acordar", Style.AMBER, (Runnable) () -> sendKey(ProjectorCommands.KEY_WAKEUP)},
-                {R.drawable.ic_restart, "Reiniciar", Style.RED, (Runnable) this::confirmReboot},
-        };
-        LinearLayout row = null;
-        for (int i = 0; i < items.length; i++) {
-            if (i % 3 == 0) {
-                row = new LinearLayout(this);
-                proj.addView(row);
-            }
-            row.addView(tile((Integer) items[i][0], (String) items[i][1], (Integer) items[i][2],
-                    (Runnable) items[i][3]), cell(dp(4)));
-        }
-        for (int i = items.length % 3; i != 0 && i < 3; i++) row.addView(new Space(this), cell(dp(4)));
-
-        LinearLayout pad = card(page, "Touchpad", R.drawable.ic_mouse, Style.TEAL);
-        pad.addView(text("Velocidade do cursor", 14, Style.SOFT, false));
-        SeekBar speed = new SeekBar(this);
-        speed.setMax(8);
-        speed.setProgress(prefs.getInt("speed", 3));
-        speed.setProgressDrawable(Style.track(dp(8)));
-        speed.setThumb(Style.thumb(dp(22), dp(4)));
-        speed.setSplitTrack(false);
-        speed.setPadding(dp(18), dp(14), dp(18), dp(6));
-        speed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
-                prefs.edit().putInt("speed", progress).apply();
-                touchpad.setSensitivity(sensitivityFromPrefs());
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar bar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar bar) {
-            }
-        });
-        pad.addView(speed);
-
-        LinearLayout free = card(page, "Funcionar sem a depuração", R.drawable.ic_projector, Style.GREEN);
-        free.addView(infoRow(R.drawable.ic_projector, Style.GREEN, "Receptor no projetor",
-                "Instale uma vez o Receptor do Controle no projetor. Depois disso o app funciona igual, mesmo com "
-                        + "a depuração desligada: ele acha o projetor no Wi-Fi e usa o receptor."),
-                matchWrap(0, 0, 0, dp(12)));
-        free.addView(pill(R.drawable.ic_download, "Instalar o receptor no projetor",
-                Style.ripple(Style.gradient(Style.GREEN, Style.TEAL, dp(16))), this::installReceiver), matchWrap(0, 0, 0, 0));
-        free.addView(pill(R.drawable.ic_enter, "Parear com o receptor",
-                Style.ripple(Style.tinted(Style.GREEN, dp(16), dp(1))), this::pairManually), matchWrap(0, dp(10), 0, 0));
-        Switch arrowsByIr = new Switch(this);
-        arrowsByIr.setText("Setas e OK pelo infravermelho");
-        arrowsByIr.setTextColor(Style.TEXT);
-        arrowsByIr.setTextSize(14.5f);
-        arrowsByIr.setChecked(prefs.getBoolean("setas_ir", false));
-        int[][] states = {{android.R.attr.state_checked}, {}};
-        arrowsByIr.setThumbTintList(new ColorStateList(states, new int[] {Style.GREEN, 0xFFB4BCCB}));
-        arrowsByIr.setTrackTintList(new ColorStateList(states, new int[] {Style.alpha(Style.GREEN, 0x80), 0x40FFFFFF}));
-        arrowsByIr.setOnCheckedChangeListener((b, on) -> prefs.edit().putBoolean("setas_ir", on).apply());
-        free.addView(arrowsByIr, matchWrap(dp(2), dp(14), dp(2), 0));
-        TextView freeHint = text("Sem a depuração, as setas andam pelos itens da tela. Se em algum app elas não "
-                + "responderem, ligue a opção acima para mandar as setas pelo infravermelho. Menu e Acordar vão "
-                + "pelo infravermelho, e Reiniciar abre o menu de energia do projetor.", 12, Style.MUTED, false);
-        freeHint.setLineSpacing(dp(1.5f), 1f);
-        freeHint.setPadding(dp(2), dp(6), dp(2), 0);
-        free.addView(freeHint);
-
-        LinearLayout conn = card(page, "Conexão", R.drawable.ic_wifi, Style.TEAL);
-        LinearLayout connRow = new LinearLayout(this);
-        connRow.setGravity(Gravity.CENTER_VERTICAL);
-        hostField = field("IP do projetor", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        LinearLayout conn = section(page, "Conexão", "O app acha o projetor sozinho quando o celular está no mesmo Wi-Fi. "
+                + "Com a depuração por rede ligada, aceite o pedido na tela do projetor na primeira vez.");
+        LinearLayout ipRow = new LinearLayout(this);
+        ipRow.setGravity(Gravity.CENTER_VERTICAL);
+        ipRow.setPadding(dp(16), dp(4), dp(16), dp(4));
+        ipRow.addView(iconSquare(R.drawable.ic_wifi, Style.TEAL));
+        TextView ipLabel = text("IP do projetor", 16.5f, Style.TEXT, Style.regular);
+        ipLabel.setPadding(dp(14), 0, 0, 0);
+        ipRow.addView(ipLabel);
+        hostField = field("192.168.0.5", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        hostField.setBackground(null);
+        hostField.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        hostField.setTextColor(Style.TEXT2);
+        hostField.setPadding(0, 0, 0, 0);
         hostField.setText(host);
         hostField.setImeOptions(EditorInfo.IME_ACTION_GO);
         hostField.setOnEditorActionListener((v, actionId, event) -> {
             reconnect();
             return true;
         });
-        connRow.addView(hostField, new LinearLayout.LayoutParams(0, dp(54), 1f));
-        LinearLayout connect = pill(R.drawable.ic_enter, "Conectar", Style.ripple(Style.gradient(Style.ACCENT, Style.VIOLET, dp(16))),
-                this::reconnect);
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, dp(54));
-        cp.leftMargin = dp(8);
-        connect.setPadding(dp(14), 0, dp(16), 0);
-        connRow.addView(connect, cp);
-        conn.addView(connRow);
-        LinearLayout search = pill(R.drawable.ic_wifi, "Procurar o projetor no Wi-Fi",
-                Style.ripple(Style.gradient(Style.TEAL, Style.ACCENT, dp(16))), this::searchNetwork);
-        conn.addView(search, matchWrap(0, dp(10), 0, 0));
+        ipRow.addView(hostField, new LinearLayout.LayoutParams(0, dp(48), 1f));
+        conn.addView(ipRow);
+        row(conn, R.drawable.ic_link, Style.BLUE, "Conectar a este IP", null, this::reconnect);
+        row(conn, R.drawable.ic_search, Style.TEAL, "Procurar o projetor no Wi-Fi", null, this::searchNetwork);
+
+        LinearLayout free = section(page, "Sem a depuração", "Instale uma vez o Receptor do Controle no projetor (com a "
+                + "depuração ligada). Depois o app funciona igual com ela desligada. Menu e Acordar vão pelo infravermelho; "
+                + "Reiniciar abre o menu de energia do projetor.");
+        row(free, R.drawable.ic_download, Style.GREEN, "Instalar o receptor no projetor", null, this::installReceiver);
+        row(free, R.drawable.ic_link, Style.GREEN, "Parear com o receptor", null, this::pairManually);
+        View irRow = row(free, R.drawable.ic_ir, Style.ORANGE, "Setas e OK pelo infravermelho", null, null);
+        IosSwitch arrows = new IosSwitch(this);
+        arrows.setChecked(prefs.getBoolean("setas_ir", false), false);
+        arrows.setListener(on -> prefs.edit().putBoolean("setas_ir", on).apply());
+        ((LinearLayout) irRow).addView(arrows);
+
+        LinearLayout pad = section(page, "Touchpad", null);
+        LinearLayout speedRow = vertical();
+        speedRow.setPadding(dp(16), dp(12), dp(16), dp(14));
+        speedRow.addView(text("Velocidade do cursor", 16.5f, Style.TEXT, Style.regular));
+        PillSlider speed = new PillSlider(this, false);
+        speed.setFillColor(Style.BLUE);
+        speed.setMax(8);
+        speed.setValue(prefs.getInt("speed", 3), false);
+        speed.setListener((v, done) -> {
+            prefs.edit().putInt("speed", v).apply();
+            if (touchpad != null) touchpad.setSensitivity(sensitivityFromPrefs());
+        });
+        speedRow.addView(speed, new LinearLayout.LayoutParams(-1, dp(34)) {{ topMargin = dp(12); }});
+        pad.addView(speedRow);
+
         boolean hasIr = infrared() != null;
-        conn.addView(infoRow(R.drawable.ic_wifi, Style.TEAL, "Wi-Fi",
-                "O app encontra o projetor sozinho quando o celular está no mesmo Wi-Fi. A depuração por rede (ADB) "
-                        + "precisa ficar ligada no projetor. Na primeira conexão, aceite o pedido que aparece na tela dele."),
-                matchWrap(0, dp(14), 0, 0));
-        conn.addView(infoRow(R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED,
-                hasIr ? "Infravermelho disponível" : "Sem infravermelho",
-                hasIr ? "Ligar e Desligar usam o infravermelho do celular: aponte o celular para o projetor."
-                        : "Este celular não tem emissor infravermelho. Use o controle original para ligar e desligar."),
-                matchWrap(0, dp(12), 0, 0));
-        return page;
+        LinearLayout ir = section(page, "Infravermelho", "Ligar, Desligar e, quando preciso, as setas usam o emissor do celular. "
+                + "Aponte a ponta de cima do celular para o projetor.");
+        row(ir, R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED, "Emissor do celular", hasIr ? "Disponível" : "Não encontrado", null);
+
+        TextView version = text("Controle Projetor 6.0", 13, Style.TEXT3, Style.regular);
+        version.setGravity(Gravity.CENTER);
+        page.addView(version, matchWrap(0, dp(26), 0, 0));
+        return constrained(page, 680);
     }
+
+    /** Grouped section: grey caption, rounded cell, optional footnote. Returns the cell to add rows to. */
+    private LinearLayout section(LinearLayout page, String header, String footer) {
+        TextView h = text(header.toUpperCase(), 13, Style.TEXT2, Style.regular);
+        h.setLetterSpacing(0.02f);
+        page.addView(h, matchWrap(dp(16), dp(26), dp(16), dp(7)));
+        LinearLayout cell = vertical();
+        cell.setBackground(Style.rounded(Style.CELL, dp(12)));
+        cell.setClipToOutline(true);
+        page.addView(cell, matchWrap(0, 0, 0, 0));
+        if (footer != null) {
+            TextView f = text(footer, 13, Style.TEXT2, Style.regular);
+            f.setLineSpacing(dp(1.5f), 1f);
+            page.addView(f, matchWrap(dp(16), dp(7), dp(16), 0));
+        }
+        return cell;
+    }
+
+    /** Settings row: coloured icon square, title, optional value, chevron when it does something. */
+    private View row(LinearLayout cell, int icon, int color, String title, String value, Runnable action) {
+        if (cell.getChildCount() > 0) {
+            View sep = new View(this);
+            sep.setBackgroundColor(Style.SEPARATOR);
+            LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, Math.max(1, dp(0.5f)));
+            sp.leftMargin = dp(60);
+            cell.addView(sep, sp);
+        }
+        LinearLayout r = new LinearLayout(this);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setMinimumHeight(dp(52));
+        r.setPadding(dp(16), dp(8), dp(14), dp(8));
+        r.addView(iconSquare(icon, color));
+        TextView t = text(title, 16.5f, Style.TEXT, Style.regular);
+        t.setPadding(dp(14), 0, dp(8), 0);
+        r.addView(t, new LinearLayout.LayoutParams(0, -2, 1f));
+        if (value != null) r.addView(text(value, 16, Style.TEXT2, Style.regular));
+        if (action != null) {
+            ImageView chevron = icon(R.drawable.ic_chevron_right, 0x4DEBEBF5);
+            LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(dp(14), dp(14));
+            cp.leftMargin = dp(8);
+            r.addView(chevron, cp);
+            r.setBackground(Style.rowBackground());
+            onTap(r, action);
+        }
+        cell.addView(r);
+        return r;
+    }
+
+    private View iconSquare(int icon, int color) {
+        FrameLayout sq = new FrameLayout(this);
+        sq.setBackground(Style.rounded(color, dp(7.5f)));
+        sq.addView(icon(icon, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.CENTER));
+        sq.setLayoutParams(new LinearLayout.LayoutParams(dp(30), dp(30)));
+        return sq;
+    }
+
+    // -- shared pieces
 
     private float sensitivityFromPrefs() {
         return 0.8f + prefs.getInt("speed", 3) * 0.3f;
@@ -1685,13 +2130,23 @@ public class MainActivity extends Activity {
         textField.setText("");
     }
 
-    // ---------------------------------------------------------------- view helpers
-
     private LinearLayout page() {
-        LinearLayout page = new LinearLayout(this);
-        page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(14), dp(8), dp(14), dp(28));
+        LinearLayout page = vertical();
+        page.setPadding(dp(tablet ? 32 : 16), dp(8), dp(tablet ? 32 : 16), dp(tablet ? 40 : 120));
         return page;
+    }
+
+    /** On wide screens, centres the page and keeps it at a readable width. */
+    private View constrained(View content, int maxDp) {
+        if (!tablet) return content;
+        FrameLayout box = new FrameLayout(this);
+        int w = Math.min(dp(maxDp), getResources().getDisplayMetrics().widthPixels);
+        box.addView(content, new FrameLayout.LayoutParams(w, -2, Gravity.CENTER_HORIZONTAL));
+        return box;
+    }
+
+    private TextView sectionTitle(String s) {
+        return text(s, 28, Style.TEXT, Style.bold);
     }
 
     private LinearLayout vertical() {
@@ -1711,129 +2166,86 @@ public class MainActivity extends Activity {
         ScrollView s = new ScrollView(this);
         s.setFillViewport(true);
         s.setVerticalScrollBarEnabled(false);
+        s.setOverScrollMode(View.OVER_SCROLL_NEVER);
         s.addView(content);
         return s;
     }
 
-    /** Card with a coloured icon and a title in its first row (index 0), which callers may add views to. */
-    private LinearLayout card(LinearLayout parent, String title, int iconRes, int color) {
-        LinearLayout c = new LinearLayout(this);
-        c.setOrientation(LinearLayout.VERTICAL);
-        c.setBackground(Style.card(dp(24), dp(1)));
-        c.setElevation(dp(4));
-        c.setPadding(dp(14), dp(12), dp(14), dp(16));
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        FrameLayout bubble = new FrameLayout(this);
-        bubble.setBackground(Style.ovalGradient(color, Style.darker(color)));
-        bubble.addView(icon(iconRes, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.CENTER));
-        header.addView(bubble, new LinearLayout.LayoutParams(dp(34), dp(34)));
-        TextView t = text(title, 16, Style.TEXT, true);
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, -2, 1f);
-        tp.leftMargin = dp(10);
-        header.addView(t, tp);
-        c.addView(header, matchWrap(0, 0, 0, dp(12)));
-        parent.addView(c, matchWrap(0, dp(16), 0, 0));
-        return c;
-    }
-
-    private View roundButton(int icon, int sizeDp, Drawable background, int tint, String description, Runnable action) {
+    private View circleButton(int icon, int sizeDp, int background, int tint, String description, Runnable action) {
         FrameLayout b = new FrameLayout(this);
-        b.setBackground(background);
+        b.setBackground(Style.oval(background));
         b.setContentDescription(description);
-        b.setElevation(dp(4));
         int iconSize = Math.round(sizeDp * 0.42f);
         b.addView(icon(icon, tint), new FrameLayout.LayoutParams(dp(iconSize), dp(iconSize), Gravity.CENTER));
         onTap(b, action);
-        FrameLayout wrap = new FrameLayout(this);
-        wrap.addView(b, new FrameLayout.LayoutParams(dp(sizeDp), dp(sizeDp), Gravity.CENTER));
-        return wrap;
+        Style.press(b, 0.9f);
+        b.setLayoutParams(new LinearLayout.LayoutParams(dp(sizeDp), dp(sizeDp)));
+        return b;
     }
 
-    /** Button over its name; the button sits in a box {@code boxDp} tall so names in a row line up. */
-    private View labeled(View button, String label, int boxDp) {
-        LinearLayout l = new LinearLayout(this);
-        l.setOrientation(LinearLayout.VERTICAL);
-        l.setGravity(Gravity.CENTER_HORIZONTAL);
-        l.addView(button, new LinearLayout.LayoutParams(-2, dp(boxDp)));
-        TextView t = text(label, 12.5f, Style.SOFT, true);
-        t.setGravity(Gravity.CENTER);
-        t.setPadding(0, dp(4), 0, 0);
-        l.addView(t);
-        return l;
-    }
-
-    private LinearLayout pill(int icon, String label, Drawable background, Runnable action) {
+    /** Tinted capsule: soft fill in the colour, icon and text in a lighter shade of it. */
+    private View commandPill(int icon, String label, int color, Runnable action) {
         LinearLayout p = new LinearLayout(this);
         p.setGravity(Gravity.CENTER);
-        p.setBackground(background);
-        p.setMinimumHeight(dp(56));
-        p.setPadding(dp(12), dp(14), dp(12), dp(14));
-        if (icon != 0) {
-            LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(22), dp(22));
-            ip.rightMargin = dp(8);
-            p.addView(icon(icon, 0xFFFFFFFF), ip);
-        }
-        p.addView(text(label, 15.5f, 0xFFFFFFFF, true));
+        p.setBackground(Style.capsule(Style.alpha(color, 0x38)));
+        p.setPadding(dp(tablet ? 14 : 8), 0, dp(tablet ? 16 : 10), 0);
+        p.setContentDescription(label);
+        int fg = Style.mix(color, 0xFFFFFFFF, 0.25f);
+        p.addView(icon(icon, fg), new LinearLayout.LayoutParams(dp(16), dp(16)));
+        TextView t = text(label, tablet ? 15 : 14.5f, fg, Style.semibold);
+        t.setSingleLine(true);
+        t.setPadding(dp(6), 0, 0, 0);
+        p.addView(t);
         onTap(p, action);
+        Style.press(p, 0.94f);
         return p;
     }
 
-    /** Coloured shortcut tile: tinted body, solid icon bubble and a label. */
-    private View tile(int icon, String label, int color, Runnable action) {
-        LinearLayout t = new LinearLayout(this);
-        t.setOrientation(LinearLayout.VERTICAL);
-        t.setGravity(Gravity.CENTER);
-        t.setPadding(dp(6), dp(14), dp(6), dp(12));
-        t.setBackground(Style.ripple(Style.tinted(color, dp(18), dp(1))));
-        FrameLayout bubble = new FrameLayout(this);
-        bubble.setBackground(Style.ovalGradient(Style.lighter(color), Style.darker(color)));
-        bubble.setElevation(dp(2));
-        bubble.addView(icon(icon, 0xFFFFFFFF), new FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER));
-        t.addView(bubble, new LinearLayout.LayoutParams(dp(44), dp(44)));
-        TextView l = text(label, 12.5f, Style.TEXT, true);
-        l.setGravity(Gravity.CENTER);
-        l.setMaxLines(2);
-        l.setPadding(0, dp(8), 0, 0);
-        t.addView(l);
-        onTap(t, action);
+    private View quickPill(int icon, String label, Runnable action) {
+        LinearLayout p = new LinearLayout(this);
+        p.setGravity(Gravity.CENTER);
+        p.setBackground(Style.capsule(Style.FILL4));
+        p.setPadding(dp(13), 0, dp(15), 0);
+        p.setContentDescription(label);
+        p.addView(icon(icon, Style.TEXT), new LinearLayout.LayoutParams(dp(16), dp(16)));
+        TextView t = text(label, 14.5f, Style.TEXT, Style.semibold);
+        t.setPadding(dp(7), 0, 0, 0);
+        p.addView(t);
+        onTap(p, action);
+        Style.press(p, 0.94f);
+        return p;
+    }
+
+    private LinearLayout.LayoutParams quickParams() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(38));
+        lp.setMargins(dp(4), 0, dp(4), 0);
+        return lp;
+    }
+
+    private View actionPill(int icon, String label, int background, int foreground, Runnable action) {
+        LinearLayout p = new LinearLayout(this);
+        p.setGravity(Gravity.CENTER);
+        p.setBackground(Style.capsule(background));
+        p.setMinimumHeight(dp(52));
+        p.setContentDescription(label);
+        p.addView(icon(icon, foreground), new LinearLayout.LayoutParams(dp(19), dp(19)));
+        TextView t = text(label, 16, foreground, Style.semibold);
+        t.setPadding(dp(8), 0, 0, 0);
+        p.addView(t);
+        onTap(p, action);
+        Style.press(p, 0.95f);
+        return p;
+    }
+
+    private View tipPill(String label) {
+        TextView t = text(label, 12.5f, Style.TEXT2, Style.medium);
+        t.setBackground(Style.capsule(Style.FILL4));
+        t.setPadding(dp(11), dp(6), dp(11), dp(6));
         return t;
     }
 
-    /** Small coloured label with an icon, used for the touchpad tips. */
-    private View chip(int icon, String label, int color) {
-        LinearLayout c = new LinearLayout(this);
-        c.setGravity(Gravity.CENTER);
-        c.setBackground(Style.tinted(color, dp(14), dp(1)));
-        c.setPadding(dp(6), dp(8), dp(6), dp(8));
-        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(16), dp(16));
-        ip.rightMargin = dp(5);
-        c.addView(icon(icon, Style.lighter(color)), ip);
-        TextView t = text(label, 12, Style.TEXT, true);
-        t.setMaxLines(1);
-        c.addView(t);
-        return c;
-    }
-
-    /** Icon bubble, bold title and explanation, for the information in the Conexão card. */
-    private View infoRow(int icon, int color, String title, String body) {
-        LinearLayout r = new LinearLayout(this);
-        FrameLayout bubble = new FrameLayout(this);
-        bubble.setBackground(Style.tinted(color, dp(18), dp(1)));
-        bubble.addView(icon(icon, Style.lighter(color)), new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.CENTER));
-        r.addView(bubble, new LinearLayout.LayoutParams(dp(36), dp(36)));
-        LinearLayout t = vertical();
-        t.addView(text(title, 14, Style.TEXT, true));
-        TextView b = text(body, 12.5f, Style.MUTED, false);
-        b.setLineSpacing(dp(1.5f), 1f);
-        t.addView(b);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
-        lp.leftMargin = dp(10);
-        r.addView(t, lp);
-        return r;
-    }
-
     private void onTap(View v, Runnable action) {
+        v.setClickable(true);
         v.setOnClickListener(view -> {
             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             action.run();
@@ -1846,27 +2258,42 @@ public class MainActivity extends Activity {
         e.setInputType(inputType);
         e.setSingleLine(true);
         e.setTextColor(Style.TEXT);
-        e.setHintTextColor(Style.MUTED);
-        e.setTextSize(16);
-        GradientDrawable bg = Style.rounded(0xFF0E1322, dp(16));
-        bg.setStroke(dp(1.5f), 0x553D8BFF);
-        e.setBackground(bg);
-        e.setPadding(dp(16), 0, dp(16), 0);
+        e.setHintTextColor(Style.TEXT3);
+        Style.type(e, 16.5f, Style.regular);
+        e.setBackground(Style.rounded(Style.FILL4, dp(12)));
+        e.setPadding(dp(14), 0, dp(14), 0);
         return e;
     }
 
-    private TextView text(String s, float sp, int color, boolean bold) {
+    private TextView text(String s, float sp, int color, Typeface face) {
         TextView t = new TextView(this);
         t.setText(s);
-        t.setTextSize(sp);
         t.setTextColor(color);
-        if (bold) t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        Style.type(t, sp, face);
         return t;
     }
 
     private LinearLayout.LayoutParams weighted(int margin) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         lp.setMargins(margin, margin, margin, margin);
+        return lp;
+    }
+
+    private LinearLayout.LayoutParams wrapped(int margin) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+        lp.setMargins(margin, 0, margin, 0);
+        return lp;
+    }
+
+    /** Adds a left margin to a view that already carries its own size. */
+    private View withLeft(View v, int left) {
+        ((LinearLayout.LayoutParams) v.getLayoutParams()).leftMargin = left;
+        return v;
+    }
+
+    private LinearLayout.LayoutParams spaced(int left) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+        lp.leftMargin = left;
         return lp;
     }
 

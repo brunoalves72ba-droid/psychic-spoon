@@ -1,50 +1,86 @@
 package dev.projetor.controle;
 
+import android.animation.TimeInterpolator;
+import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.LinearGradient;
-import android.graphics.Outline;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PixelFormat;
-import android.graphics.RadialGradient;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.drawable.ClipDrawable;
+import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
-import android.graphics.drawable.RippleDrawable;
-import android.view.Gravity;
+import android.graphics.drawable.StateListDrawable;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.TextView;
 
+/**
+ * Design system inspired by iOS in dark mode: system colours, Inter (close to SF Pro), capsules,
+ * grouped cells, springy press feedback. Animations only touch transform and alpha, which the
+ * render thread draws without re-layout, so they stay at 60 fps.
+ */
 final class Style {
 
-    static final int BG = 0xFF0A0E1A;
-    static final int SURFACE = 0xFF151B2B;
-    static final int SURFACE2 = 0xFF1F2638;
-    static final int SURFACE3 = 0xFF283147;
-    static final int STROKE = 0x24FFFFFF;
-    static final int TEXT = 0xFFF1F4F8;
-    static final int SOFT = 0xFFD3D9E4;
-    static final int MUTED = 0xFF8C96A6;
-    static final int ACCENT = 0xFF3D8BFF;
-    static final int ACCENT2 = 0xFF6A5CFF;
-    static final int VIOLET = 0xFF8B5CF6;
-    static final int PINK = 0xFFEC4899;
-    static final int ORANGE = 0xFFFF8A3D;
-    static final int TEAL = 0xFF14B8A6;
-    static final int TEAL2 = 0xFF0E8F83;
-    static final int INDIGO = 0xFF6366F1;
-    static final int SKY = 0xFF0EA5E9;
-    static final int GREEN = 0xFF22C55E;
-    static final int GREEN2 = 0xFF15803D;
-    static final int RED = 0xFFF43F5E;
-    static final int RED2 = 0xFFB91C3C;
-    static final int AMBER = 0xFFF5A524;
+    // iOS dark-mode system colours
+    static final int BG = 0xFF000000;
+    static final int CELL = 0xFF1C1C1E;
+    static final int CELL2 = 0xFF2C2C2E;
+    static final int CELL3 = 0xFF3A3A3C;
+    static final int FILL = 0x5C787880;
+    static final int FILL2 = 0x52787880;
+    static final int FILL3 = 0x3D767680;
+    static final int FILL4 = 0x2E767680;
+    static final int SEPARATOR = 0xFF38383A;
+    static final int STROKE = 0x1FFFFFFF;
+    static final int TEXT = 0xFFFFFFFF;
+    static final int TEXT2 = 0x99EBEBF5;
+    static final int TEXT3 = 0x4DEBEBF5;
+    static final int MUTED = 0xFF8E8E93;
+    static final int GRAY2 = 0xFF636366;
+    static final int BLUE = 0xFF0A84FF;
+    static final int GREEN = 0xFF30D158;
+    static final int RED = 0xFFFF453A;
+    static final int ORANGE = 0xFFFF9F0A;
+    static final int AMBER = ORANGE;
+    static final int YELLOW = 0xFFFFD60A;
+    static final int PINK = 0xFFFF375F;
+    static final int PURPLE = 0xFFBF5AF2;
+    static final int INDIGO = 0xFF5E5CE6;
+    static final int TEAL = 0xFF40C8E0;
+    static final int CYAN = 0xFF64D2FF;
+    static final int MINT = 0xFF63E6E2;
+    static final int BROWN = 0xFFAC8E68;
+
+    static Typeface regular = Typeface.DEFAULT;
+    static Typeface medium = Typeface.DEFAULT;
+    static Typeface semibold = Typeface.DEFAULT_BOLD;
+    static Typeface bold = Typeface.DEFAULT_BOLD;
 
     private Style() {
+    }
+
+    /** Loads Inter once from the APK assets; keeps the system font if that fails. */
+    static void init(Context c) {
+        if (regular != Typeface.DEFAULT) return;
+        try {
+            regular = Typeface.createFromAsset(c.getAssets(), "fonts/Inter-400Regular.ttf");
+            medium = Typeface.createFromAsset(c.getAssets(), "fonts/Inter-500Medium.ttf");
+            semibold = Typeface.createFromAsset(c.getAssets(), "fonts/Inter-600SemiBold.ttf");
+            bold = Typeface.createFromAsset(c.getAssets(), "fonts/Inter-700Bold.ttf");
+        } catch (RuntimeException e) {
+            regular = Typeface.DEFAULT;
+            medium = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+            semibold = medium;
+            bold = Typeface.DEFAULT_BOLD;
+        }
+    }
+
+    /** Text sizes and tracking of the iOS type ramp (Large Title, Title 2, Headline, Body, ...). */
+    static void type(TextView t, float sp, Typeface face) {
+        t.setTextSize(sp);
+        t.setTypeface(face);
+        // SF tightens large text and loosens small text; Inter needs about the same
+        t.setLetterSpacing(sp >= 28 ? -0.022f : sp >= 20 ? -0.017f : sp >= 15 ? -0.01f : 0f);
+        t.setIncludeFontPadding(false);
     }
 
     static GradientDrawable rounded(int color, float radiusPx) {
@@ -60,26 +96,8 @@ final class Style {
         return g;
     }
 
-    /** Rounded fill tinted with {@code color}, with a stronger border in the same colour. */
-    static GradientDrawable tinted(int color, float radiusPx, int strokePx) {
-        GradientDrawable g = rounded(alpha(color, 0x24), radiusPx);
-        g.setStroke(strokePx, alpha(color, 0x55));
-        return g;
-    }
-
-    static GradientDrawable gradient(int from, int to, float radiusPx) {
-        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {from, to});
-        g.setCornerRadius(radiusPx);
-        return g;
-    }
-
-    /** Card body: a slight vertical gradient with a thin light border. */
-    static GradientDrawable card(float radiusPx, int strokePx) {
-        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {0xFF182035, 0xFF121828});
-        g.setCornerRadius(radiusPx);
-        g.setStroke(strokePx, STROKE);
-        return g;
+    static GradientDrawable capsule(int color) {
+        return rounded(color, 999f);
     }
 
     static GradientDrawable oval(int color) {
@@ -89,47 +107,51 @@ final class Style {
         return g;
     }
 
-    static GradientDrawable ovalGradient(int from, int to) {
+    static GradientDrawable gradient(int from, int to, float radiusPx) {
         GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {from, to});
-        g.setShape(GradientDrawable.OVAL);
+        g.setCornerRadius(radiusPx);
         return g;
     }
 
-    /** App badge: gradient square with a soft light on its upper half. */
-    static Drawable badge(int color, float radiusPx) {
-        GradientDrawable base = gradient(lighter(color), darker(color), radiusPx);
+    static GradientDrawable vertical(int top, int bottom, float radiusPx) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[] {top, bottom});
+        g.setCornerRadius(radiusPx);
+        return g;
+    }
+
+    /** Frosted "material" like the iOS tab bar: dark translucent fill with a hairline highlight. */
+    static Drawable glass(float radiusPx, int hairlinePx) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0xF22A2A2E, 0xF21C1C1E});
+        g.setCornerRadius(radiusPx);
+        g.setStroke(hairlinePx, 0x29FFFFFF);
+        return g;
+    }
+
+    /** App icon "squircle": iOS uses a continuous curve; a 22.5% corner radius reads the same at this size. */
+    static Drawable appIcon(int color, float sizePx) {
+        GradientDrawable base = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {mix(color, 0xFFFFFFFF, 0.12f), mix(color, 0xFF000000, 0.18f)});
+        base.setCornerRadius(sizePx * 0.225f);
         GradientDrawable shine = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {0x40FFFFFF, 0x00FFFFFF});
-        shine.setCornerRadius(radiusPx);
+                new int[] {0x2EFFFFFF, 0x00FFFFFF});
+        shine.setCornerRadius(sizePx * 0.225f);
         LayerDrawable d = new LayerDrawable(new Drawable[] {base, shine});
-        d.setLayerInsetBottom(1, 0);
+        d.setLayerInset(1, 0, 0, 0, Math.round(sizePx * 0.45f));
         return d;
     }
 
-    /** SeekBar track: dark rail with a blue-to-violet fill. */
-    static Drawable track(int heightPx) {
-        GradientDrawable rail = rounded(0xFF2A3348, heightPx / 2f);
-        rail.setSize(0, heightPx);
-        GradientDrawable fill = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[] {ACCENT, VIOLET, PINK});
-        fill.setCornerRadius(heightPx / 2f);
-        fill.setSize(0, heightPx);
-        LayerDrawable d = new LayerDrawable(new Drawable[] {rail,
-                new ClipDrawable(fill, Gravity.START, ClipDrawable.HORIZONTAL)});
-        d.setId(0, android.R.id.background);
-        d.setId(1, android.R.id.progress);
-        return d;
+    /** Settings-row background: no ripple, the row darkens while pressed, as on iOS. */
+    static Drawable rowBackground() {
+        StateListDrawable s = new StateListDrawable();
+        s.addState(new int[] {android.R.attr.state_pressed}, new ColorDrawable(CELL3));
+        s.addState(new int[] {}, new ColorDrawable(0x00000000));
+        s.setExitFadeDuration(220);
+        return s;
     }
 
-    static Drawable thumb(int sizePx, int strokePx) {
-        GradientDrawable t = oval(0xFFFFFFFF);
-        t.setSize(sizePx, sizePx);
-        t.setStroke(strokePx, ACCENT);
-        return t;
-    }
-
-    static Drawable ripple(Drawable content) {
-        return new RippleDrawable(ColorStateList.valueOf(0x40FFFFFF), content, null);
+    static ColorStateList tint(int color) {
+        return ColorStateList.valueOf(color);
     }
 
     static int alpha(int color, int alpha) {
@@ -151,97 +173,53 @@ final class Style {
         return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
-    /** Screen background: deep navy with a blue glow at the top and a violet one at the bottom. */
-    static final class Backdrop extends Drawable {
-        private final Paint base = new Paint();
-        private final Paint glowTop = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Paint glowBottom = new Paint(Paint.ANTI_ALIAS_FLAG);
+    /**
+     * Damped spring, like UIKit's default (damping ratio 0.8): settles with a hint of overshoot.
+     * Normalised so the curve reaches 1 at t = 1.
+     */
+    static final class Spring implements TimeInterpolator {
+        private final float zeta;
+        private final float omega;
 
-        @Override
-        protected void onBoundsChange(Rect b) {
-            base.setShader(new LinearGradient(0, b.top, 0, b.bottom, 0xFF0D1324, 0xFF080B14, Shader.TileMode.CLAMP));
-            float r = Math.max(b.width(), 1) * 0.9f;
-            glowTop.setShader(new RadialGradient(b.left + b.width() * 0.15f, b.top, r,
-                    0x553D8BFF, 0x003D8BFF, Shader.TileMode.CLAMP));
-            glowBottom.setShader(new RadialGradient(b.right, b.bottom - b.height() * 0.1f, r,
-                    0x408B5CF6, 0x008B5CF6, Shader.TileMode.CLAMP));
+        Spring(float dampingRatio, float stiffness) {
+            zeta = dampingRatio;
+            omega = stiffness;
         }
 
         @Override
-        public void draw(Canvas c) {
-            Rect b = getBounds();
-            c.drawRect(b, base);
-            c.drawRect(b, glowTop);
-            c.drawRect(b, glowBottom);
-        }
-
-        @Override
-        public void setAlpha(int alpha) {
-        }
-
-        @Override
-        public void setColorFilter(ColorFilter cf) {
-        }
-
-        @Override
-        public int getOpacity() {
-            return PixelFormat.OPAQUE;
+        public float getInterpolation(float t) {
+            if (t >= 1f) return 1f;
+            double wd = omega * Math.sqrt(1 - zeta * zeta);
+            double e = Math.exp(-zeta * omega * t);
+            return (float) (1 - e * (Math.cos(wd * t) + (zeta * omega / wd) * Math.sin(wd * t)));
         }
     }
 
-    /** Header card: blue-to-violet gradient with light decorative circles, clipped to round corners. */
-    static final class Hero extends Drawable {
-        private final float radius;
-        private final float unit;
-        private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Paint bubble = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Path clip = new Path();
-        private final RectF rect = new RectF();
+    static final TimeInterpolator SPRING = new Spring(0.78f, 13f);
+    static final TimeInterpolator SPRING_SOFT = new Spring(0.9f, 10f);
 
-        Hero(float radiusPx, float dpPx) {
-            radius = radiusPx;
-            unit = dpPx;
-            bubble.setColor(0x1AFFFFFF);
-        }
-
-        @Override
-        protected void onBoundsChange(Rect b) {
-            rect.set(b);
-            clip.reset();
-            clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
-            fill.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom,
-                    new int[] {0xFF2563EB, 0xFF6D28D9, 0xFFBE185D}, new float[] {0f, 0.6f, 1f},
-                    Shader.TileMode.CLAMP));
-        }
-
-        @Override
-        public void draw(Canvas c) {
-            Rect b = getBounds();
-            c.save();
-            c.clipPath(clip);
-            c.drawRect(b, fill);
-            c.drawCircle(b.right - 30 * unit, b.top + 6 * unit, 70 * unit, bubble);
-            c.drawCircle(b.right + 6 * unit, b.bottom - 4 * unit, 46 * unit, bubble);
-            c.drawCircle(b.left + b.width() * 0.42f, b.bottom + 24 * unit, 40 * unit, bubble);
-            c.restore();
-        }
-
-        @Override
-        public void getOutline(Outline outline) {
-            outline.setRoundRect(getBounds(), radius);
-        }
-
-        @Override
-        public void setAlpha(int alpha) {
-        }
-
-        @Override
-        public void setColorFilter(ColorFilter cf) {
-        }
-
-        @Override
-        public int getOpacity() {
-            return PixelFormat.TRANSLUCENT;
-        }
+    /**
+     * iOS press feedback: the control shrinks a little while touched and springs back. Observes the
+     * touch only, so clicks still go through the normal click listener.
+     */
+    static void press(View v, final float scale) {
+        v.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent e) {
+                switch (e.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        view.animate().scaleX(scale).scaleY(scale).alpha(0.85f).setDuration(110)
+                                .setInterpolator(SPRING_SOFT).start();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        view.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(420).setInterpolator(SPRING).start();
+                        break;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        });
     }
 }

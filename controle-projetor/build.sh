@@ -13,8 +13,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION_CODE=6
-VERSION_NAME=5.0
+VERSION_CODE=7
+VERSION_NAME=6.0
 MAVEN_REPO=${MAVEN_REPO:-https://repo1.maven.org/maven2}
 JAVA8=${JAVA8:-/usr/lib/jvm/java-8-openjdk-amd64/bin/java}
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}
@@ -35,10 +35,12 @@ if [ "${1:-}" = "test" ]; then
     javac --release 11 -nowarn -encoding UTF-8 -d "$OUT/test" \
         src/dev/projetor/controle/IrCodes.java src/dev/projetor/controle/LanScanner.java \
         src/dev/projetor/controle/ReceiverClient.java ../receptor-projetor/src/dev/projetor/receptor/ReceiverServer.java \
-        test/IrCodesTest.java test/LanScannerTest.java test/ReceiverProtocolTest.java
+        src/dev/projetor/controle/ProjectorCommands.java \
+        test/IrCodesTest.java test/LanScannerTest.java test/ReceiverProtocolTest.java test/NowPlayingTest.java
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" IrCodesTest
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" LanScannerTest
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" ReceiverProtocolTest
+    java -Dstdout.encoding=UTF-8 -cp "$OUT/test" NowPlayingTest
     exit 0
 fi
 
@@ -53,6 +55,7 @@ rm -rf "$OUT" && mkdir -p "$OUT/gen" "$OUT/classes" "$OUT/retro" "$OUT/assets"
 # O receptor (app do projetor) vai dentro deste APK, para o botão "Instalar o receptor" da aba Mais.
 MAVEN_REPO="$MAVEN_REPO" ../receptor-projetor/build.sh >/dev/null
 cp ../receptor-projetor/build/ReceptorControle.apk "$OUT/assets/receptor.apk"
+cp -r assets/. "$OUT/assets/"
 
 # Recursos: o android.jar 23 basta (ícones vetoriais sem atributos novos).
 aapt package -f -m -J "$OUT/gen" -M AndroidManifest.xml -S res -I "$ANDROID_JAR" \
