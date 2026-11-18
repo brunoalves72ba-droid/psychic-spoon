@@ -25,6 +25,11 @@ A interface segue o estilo do iOS no modo escuro: título grande, pílulas de co
   - velocidade do cursor;
   - estado do infravermelho do celular.
 
+**120 Hz:**
+- Em celulares com tela de 120 Hz, o app pede ao Android o modo de 120 Hz na resolução atual. Se o celular também tiver 144 Hz, ele fica com 120; se não tiver 120, usa o modo mais rápido que houver.
+- No Android 15 ou mais novo, as telas do app também pedem taxa alta enquanto se mexem. Isso importa nos celulares que baixam a taxa sozinhos para poupar bateria.
+- Em **Ajustes → Tela** há o interruptor "Animações a 120 Hz" e a taxa da tela no momento. Alguns celulares só liberam 120 Hz com a taxa de atualização alta ligada nas configurações de tela do aparelho.
+
 No celular, a barra de abas flutua embaixo e a tela fica em pé. No tablet, a barra fica no alto, centralizada, e a tela gira. Com 720 dp de largura ou mais, a aba Controle se divide em duas colunas: o controle à esquerda e mídia, volume e atalhos à direita.
 
 ## Sem a depuração: o receptor
@@ -90,6 +95,7 @@ Abra `build/ControleProjetor.apk` no celular.
 
 `./build.sh test` testa:
 - a leitura do "Tocando agora" (`dumpsys media_session`);
+- a escolha do modo de tela de 120 Hz;
 - o código infravermelho contra os 15 botões capturados do controle;
 - a busca na rede com projetores falsos;
 - o protocolo entre o celular e o receptor, com pareamento e cada comando.

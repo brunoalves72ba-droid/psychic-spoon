@@ -13,8 +13,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION_CODE=7
-VERSION_NAME=6.0
+VERSION_CODE=8
+VERSION_NAME=6.1
 MAVEN_REPO=${MAVEN_REPO:-https://repo1.maven.org/maven2}
 JAVA8=${JAVA8:-/usr/lib/jvm/java-8-openjdk-amd64/bin/java}
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}
@@ -36,11 +36,13 @@ if [ "${1:-}" = "test" ]; then
         src/dev/projetor/controle/IrCodes.java src/dev/projetor/controle/LanScanner.java \
         src/dev/projetor/controle/ReceiverClient.java ../receptor-projetor/src/dev/projetor/receptor/ReceiverServer.java \
         src/dev/projetor/controle/ProjectorCommands.java \
+        src/dev/projetor/controle/DisplayModes.java test/dev/projetor/controle/DisplayModesTest.java \
         test/IrCodesTest.java test/LanScannerTest.java test/ReceiverProtocolTest.java test/NowPlayingTest.java
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" IrCodesTest
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" LanScannerTest
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" ReceiverProtocolTest
     java -Dstdout.encoding=UTF-8 -cp "$OUT/test" NowPlayingTest
+    java -Dstdout.encoding=UTF-8 -cp "$OUT/test" dev.projetor.controle.DisplayModesTest
     exit 0
 fi
 

@@ -21,17 +21,20 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Build;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -169,7 +172,95 @@ public class MainActivity extends Activity {
         }
         setContentView(buildUi());
         selectTab(prefs.getInt("tab", 0), false);
+        applyRefreshRate();
         watchWifi();
+    }
+
+    // ---------------------------------------------------------------- 120 Hz
+
+    /**
+     * Asks the display for its 120 Hz mode (or its fastest) at the current resolution, so lists,
+     * springs and the clickpad animate at 120 frames per second on phones that support it. Off in
+     * Ajustes, the system decides. On Android 15+ the views also vote for a high frame rate while
+     * they draw, which matters on phones that lower the rate on their own (LTPO).
+     */
+    private void applyRefreshRate() {
+        boolean on = prefs.getBoolean("hz120", true);
+        Display display = currentDisplay();
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.preferredDisplayModeId = 0;
+        lp.preferredRefreshRate = 0;
+        if (on && display != null) {
+            Display.Mode[] modes = display.getSupportedModes();
+            Display.Mode current = display.getMode();
+            float[][] table = new float[modes.length][];
+            for (int i = 0; i < modes.length; i++) {
+                table[i] = new float[] {modes[i].getPhysicalWidth(), modes[i].getPhysicalHeight(), modes[i].getRefreshRate()};
+            }
+            int pick = DisplayModes.pick(table, current.getPhysicalWidth(), current.getPhysicalHeight(), current.getRefreshRate());
+            if (pick >= 0) {
+                lp.preferredDisplayModeId = modes[pick].getModeId();
+                lp.preferredRefreshRate = modes[pick].getRefreshRate();
+            }
+        }
+        getWindow().setAttributes(lp);
+        voteFrameRate(getWindow().getDecorView(), on);
+        handler.postDelayed(this::showRefreshRate, 400);
+    }
+
+    @SuppressWarnings("deprecation")
+    private Display currentDisplay() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                Display d = getDisplay();
+                if (d != null) return d;
+            } catch (RuntimeException e) {
+                // not a visual context yet: fall back to the window manager's display below
+            }
+        }
+        return getWindowManager().getDefaultDisplay();
+    }
+
+    /** Android 15's per-view frame rate vote (looked up by name, as this app compiles against 14). */
+    private static void voteFrameRate(View v, boolean high) {
+        if (Build.VERSION.SDK_INT < 35) return;
+        try {
+            float value = View.class.getField(high ? "REQUESTED_FRAME_RATE_CATEGORY_HIGH"
+                    : "REQUESTED_FRAME_RATE_CATEGORY_DEFAULT").getFloat(null);
+            java.lang.reflect.Method set = View.class.getMethod("setRequestedFrameRate", float.class);
+            voteTree(v, set, value);
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // older Android 15 previews: the display mode request above still applies
+        }
+    }
+
+    private static void voteTree(View v, java.lang.reflect.Method set, float value) throws ReflectiveOperationException {
+        set.invoke(v, value);
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) voteTree(g.getChildAt(i), set, value);
+        }
+    }
+
+    private final DisplayManager.DisplayListener displayListener = new DisplayManager.DisplayListener() {
+        @Override
+        public void onDisplayAdded(int displayId) {
+        }
+
+        @Override
+        public void onDisplayRemoved(int displayId) {
+        }
+
+        @Override
+        public void onDisplayChanged(int displayId) {
+            showRefreshRate();
+        }
+    };
+
+    private void showRefreshRate() {
+        Display d = currentDisplay();
+        if (refreshValue == null || d == null) return;
+        refreshValue.setText(Math.round(d.getRefreshRate()) + " Hz");
     }
 
     /** Rotation and window resizes rebuild the screen in place; the connection is kept. */
@@ -180,6 +271,7 @@ public class MainActivity extends Activity {
         currentTab = -1;
         setContentView(buildUi());
         selectTab(tab, false);
+        applyRefreshRate();
         showVolume();
         showApps(lastApps);
         if (hostField != null) hostField.setText(host);
@@ -189,6 +281,8 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(mediaPoll);
+        DisplayManager dm = getSystemService(DisplayManager.class);
+        if (dm != null) dm.unregisterDisplayListener(displayListener);
     }
 
     /** While Controle or Mídia is showing, asks every 3 s what the projector is playing (ADB only). */
@@ -220,6 +314,9 @@ public class MainActivity extends Activity {
         });
         handler.removeCallbacks(mediaPoll);
         handler.postDelayed(mediaPoll, 800);
+        DisplayManager dm = getSystemService(DisplayManager.class);
+        if (dm != null) dm.registerDisplayListener(displayListener, handler);
+        showRefreshRate();
     }
 
     @Override
@@ -1237,6 +1334,7 @@ public class MainActivity extends Activity {
     private volatile ProjectorCommands.NowPlaying nowPlaying;
     private String appFilter = "";
     private String statusShown = "Desconectado";
+    private TextView refreshValue;
     private int statusColor = Style.MUTED;
 
     private View buildUi() {
@@ -2028,6 +2126,21 @@ public class MainActivity extends Activity {
         arrows.setListener(on -> prefs.edit().putBoolean("setas_ir", on).apply());
         ((LinearLayout) irRow).addView(arrows);
 
+        LinearLayout screen = section(page, "Tela", "Quando o celular tem tela de 120 Hz, o app pede esse modo, e as animações "
+                + "ficam com 120 quadros por segundo. Se a taxa não subir, ligue a taxa de atualização alta nas "
+                + "configurações de tela do celular. Desligue para gastar menos bateria.");
+        View hzRow = row(screen, R.drawable.ic_tv, Style.PURPLE, "Animações a 120 Hz", null, null);
+        IosSwitch hz = new IosSwitch(this);
+        hz.setChecked(prefs.getBoolean("hz120", true), false);
+        hz.setListener(on -> {
+            prefs.edit().putBoolean("hz120", on).apply();
+            applyRefreshRate();
+        });
+        ((LinearLayout) hzRow).addView(hz);
+        View nowRow = row(screen, R.drawable.ic_tv, Style.GRAY2, "Taxa da tela agora", "", null);
+        refreshValue = (TextView) ((LinearLayout) nowRow).getChildAt(2);
+        refreshValue.setFontFeatureSettings("tnum");
+
         LinearLayout pad = section(page, "Touchpad", null);
         LinearLayout speedRow = vertical();
         speedRow.setPadding(dp(16), dp(12), dp(16), dp(14));
@@ -2048,7 +2161,7 @@ public class MainActivity extends Activity {
                 + "Aponte a ponta de cima do celular para o projetor.");
         row(ir, R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED, "Emissor do celular", hasIr ? "Disponível" : "Não encontrado", null);
 
-        TextView version = text("Controle Projetor 6.0", 13, Style.TEXT3, Style.regular);
+        TextView version = text("Controle Projetor 6.1", 13, Style.TEXT3, Style.regular);
         version.setGravity(Gravity.CENTER);
         page.addView(version, matchWrap(0, dp(26), 0, 0));
         return constrained(page, 680);
