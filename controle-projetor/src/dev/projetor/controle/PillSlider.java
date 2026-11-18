@@ -43,8 +43,8 @@ public class PillSlider extends View {
         super(context);
         this.vertical = vertical;
         density = context.getResources().getDisplayMetrics().density;
-        track.setColor(Style.FILL3);
-        fill.setColor(0xFFFFFFFF);
+        track.setColor(0x26FFFFFF);
+        fill.setColor(0xF0FFFFFF);
         setHapticFeedbackEnabled(true);
     }
 
@@ -126,7 +126,7 @@ public class PillSlider extends View {
         float x = vertical ? rect.centerX() : (start ? rect.left + inset : rect.right - inset);
         float y = vertical ? (start ? rect.bottom - inset : rect.top + inset) : rect.centerY();
         float along = vertical ? (rect.bottom - y) / rect.height() : (x - rect.left) / rect.width();
-        d.setTint(along < position ? 0xFF3A3A3C : 0xD9FFFFFF);
+        d.setTint(along < position ? Style.WINE : 0xD9FFFFFF);
         int half = size / 2;
         d.setBounds(Math.round(x) - half, Math.round(y) - half, Math.round(x) + half, Math.round(y) + half);
         d.draw(canvas);

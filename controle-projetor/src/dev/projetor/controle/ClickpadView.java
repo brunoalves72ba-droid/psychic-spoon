@@ -103,18 +103,19 @@ public class ClickpadView extends View {
         maxSizePx = 330 * density;
         rim.setStyle(Paint.Style.STROKE);
         rim.setStrokeWidth(1f * density);
-        rim.setColor(0x24FFFFFF);
+        rim.setColor(0x40FFFFFF);
         ring.setStyle(Paint.Style.STROKE);
         ring.setStrokeWidth(1.2f * density);
-        ring.setColor(0x1AFFFFFF);
+        ring.setColor(0x2EFFFFFF);
         centerFill.setColor(0x14FFFFFF);
+        centerFill.setStyle(Paint.Style.FILL);
         marker.setStyle(Paint.Style.STROKE);
         marker.setStrokeWidth(2.6f * density);
         marker.setStrokeCap(Paint.Cap.ROUND);
         marker.setStrokeJoin(Paint.Join.ROUND);
-        marker.setColor(0x8CEBEBF5);
-        touchDot.setColor(0x33FFFFFF);
-        hint.setColor(0x66EBEBF5);
+        marker.setColor(0xB3FFE6EA);
+        touchDot.setColor(0x38FFFFFF);
+        hint.setColor(0x99FFE6EA);
         hint.setTextAlign(Paint.Align.CENTER);
         hint.setTextSize(13 * density);
         hint.setTypeface(Style.semibold);
@@ -144,10 +145,11 @@ public class ClickpadView extends View {
         cy = h / 2f;
         radius = Math.min(w, h) / 2f - 2 * density;
         innerRadius = radius * 0.34f;
-        disc.setShader(new RadialGradient(cx, cy - radius * 0.6f, radius * 1.7f,
-                0xFF2C2C2E, 0xFF161618, Shader.TileMode.CLAMP));
+        // glass: the wallpaper shows through, a little brighter toward the top edge
+        disc.setShader(new RadialGradient(cx, cy - radius * 0.9f, radius * 1.9f,
+                new int[] {0x30FFFFFF, 0x12FFFFFF, 0x08FFFFFF}, new float[] {0f, 0.5f, 1f}, Shader.TileMode.CLAMP));
         glow.setShader(new RadialGradient(0, 0, radius * 0.62f,
-                new int[] {0x55FFFFFF, 0x1AFFFFFF, 0x00FFFFFF}, new float[] {0f, 0.55f, 1f}, Shader.TileMode.CLAMP));
+                new int[] {0x5CFFD9E0, 0x1FFFD9E0, 0x00FFD9E0}, new float[] {0f, 0.55f, 1f}, Shader.TileMode.CLAMP));
     }
 
     @Override

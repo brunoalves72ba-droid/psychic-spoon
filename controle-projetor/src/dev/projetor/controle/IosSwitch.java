@@ -9,7 +9,7 @@ import android.graphics.RectF;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 
-/** The iOS switch: green capsule, white knob that slides with a spring. */
+/** The iOS switch, in the app's rose: capsule track, white knob that slides with a spring. */
 public class IosSwitch extends View {
 
     public interface Listener {
@@ -78,7 +78,7 @@ public class IosSwitch extends View {
         rect.set(pad, pad, getWidth() - pad, getHeight() - pad);
         float r = rect.height() / 2f;
         float clamped = Math.max(0f, Math.min(1f, t));
-        track.setColor((Integer) argb.evaluate(clamped, 0xFF39393D, Style.GREEN));
+        track.setColor((Integer) argb.evaluate(clamped, 0x33FFFFFF, Style.ROSE));
         canvas.drawRoundRect(rect, r, r, track);
         float k = r - 2 * density;
         float x = rect.left + r + (rect.width() - 2 * r) * t;

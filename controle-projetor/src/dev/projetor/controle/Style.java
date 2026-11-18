@@ -20,35 +20,44 @@ import android.widget.TextView;
  */
 final class Style {
 
-    // iOS dark-mode system colours
-    static final int BG = 0xFF000000;
-    static final int CELL = 0xFF1C1C1E;
-    static final int CELL2 = 0xFF2C2C2E;
-    static final int CELL3 = 0xFF3A3A3C;
-    static final int FILL = 0x5C787880;
-    static final int FILL2 = 0x52787880;
-    static final int FILL3 = 0x3D767680;
-    static final int FILL4 = 0x2E767680;
-    static final int SEPARATOR = 0xFF38383A;
-    static final int STROKE = 0x1FFFFFFF;
+    // Palette taken from the wallpaper (res/drawable-nodpi/fundo.jpg): deep wine, and the rose of its
+    // glowing lines as the accent. Surfaces are translucent "glass" so the wallpaper shows through.
+    static final int BG = 0xFF1F0B0D;
+    static final int WINE = 0xFF2E1519;
+    static final int CELL = 0x1AFFFFFF;
+    static final int CELL2 = 0x24FFFFFF;
+    static final int CELL3 = 0x30FFFFFF;
+    static final int FILL = 0x33FFFFFF;
+    static final int FILL2 = 0x2BFFFFFF;
+    static final int FILL3 = 0x24FFFFFF;
+    static final int FILL4 = 0x1AFFFFFF;
+    static final int SEPARATOR = 0x21FFFFFF;
+    static final int STROKE = 0x29FFFFFF;
     static final int TEXT = 0xFFFFFFFF;
-    static final int TEXT2 = 0x99EBEBF5;
-    static final int TEXT3 = 0x4DEBEBF5;
-    static final int MUTED = 0xFF8E8E93;
-    static final int GRAY2 = 0xFF636366;
-    static final int BLUE = 0xFF0A84FF;
-    static final int GREEN = 0xFF30D158;
-    static final int RED = 0xFFFF453A;
-    static final int ORANGE = 0xFFFF9F0A;
+    static final int TEXT2 = 0xA8FFE6EA;
+    static final int TEXT3 = 0x66FFE6EA;
+    static final int MUTED = 0xFFB89CA2;
+    static final int GRAY2 = 0xFF8C7076;
+    /** Rose of the wallpaper's lines, lifted for contrast: selection, links, tints. */
+    static final int ACCENT = 0xFFF4A9B8;
+    /** Deeper rose for filled buttons with white text. */
+    static final int ACCENT_FILL = 0xFFC8627B;
+    // the rest of the family, for icons and status
+    static final int ROSE = 0xFFE3889C;
+    static final int BERRY = 0xFFC4506E;
+    static final int PLUM = 0xFFA45C90;
+    static final int MAUVE = 0xFFB585A8;
+    static final int COPPER = 0xFFD98B6C;
+    static final int GOLD = 0xFFE2B274;
+    static final int GREEN = 0xFF3CCB7F;
+    static final int RED = 0xFFFF5A5F;
+    static final int ORANGE = 0xFFFFA24C;
     static final int AMBER = ORANGE;
-    static final int YELLOW = 0xFFFFD60A;
-    static final int PINK = 0xFFFF375F;
-    static final int PURPLE = 0xFFBF5AF2;
-    static final int INDIGO = 0xFF5E5CE6;
-    static final int TEAL = 0xFF40C8E0;
-    static final int CYAN = 0xFF64D2FF;
-    static final int MINT = 0xFF63E6E2;
-    static final int BROWN = 0xFFAC8E68;
+    static final int YELLOW = 0xFFFFD36B;
+    static final int PINK = 0xFFFF6E8E;
+    static final int PURPLE = 0xFFB86BD9;
+    static final int INDIGO = 0xFF8F6EDB;
+    static final int TEAL = 0xFF71C7C1;
 
     static Typeface regular = Typeface.DEFAULT;
     static Typeface medium = Typeface.DEFAULT;
@@ -119,12 +128,50 @@ final class Style {
         return g;
     }
 
-    /** Frosted "material" like the iOS tab bar: dark translucent fill with a hairline highlight. */
+    /** Tab bar material: smoky wine glass with a light rim, the wallpaper faintly visible through it. */
     static Drawable glass(float radiusPx, int hairlinePx) {
         GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {0xF22A2A2E, 0xF21C1C1E});
+                new int[] {0xB83A1E24, 0xCC1F0B0D});
         g.setCornerRadius(radiusPx);
-        g.setStroke(hairlinePx, 0x29FFFFFF);
+        g.setStroke(hairlinePx, 0x38FFFFFF);
+        return g;
+    }
+
+    /**
+     * "Liquid glass" key: mostly transparent, a little brighter at the top, with a hairline rim,
+     * so the wallpaper reads through it.
+     */
+    static Drawable glassKey(float radiusPx, int hairlinePx) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x2BFFFFFF, 0x0FFFFFFF});
+        g.setCornerRadius(radiusPx);
+        g.setStroke(hairlinePx, 0x38FFFFFF);
+        return g;
+    }
+
+    static Drawable glassOval(int hairlinePx) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x2BFFFFFF, 0x0FFFFFFF});
+        g.setShape(GradientDrawable.OVAL);
+        g.setStroke(hairlinePx, 0x38FFFFFF);
+        return g;
+    }
+
+    /** Cards and grouped cells: fainter glass than the keys, so the keys stand out. */
+    static Drawable glassCard(float radiusPx, int hairlinePx) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x1FFFFFFF, 0x0DFFFFFF});
+        g.setCornerRadius(radiusPx);
+        g.setStroke(hairlinePx, 0x24FFFFFF);
+        return g;
+    }
+
+    /** Tinted glass capsule for command pills (Ligar in green, Desligar in red...). */
+    static Drawable tintedGlass(int color, int hairlinePx) {
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {alpha(color, 0x40), alpha(color, 0x24)});
+        g.setCornerRadius(999f);
+        g.setStroke(hairlinePx, alpha(color, 0x66));
         return g;
     }
 

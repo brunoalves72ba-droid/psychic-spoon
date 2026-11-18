@@ -38,7 +38,7 @@ public class PillTabBar extends FrameLayout {
         setElevation(dp(14));
 
         indicator = new View(context);
-        indicator.setBackground(Style.capsule(0x33FFFFFF));
+        indicator.setBackground(Style.glassKey(999f, Math.max(1, dp(0.6f))));
         addView(indicator, new LayoutParams(0, dp(heightDp - 10)));
 
         row = new LinearLayout(context);
@@ -82,9 +82,9 @@ public class PillTabBar extends FrameLayout {
         if (index < 0 || index >= icons.length) return;
         selected = index;
         for (int i = 0; i < icons.length; i++) {
-            int color = i == index ? Style.BLUE : 0xFFEBEBF5;
+            int color = i == index ? Style.ACCENT : 0xE6FFFFFF;
             icons[i].setImageTintList(Style.tint(color));
-            labels[i].setTextColor(i == index ? Style.BLUE : 0xCCEBEBF5);
+            labels[i].setTextColor(i == index ? Style.ACCENT : 0xC7FFE6EA);
         }
         float target = targetX();
         if (target < 0) return;

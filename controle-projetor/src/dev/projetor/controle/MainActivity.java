@@ -1350,6 +1350,7 @@ public class MainActivity extends Activity {
         shortcutCards.clear();
 
         FrameLayout root = new FrameLayout(this);
+        root.addView(wallpaper(), new FrameLayout.LayoutParams(-1, -1));
         column = vertical();
         root.addView(column, new FrameLayout.LayoutParams(-1, -1));
         column.addView(buildHeader(), matchWrap(dp(tablet ? 32 : 20), dp(10), dp(tablet ? 32 : 20), 0));
@@ -1384,6 +1385,24 @@ public class MainActivity extends Activity {
         }
         root.setOnApplyWindowInsetsListener(this::applyInsets);
         return root;
+    }
+
+    /**
+     * The wallpaper, fixed behind the pages (it does not scroll, as on iOS), with a soft wine
+     * shade at the top and bottom so the title and the tab bar stay readable over its glowing lines.
+     */
+    private View wallpaper() {
+        FrameLayout layer = new FrameLayout(this);
+        ImageView image = new ImageView(this);
+        image.setImageResource(R.drawable.fundo);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        layer.addView(image, new FrameLayout.LayoutParams(-1, -1));
+        View shade = new View(this);
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0xE01F0B0D, 0x591F0B0D, 0x261F0B0D, 0x401F0B0D, 0xB31F0B0D});
+        shade.setBackground(g);
+        layer.addView(shade, new FrameLayout.LayoutParams(-1, -1));
+        return layer;
     }
 
     @SuppressWarnings("deprecation")
@@ -1455,7 +1474,7 @@ public class MainActivity extends Activity {
         if (tablet) {
             top.addView(powerPills());
         } else {
-            top.addView(circleButton(R.drawable.ic_settings, 40, Style.FILL3, Style.TEXT, "Ajustes", () -> selectTab(4)));
+            top.addView(circleButton(R.drawable.ic_settings, 40, Style.glassOval(hairline()), Style.TEXT, "Ajustes", () -> selectTab(4)));
         }
         header.addView(top);
         if (!tablet) header.addView(powerPills(), matchWrap(0, dp(14), 0, 0));
@@ -1468,7 +1487,7 @@ public class MainActivity extends Activity {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(commandPill(R.drawable.ic_power, "Ligar", Style.GREEN, this::powerOn), pillParams(!tablet));
         row.addView(commandPill(R.drawable.ic_power, "Desligar", Style.RED, this::powerOff), pillParams(!tablet));
-        row.addView(commandPill(R.drawable.ic_search, tablet ? "Procurar" : "Buscar", Style.BLUE, this::searchNetwork), pillParams(!tablet));
+        row.addView(commandPill(R.drawable.ic_search, tablet ? "Procurar" : "Buscar", Style.ACCENT, this::searchNetwork), pillParams(!tablet));
         return row;
     }
 
@@ -1591,17 +1610,14 @@ public class MainActivity extends Activity {
     }
 
     private View remoteButton(int icon, String description, Runnable action) {
-        View b = circleButton(icon, 68, Style.CELL2, Style.TEXT, description, action);
-        b.setElevation(dp(2));
-        return b;
+        return circleButton(icon, 68, Style.glassOval(hairline()), Style.TEXT, description, action);
     }
 
     /** Volume capsule with + on top and − below, each half lights up while pressed. */
     private View volumeRocker() {
         LinearLayout rocker = vertical();
-        rocker.setBackground(Style.capsule(Style.CELL2));
+        rocker.setBackground(Style.glassKey(999f, hairline()));
         rocker.setClipToOutline(true);
-        rocker.setElevation(dp(2));
         rocker.addView(rockerHalf(R.drawable.ic_plus, "Aumentar volume", () -> stepVolume(ProjectorCommands.KEY_VOLUME_UP, 1)),
                 new LinearLayout.LayoutParams(dp(68), dp(77)));
         View line = new View(this);
@@ -1640,9 +1656,8 @@ public class MainActivity extends Activity {
     /** "Tocando agora" with artwork, title and the transport controls. */
     private View nowPlayingCard(boolean large) {
         LinearLayout card = vertical();
-        card.setBackground(Style.vertical(0xFF26262A, Style.CELL, dp(26)));
+        card.setBackground(Style.glassCard(dp(26), hairline()));
         card.setPadding(dp(18), dp(18), dp(18), dp(20));
-        card.setElevation(dp(2));
         NowPlayingViews v = new NowPlayingViews();
 
         LinearLayout top = new LinearLayout(this);
@@ -1676,10 +1691,9 @@ public class MainActivity extends Activity {
         transport.addView(transportButton(R.drawable.ic_prev, 50, "Anterior", () -> sendKey(ProjectorCommands.KEY_PREVIOUS)), weighted(0));
         transport.addView(skipButton(false), weighted(0));
         FrameLayout play = new FrameLayout(this);
-        play.setBackground(Style.oval(0xFFFFFFFF));
+        play.setBackground(Style.glassOval(hairline()));
         play.setContentDescription("Play ou pausa");
-        play.setElevation(dp(8));
-        v.play = icon(R.drawable.ic_play, 0xFF000000);
+        v.play = icon(R.drawable.ic_play, Style.TEXT);
         play.addView(v.play, new FrameLayout.LayoutParams(dp(34), dp(34), Gravity.CENTER));
         onTap(play, this::playPause);
         Style.press(play, 0.9f);
@@ -1701,7 +1715,7 @@ public class MainActivity extends Activity {
     private View nowPlayingMini() {
         LinearLayout card = new LinearLayout(this);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setBackground(Style.rounded(Style.CELL, dp(22)));
+        card.setBackground(Style.glassCard(dp(22), hairline()));
         card.setPadding(dp(12), dp(12), dp(10), dp(12));
         NowPlayingViews v = new NowPlayingViews();
         v.art = text("♪", 20, 0xFFFFFFFF, Style.bold);
@@ -1785,7 +1799,7 @@ public class MainActivity extends Activity {
         int artPx = v.art.getLayoutParams() != null ? v.art.getLayoutParams().width : dp(68);
         if (np == null) {
             v.art.setText("♪");
-            v.art.setBackground(Style.appIcon(Style.INDIGO, artPx));
+            v.art.setBackground(Style.appIcon(Style.BERRY, artPx));
             v.state.setText(mode == MODE_RECEIVER ? "SEM DEPURAÇÃO" : "PROJETOR");
             v.state.setTextColor(Style.TEXT2);
             v.title.setText(mode == MODE_RECEIVER ? "Controle de mídia" : "Nada tocando");
@@ -1795,11 +1809,11 @@ public class MainActivity extends Activity {
         }
         String app = appLabel(np.packageName);
         Object[] brand = BRANDS.get(np.packageName);
-        int color = brand != null ? (Integer) brand[0] : Style.INDIGO;
+        int color = brand != null ? (Integer) brand[0] : Style.BERRY;
         v.art.setText(brand != null ? (String) brand[1] : app.substring(0, 1).toUpperCase());
         v.art.setBackground(Style.appIcon(color, artPx));
         v.state.setText(np.isPlaying() ? "TOCANDO" : "PAUSADO");
-        v.state.setTextColor(np.isPlaying() ? Style.GREEN : Style.ORANGE);
+        v.state.setTextColor(np.isPlaying() ? Style.ACCENT : Style.GOLD);
         v.title.setText(np.title.isEmpty() ? app : np.title);
         v.subtitle.setText(np.subtitle.isEmpty() ? app : np.subtitle + " · " + app);
         v.play.setImageResource(np.isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play);
@@ -1816,7 +1830,7 @@ public class MainActivity extends Activity {
     /** Volume like the Control Center: capsule slider, the level, and −, Sem som, +. */
     private View volumeCard() {
         LinearLayout card = vertical();
-        card.setBackground(Style.rounded(Style.CELL, dp(26)));
+        card.setBackground(Style.glassCard(dp(26), hairline()));
         card.setPadding(dp(18), dp(16), dp(18), dp(18));
         LinearLayout head = new LinearLayout(this);
         head.setGravity(Gravity.CENTER_VERTICAL);
@@ -1840,11 +1854,11 @@ public class MainActivity extends Activity {
 
         LinearLayout buttons = new LinearLayout(this);
         buttons.setGravity(Gravity.CENTER_VERTICAL);
-        buttons.addView(circleButton(R.drawable.ic_minus, 48, Style.FILL3, Style.TEXT, "Diminuir volume",
+        buttons.addView(circleButton(R.drawable.ic_minus, 48, Style.glassOval(hairline()), Style.TEXT, "Diminuir volume",
                 () -> stepVolume(ProjectorCommands.KEY_VOLUME_DOWN, -1)));
         LinearLayout mute = new LinearLayout(this);
         mute.setGravity(Gravity.CENTER);
-        mute.setBackground(Style.capsule(Style.FILL3));
+        mute.setBackground(Style.glassKey(999f, hairline()));
         ImageView muteIcon = icon(R.drawable.ic_volume_off, Style.TEXT);
         mute.addView(muteIcon, new LinearLayout.LayoutParams(dp(20), dp(20)));
         TextView muteText = text("Sem som", 15, Style.TEXT, Style.semibold);
@@ -1857,7 +1871,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, dp(48), 1f);
         mp.setMargins(dp(10), 0, dp(10), 0);
         buttons.addView(mute, mp);
-        buttons.addView(circleButton(R.drawable.ic_plus, 48, Style.FILL3, Style.TEXT, "Aumentar volume",
+        buttons.addView(circleButton(R.drawable.ic_plus, 48, Style.glassOval(hairline()), Style.TEXT, "Aumentar volume",
                 () -> stepVolume(ProjectorCommands.KEY_VOLUME_UP, 1)));
         card.addView(buttons, matchWrap(0, dp(14), 0, 0));
         return card;
@@ -1866,12 +1880,12 @@ public class MainActivity extends Activity {
     /** First apps of the projector as icons; "Ver todos" opens the Apps tab. */
     private View shortcutsCard() {
         LinearLayout card = vertical();
-        card.setBackground(Style.rounded(Style.CELL, dp(26)));
+        card.setBackground(Style.glassCard(dp(26), hairline()));
         card.setPadding(dp(16), dp(14), dp(16), dp(16));
         LinearLayout head = new LinearLayout(this);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(text("Atalhos", 17, Style.TEXT, Style.semibold), new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView all = text("Ver todos", 15, Style.BLUE, Style.medium);
+        TextView all = text("Ver todos", 15, Style.ACCENT, Style.medium);
         onTap(all, () -> selectTab(3));
         head.addView(all);
         card.addView(head);
@@ -1920,9 +1934,9 @@ public class MainActivity extends Activity {
         });
         page.addView(touchpad, new LinearLayout.LayoutParams(-1, 0, 1f));
         LinearLayout row = new LinearLayout(this);
-        row.addView(actionPill(R.drawable.ic_click, "Clique", Style.BLUE, 0xFFFFFFFF, this::click), weighted(dp(5)));
-        row.addView(actionPill(R.drawable.ic_chevron_back, "Voltar", Style.CELL2, Style.TEXT, () -> sendKey(ProjectorCommands.KEY_BACK)), weighted(dp(5)));
-        row.addView(actionPill(R.drawable.ic_home, "Início", Style.CELL2, Style.TEXT, () -> sendKey(ProjectorCommands.KEY_HOME)), weighted(dp(5)));
+        row.addView(actionPill(R.drawable.ic_click, "Clique", Style.tintedGlass(Style.ACCENT_FILL, hairline()), 0xFFFFFFFF, this::click), weighted(dp(5)));
+        row.addView(actionPill(R.drawable.ic_chevron_back, "Voltar", Style.glassKey(999f, hairline()), Style.TEXT, () -> sendKey(ProjectorCommands.KEY_BACK)), weighted(dp(5)));
+        row.addView(actionPill(R.drawable.ic_home, "Início", Style.glassKey(999f, hairline()), Style.TEXT, () -> sendKey(ProjectorCommands.KEY_HOME)), weighted(dp(5)));
         page.addView(row, matchWrap(-dp(5), dp(12), -dp(5), 0));
         if (!tablet) return page;
         FrameLayout box = new FrameLayout(this);
@@ -1942,7 +1956,7 @@ public class MainActivity extends Activity {
         appsCount.setPadding(dp(10), dp(4), dp(10), dp(4));
         appsCount.setVisibility(View.GONE);
         head.addView(appsCount);
-        head.addView(withLeft(circleButton(R.drawable.ic_refresh, 36, Style.FILL3, Style.TEXT, "Atualizar lista",
+        head.addView(withLeft(circleButton(R.drawable.ic_refresh, 36, Style.glassOval(hairline()), Style.TEXT, "Atualizar lista",
                 () -> worker.execute(this::loadApps)), dp(10)));
         page.addView(head, matchWrap(dp(4), dp(6), 0, dp(12)));
 
@@ -2061,15 +2075,15 @@ public class MainActivity extends Activity {
         page.addView(sectionTitle("Ajustes"), matchWrap(dp(4), dp(6), 0, dp(4)));
 
         LinearLayout proj = section(page, "Projetor", null);
-        row(proj, R.drawable.ic_tune, Style.BLUE, "Ajustes do projetor", null,
+        row(proj, R.drawable.ic_tune, Style.ROSE, "Ajustes do projetor", null,
                 () -> openScreen("PROJECTOR_SETTINGS", ProjectorCommands.OPEN_PROJECTOR_SETTINGS));
         row(proj, R.drawable.ic_settings, Style.GRAY2, "Configurações", null, () -> openScreen("SETTINGS", ProjectorCommands.OPEN_SETTINGS));
-        row(proj, R.drawable.ic_wifi, Style.BLUE, "Wi-Fi", null, () -> openScreen("WIFI", ProjectorCommands.OPEN_WIFI));
-        row(proj, R.drawable.ic_bluetooth, Style.BLUE, "Bluetooth", null, () -> openScreen("BLUETOOTH", ProjectorCommands.OPEN_BLUETOOTH));
+        row(proj, R.drawable.ic_wifi, Style.PLUM, "Wi-Fi", null, () -> openScreen("WIFI", ProjectorCommands.OPEN_WIFI));
+        row(proj, R.drawable.ic_bluetooth, Style.MAUVE, "Bluetooth", null, () -> openScreen("BLUETOOTH", ProjectorCommands.OPEN_BLUETOOTH));
 
         LinearLayout power = section(page, "Energia", "Ligar e Desligar ficam no topo e usam o infravermelho do celular.");
         row(power, R.drawable.ic_moon, Style.INDIGO, "Dormir", null, () -> sendKey(ProjectorCommands.KEY_SLEEP));
-        row(power, R.drawable.ic_sun, Style.ORANGE, "Acordar", null, () -> sendKey(ProjectorCommands.KEY_WAKEUP));
+        row(power, R.drawable.ic_sun, Style.GOLD, "Acordar", null, () -> sendKey(ProjectorCommands.KEY_WAKEUP));
         row(power, R.drawable.ic_restart, Style.RED, "Reiniciar", null, this::confirmReboot);
 
         LinearLayout typing = section(page, "Digitar no projetor", "Selecione antes um campo de busca no projetor.");
@@ -2085,7 +2099,7 @@ public class MainActivity extends Activity {
             return true;
         });
         inputRow.addView(textField, new LinearLayout.LayoutParams(0, dp(46), 1f));
-        inputRow.addView(circleButton(R.drawable.ic_send, 38, Style.BLUE, 0xFFFFFFFF, "Enviar texto", this::sendTypedText));
+        inputRow.addView(circleButton(R.drawable.ic_send, 38, Style.oval(Style.ACCENT_FILL), 0xFFFFFFFF, "Enviar texto", this::sendTypedText));
         typing.addView(inputRow);
         row(typing, R.drawable.ic_backspace, Style.RED, "Apagar", null, () -> sendKey(ProjectorCommands.KEY_DEL));
         row(typing, R.drawable.ic_enter, Style.GREEN, "Enter", null, () -> sendKey(ProjectorCommands.KEY_ENTER));
@@ -2095,7 +2109,7 @@ public class MainActivity extends Activity {
         LinearLayout ipRow = new LinearLayout(this);
         ipRow.setGravity(Gravity.CENTER_VERTICAL);
         ipRow.setPadding(dp(16), dp(4), dp(16), dp(4));
-        ipRow.addView(iconSquare(R.drawable.ic_wifi, Style.TEAL));
+        ipRow.addView(iconSquare(R.drawable.ic_wifi, Style.PLUM));
         TextView ipLabel = text("IP do projetor", 16.5f, Style.TEXT, Style.regular);
         ipLabel.setPadding(dp(14), 0, 0, 0);
         ipRow.addView(ipLabel);
@@ -2112,15 +2126,15 @@ public class MainActivity extends Activity {
         });
         ipRow.addView(hostField, new LinearLayout.LayoutParams(0, dp(48), 1f));
         conn.addView(ipRow);
-        row(conn, R.drawable.ic_link, Style.BLUE, "Conectar a este IP", null, this::reconnect);
-        row(conn, R.drawable.ic_search, Style.TEAL, "Procurar o projetor no Wi-Fi", null, this::searchNetwork);
+        row(conn, R.drawable.ic_link, Style.ROSE, "Conectar a este IP", null, this::reconnect);
+        row(conn, R.drawable.ic_search, Style.COPPER, "Procurar o projetor no Wi-Fi", null, this::searchNetwork);
 
         LinearLayout free = section(page, "Sem a depuração", "Instale uma vez o Receptor do Controle no projetor (com a "
                 + "depuração ligada). Depois o app funciona igual com ela desligada. Menu e Acordar vão pelo infravermelho; "
                 + "Reiniciar abre o menu de energia do projetor.");
-        row(free, R.drawable.ic_download, Style.GREEN, "Instalar o receptor no projetor", null, this::installReceiver);
-        row(free, R.drawable.ic_link, Style.GREEN, "Parear com o receptor", null, this::pairManually);
-        View irRow = row(free, R.drawable.ic_ir, Style.ORANGE, "Setas e OK pelo infravermelho", null, null);
+        row(free, R.drawable.ic_download, Style.GOLD, "Instalar o receptor no projetor", null, this::installReceiver);
+        row(free, R.drawable.ic_link, Style.ROSE, "Parear com o receptor", null, this::pairManually);
+        View irRow = row(free, R.drawable.ic_ir, Style.COPPER, "Setas e OK pelo infravermelho", null, null);
         IosSwitch arrows = new IosSwitch(this);
         arrows.setChecked(prefs.getBoolean("setas_ir", false), false);
         arrows.setListener(on -> prefs.edit().putBoolean("setas_ir", on).apply());
@@ -2129,7 +2143,7 @@ public class MainActivity extends Activity {
         LinearLayout screen = section(page, "Tela", "Quando o celular tem tela de 120 Hz, o app pede esse modo, e as animações "
                 + "ficam com 120 quadros por segundo. Se a taxa não subir, ligue a taxa de atualização alta nas "
                 + "configurações de tela do celular. Desligue para gastar menos bateria.");
-        View hzRow = row(screen, R.drawable.ic_tv, Style.PURPLE, "Animações a 120 Hz", null, null);
+        View hzRow = row(screen, R.drawable.ic_tv, Style.MAUVE, "Animações a 120 Hz", null, null);
         IosSwitch hz = new IosSwitch(this);
         hz.setChecked(prefs.getBoolean("hz120", true), false);
         hz.setListener(on -> {
@@ -2146,7 +2160,7 @@ public class MainActivity extends Activity {
         speedRow.setPadding(dp(16), dp(12), dp(16), dp(14));
         speedRow.addView(text("Velocidade do cursor", 16.5f, Style.TEXT, Style.regular));
         PillSlider speed = new PillSlider(this, false);
-        speed.setFillColor(Style.BLUE);
+        speed.setFillColor(Style.ACCENT);
         speed.setMax(8);
         speed.setValue(prefs.getInt("speed", 3), false);
         speed.setListener((v, done) -> {
@@ -2161,7 +2175,7 @@ public class MainActivity extends Activity {
                 + "Aponte a ponta de cima do celular para o projetor.");
         row(ir, R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED, "Emissor do celular", hasIr ? "Disponível" : "Não encontrado", null);
 
-        TextView version = text("Controle Projetor 6.1", 13, Style.TEXT3, Style.regular);
+        TextView version = text("Controle Projetor 6.2", 13, Style.TEXT3, Style.regular);
         version.setGravity(Gravity.CENTER);
         page.addView(version, matchWrap(0, dp(26), 0, 0));
         return constrained(page, 680);
@@ -2173,7 +2187,7 @@ public class MainActivity extends Activity {
         h.setLetterSpacing(0.02f);
         page.addView(h, matchWrap(dp(16), dp(26), dp(16), dp(7)));
         LinearLayout cell = vertical();
-        cell.setBackground(Style.rounded(Style.CELL, dp(12)));
+        cell.setBackground(Style.glassCard(dp(12), hairline()));
         cell.setClipToOutline(true);
         page.addView(cell, matchWrap(0, 0, 0, 0));
         if (footer != null) {
@@ -2284,9 +2298,9 @@ public class MainActivity extends Activity {
         return s;
     }
 
-    private View circleButton(int icon, int sizeDp, int background, int tint, String description, Runnable action) {
+    private View circleButton(int icon, int sizeDp, Drawable background, int tint, String description, Runnable action) {
         FrameLayout b = new FrameLayout(this);
-        b.setBackground(Style.oval(background));
+        b.setBackground(background);
         b.setContentDescription(description);
         int iconSize = Math.round(sizeDp * 0.42f);
         b.addView(icon(icon, tint), new FrameLayout.LayoutParams(dp(iconSize), dp(iconSize), Gravity.CENTER));
@@ -2300,10 +2314,10 @@ public class MainActivity extends Activity {
     private View commandPill(int icon, String label, int color, Runnable action) {
         LinearLayout p = new LinearLayout(this);
         p.setGravity(Gravity.CENTER);
-        p.setBackground(Style.capsule(Style.alpha(color, 0x38)));
+        p.setBackground(Style.tintedGlass(color, hairline()));
         p.setPadding(dp(tablet ? 14 : 8), 0, dp(tablet ? 16 : 10), 0);
         p.setContentDescription(label);
-        int fg = Style.mix(color, 0xFFFFFFFF, 0.25f);
+        int fg = Style.mix(color, 0xFFFFFFFF, 0.35f);
         p.addView(icon(icon, fg), new LinearLayout.LayoutParams(dp(16), dp(16)));
         TextView t = text(label, tablet ? 15 : 14.5f, fg, Style.semibold);
         t.setSingleLine(true);
@@ -2317,7 +2331,7 @@ public class MainActivity extends Activity {
     private View quickPill(int icon, String label, Runnable action) {
         LinearLayout p = new LinearLayout(this);
         p.setGravity(Gravity.CENTER);
-        p.setBackground(Style.capsule(Style.FILL4));
+        p.setBackground(Style.glassKey(999f, hairline()));
         p.setPadding(dp(13), 0, dp(15), 0);
         p.setContentDescription(label);
         p.addView(icon(icon, Style.TEXT), new LinearLayout.LayoutParams(dp(16), dp(16)));
@@ -2335,10 +2349,10 @@ public class MainActivity extends Activity {
         return lp;
     }
 
-    private View actionPill(int icon, String label, int background, int foreground, Runnable action) {
+    private View actionPill(int icon, String label, Drawable background, int foreground, Runnable action) {
         LinearLayout p = new LinearLayout(this);
         p.setGravity(Gravity.CENTER);
-        p.setBackground(Style.capsule(background));
+        p.setBackground(background);
         p.setMinimumHeight(dp(52));
         p.setContentDescription(label);
         p.addView(icon(icon, foreground), new LinearLayout.LayoutParams(dp(19), dp(19)));
@@ -2428,5 +2442,10 @@ public class MainActivity extends Activity {
 
     private int dp(float v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    /** Glass rims are a hairline: one physical pixel, or a bit more on very dense screens. */
+    private int hairline() {
+        return Math.max(1, dp(0.6f));
     }
 }

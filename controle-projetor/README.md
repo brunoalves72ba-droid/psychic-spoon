@@ -2,7 +2,12 @@
 
 App Android que controla o projetor HY300 pelo Wi-Fi, usando a depuração por rede (ADB) do projetor ou o receptor, e que liga e desliga o projetor pelo infravermelho do celular.
 
-A interface segue o estilo do iOS no modo escuro: título grande, pílulas de comando, barra de abas flutuante em cápsula, listas agrupadas como em Ajustes e a fonte Inter, parecida com a do iPhone. As animações usam molas e só mexem em posição, escala e transparência, que a GPU desenha sem refazer o layout.
+A interface segue o estilo do iOS: título grande, pílulas de comando, barra de abas flutuante em cápsula, listas agrupadas como em Ajustes e a fonte Inter, parecida com a do iPhone. As animações usam molas e só mexem em posição, escala e transparência, que a GPU desenha sem refazer o layout.
+
+**Fundo e cores:**
+- O fundo é o papel de parede vinho com linhas rosé (`res/drawable-nodpi/fundo.jpg`). Ele fica parado atrás das páginas, como no iOS, com uma sombra vinho no alto e embaixo para o título e a barra de abas continuarem legíveis.
+- A paleta vem da imagem: vinho escuro como base e o rosé das linhas como cor de destaque (aba selecionada, links, botões principais, interruptores). Os ícones de Ajustes usam a mesma família: rosé, ameixa, malva, cobre e dourado. Ligar e Desligar continuam verde e vermelho.
+- Teclas, pílulas, cartões e listas são de **vidro**: brancos translúcidos, um pouco mais claros no alto e com uma borda fina, de modo que o papel de parede aparece por trás. As teclas ficam um tom acima dos cartões para se destacarem.
 
 - **Topo:** status da conexão e as pílulas **Ligar** e **Desligar** (infravermelho) e **Buscar** (procura o projetor no Wi-Fi).
 - **Controle:**
