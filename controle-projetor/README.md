@@ -77,14 +77,27 @@ O botão **Procurar o projetor no Wi-Fi**, na aba Mais, faz essa busca na hora. 
 
 Para funcionar, o projetor precisa estar com a **depuração por rede (ADB)** ligada e no mesmo Wi-Fi que o celular. Na primeira conexão, o projetor pergunta se permite a depuração. Marque "Sempre permitir" e confirme com o controle.
 
-## Ligar e Desligar pelo infravermelho
+## Infravermelho
 
-Os dois botões enviam o botão de energia do controle original: protocolo NEC, portadora de 38 kHz, endereço `0x00`, comando `0x14`. O projetor lista esse código como o primeiro dos que o acordam (device tree, `cir_param`). Também tem a tabela `customer_ir_ff00.kl`, em que o código 20 (`0x14`) é POWER. A captura do controle está em [irplus-codes, issue 666](https://github.com/irplus-remote/irplus-codes.github.io/issues/666).
+O app manda os mesmos sinais do controle original: protocolo NEC, endereço `0x00`, portadora de 38 kHz. A captura do controle está em [irplus-codes, issue 666](https://github.com/irplus-remote/irplus-codes.github.io/issues/666). O projetor lista o botão de energia (`0x14`) como o primeiro dos códigos que o acordam (device tree, `cir_param`). Ele também tem a tabela `customer_ir_ff00.kl` para esse endereço.
 
-- **Ligar:** se o app já está conectado, avisa que o projetor está ligado. Se não, envia o sinal e espera o projetor voltar ao Wi-Fi para reconectar sozinho.
-- **Desligar:** o projetor mostra o próprio menu de energia. Escolha a opção de desligar com as setas e OK; o app abre a aba Controle para isso. Se o app não estiver conectado, ele pergunta antes de enviar, porque o mesmo sinal ligaria um projetor desligado.
+**Quando o app usa o infravermelho:**
+- **Ligar e Desligar:** sempre.
+- **Setas, OK, Voltar, Início, Menu, volume e Sem som:** quando o app não está conectado pelo Wi-Fi (depuração desligada e sem receptor). Ou sempre, com **Ajustes → Infravermelho → Teclas pelo infravermelho** ligado.
+- **Sem infravermelho:** play/pausa, avançar, voltar, anterior, próxima, digitar e touchpad, porque o controle original não tem esses botões. Eles precisam da conexão pelo Wi-Fi.
 
-Aponte a ponta de cima do celular, onde fica o emissor, para a frente do projetor.
+**Como cada toque é enviado:**
+- Cada toque sai como o controle de verdade manda: o sinal e, 108 ms depois, um código NEC de "tecla ainda apertada". Esse código nunca conta como segundo toque, mas dá ao receptor do projetor uma segunda chance de pegar o sinal, que no celular é mais fraco que no controle.
+- A frequência é 38 kHz. Se o emissor do celular não aceitar esse valor, o app usa a frequência mais próxima que ele aceita.
+- Um deslize longo no controle redondo não acumula toques: com dois esperando, os seguintes são descartados.
+
+**Teste:** em **Ajustes → Infravermelho**, com o projetor ligado, toque em "Testar: aumentar o volume". O volume deve subir na tela do projetor. A mesma tela mostra as frequências que o emissor do celular aceita.
+
+**Ligar:** se o app já está conectado, ele avisa que o projetor está ligado. Se não, envia o sinal e espera o projetor voltar ao Wi-Fi.
+
+**Desligar:** o projetor mostra o próprio menu de energia. Escolha a opção de desligar com as setas e OK. Se o app não estiver conectado, ele pergunta antes de enviar, porque o mesmo sinal ligaria um projetor desligado.
+
+**Mira:** aponte a ponta de cima do celular, onde fica o emissor, para o projetor, a até uns 3 metros e sem nada no caminho.
 
 ## Instalar
 
@@ -101,7 +114,7 @@ Abra `build/ControleProjetor.apk` no celular.
 `./build.sh test` testa:
 - a leitura do "Tocando agora" (`dumpsys media_session`);
 - a escolha do modo de tela de 120 Hz;
-- o código infravermelho contra os 15 botões capturados do controle;
+- o código infravermelho contra os 15 botões capturados do controle, o toque com código de repetição e a escolha da frequência;
 - a busca na rede com projetores falsos;
 - o protocolo entre o celular e o receptor, com pareamento e cada comando.
 

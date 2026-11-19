@@ -13,8 +13,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION_CODE=9
-VERSION_NAME=6.2
+VERSION_CODE=10
+VERSION_NAME=6.3
 MAVEN_REPO=${MAVEN_REPO:-https://repo1.maven.org/maven2}
 JAVA8=${JAVA8:-/usr/lib/jvm/java-8-openjdk-amd64/bin/java}
 ANDROID_JAR=${ANDROID_JAR:-/usr/lib/android-sdk/platforms/android-23/android.jar}

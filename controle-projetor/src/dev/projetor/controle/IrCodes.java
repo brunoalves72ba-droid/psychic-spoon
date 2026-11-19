@@ -23,6 +23,10 @@ public final class IrCodes {
     public static final int VOLUME_UP = 0x0B;
     public static final int VOLUME_DOWN = 0x58;
     public static final int MUTE = 0x01;
+    public static final int MOUSE = 0x82;
+
+    /** NEC frames start every 108 ms; a remote held down sends a repeat code at that pace. */
+    public static final int FRAME_PERIOD_US = 108000;
 
     private IrCodes() {
     }
@@ -51,5 +55,43 @@ public final class IrCodes {
     /** The power button frame. */
     public static int[] power() {
         return necPattern(ADDRESS, POWER);
+    }
+
+    /**
+     * One button press the way the original remote sends it: the frame, then one NEC repeat code
+     * (9 ms mark, 2.25 ms space, mark) 108 ms after the frame began. The repeat only says "still
+     * held", so it never counts as a second press, but it gives a weak phone emitter a second chance
+     * to be caught by the projector's receiver.
+     */
+    public static int[] press(int command) {
+        int[] frame = necPattern(ADDRESS, command);
+        int frameUs = 0;
+        for (int d : frame) frameUs += d;
+        int[] p = new int[frame.length + 4];
+        System.arraycopy(frame, 0, p, 0, frame.length);
+        int i = frame.length;
+        p[i++] = FRAME_PERIOD_US - frameUs;
+        p[i++] = 9000;
+        p[i++] = 2250;
+        p[i] = 560;
+        return p;
+    }
+
+    /**
+     * Carrier to transmit with: 38 kHz when the emitter supports it, else the supported frequency
+     * nearest to it. {@code ranges} holds {min, max} pairs in Hz; empty means "unknown", so 38 kHz.
+     */
+    public static int carrier(int[][] ranges) {
+        int best = CARRIER_HZ;
+        int bestDistance = Integer.MAX_VALUE;
+        for (int[] r : ranges) {
+            int f = Math.max(r[0], Math.min(r[1], CARRIER_HZ));
+            int d = Math.abs(f - CARRIER_HZ);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = f;
+            }
+        }
+        return best;
     }
 }

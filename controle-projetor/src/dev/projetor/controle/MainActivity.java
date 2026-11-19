@@ -111,6 +111,12 @@ public class MainActivity extends Activity {
     /** How the app reaches the projector: ADB (debugging on) or the receiver app (debugging off). */
     private static final int MODE_ADB = 1;
     private static final int MODE_RECEIVER = 2;
+    /** Android's KEYCODE_VOLUME_MUTE; used to route Sem som by infrared when not connected. */
+    private static final int KEY_MUTE = 164;
+    private final ExecutorService irWorker = Executors.newSingleThreadExecutor();
+    private final java.util.concurrent.atomic.AtomicInteger irPending = new java.util.concurrent.atomic.AtomicInteger();
+    private volatile int irCarrierHz;
+    private volatile boolean irSent;
     private volatile int mode;
     private final ReceiverClient receiver = new ReceiverClient();
     /** Address of a receiver that answered but does not know this phone yet. */
@@ -339,6 +345,7 @@ public class MainActivity extends Activity {
         });
         worker.shutdown();
         inputWorker.shutdown();
+        irWorker.shutdown();
     }
 
     // ---------------------------------------------------------------- connection (worker thread)
@@ -797,6 +804,19 @@ public class MainActivity extends Activity {
 
     /** Keys go straight into the remote's input device when possible, else through `input keyevent`. */
     private void sendKey(int keycode) {
+        // By infrared, exactly like the original remote, when the app has no Wi-Fi connection to the
+        // projector or when "Teclas pelo infravermelho" is on.
+        int ir = irCode(keycode);
+        if (ir >= 0 && (!connected || keysByInfrared()) && infrared() != null) {
+            sendIr(ir);
+            return;
+        }
+        if (!connected && mode == 0) {
+            setStatus(ir >= 0 ? "Sem conexão e sem infravermelho neste celular"
+                    : "Este botão precisa do Wi-Fi: conecte ao projetor", Style.AMBER);
+            onWorker(this::ensureConnected);
+            return;
+        }
         if (mode == MODE_RECEIVER) {
             receiverKey(keycode);
             return;
@@ -820,20 +840,13 @@ public class MainActivity extends Activity {
 
     /**
      * Without debugging, keys go to the receiver. Keys it cannot do (Menu, or arrows when nothing on
-     * screen has focus) and, if chosen in Mais, all arrows go by infrared like the original remote.
+     * screen has focus) go by infrared like the original remote.
      */
     private void receiverKey(int keycode) {
         String name = keyName(keycode);
         int ir = irCode(keycode);
-        boolean arrow = keycode == ProjectorCommands.KEY_UP || keycode == ProjectorCommands.KEY_DOWN
-                || keycode == ProjectorCommands.KEY_LEFT || keycode == ProjectorCommands.KEY_RIGHT
-                || keycode == ProjectorCommands.KEY_CENTER;
         inputWorker.execute(() -> {
             ConsumerIrManager emitter = infrared();
-            if (arrow && emitter != null && prefs.getBoolean("setas_ir", false)) {
-                transmitIr(emitter, ir);
-                return;
-            }
             String reply = null;
             if (name != null && receiver.isConnected()) {
                 try {
@@ -843,15 +856,84 @@ public class MainActivity extends Activity {
                     onWorker(this::ensureConnected);
                 }
             }
-            if (!"OK".equals(reply) && ir >= 0 && emitter != null) transmitIr(emitter, ir);
+            if (!"OK".equals(reply) && ir >= 0 && emitter != null) sendIr(ir);
         });
     }
 
-    private void transmitIr(ConsumerIrManager emitter, int command) {
+    private boolean keysByInfrared() {
+        return prefs.getBoolean("teclas_ir", prefs.getBoolean("setas_ir", false));
+    }
+
+    /**
+     * Queues one button press of the original remote on the infrared thread. A press takes about
+     * 120 ms; while two are already waiting, further ones are dropped, so a long swipe on the
+     * clickpad never leaves the projector catching up afterwards.
+     */
+    private void sendIr(int command) {
+        if (irPending.get() >= 2) return;
+        irPending.incrementAndGet();
         try {
-            emitter.transmit(IrCodes.CARRIER_HZ, IrCodes.necPattern(IrCodes.ADDRESS, command));
+            irWorker.execute(() -> {
+                try {
+                    transmitIr(command);
+                } finally {
+                    irPending.decrementAndGet();
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            irPending.decrementAndGet();
+        }
+    }
+
+    /** Sends one press now (infrared thread or a worker). Returns false when the emitter refused it. */
+    private boolean transmitIr(int command) {
+        ConsumerIrManager emitter = infrared();
+        if (emitter == null) return false;
+        try {
+            emitter.transmit(irCarrier(emitter), IrCodes.press(command));
+            irSent = true;
+            return true;
         } catch (RuntimeException e) {
             setStatus("Falha ao enviar infravermelho: " + e.getMessage(), Style.RED);
+            return false;
+        }
+    }
+
+    /** The emitter's supported carrier nearest to 38 kHz (read once). */
+    private int irCarrier(ConsumerIrManager emitter) {
+        if (irCarrierHz > 0) return irCarrierHz;
+        int[][] ranges = new int[0][];
+        try {
+            ConsumerIrManager.CarrierFrequencyRange[] r = emitter.getCarrierFrequencies();
+            if (r != null) {
+                ranges = new int[r.length][];
+                for (int i = 0; i < r.length; i++) ranges[i] = new int[] {r[i].getMinFrequency(), r[i].getMaxFrequency()};
+            }
+        } catch (RuntimeException ignored) {
+            // some emitters do not report their range; 38 kHz is what the remote uses
+        }
+        irCarrierHz = IrCodes.carrier(ranges);
+        return irCarrierHz;
+    }
+
+    /** "30–57 kHz" style description of what the emitter accepts, for Ajustes. */
+    private String irRangeText() {
+        ConsumerIrManager emitter = infrared();
+        if (emitter == null) return "Não encontrado";
+        try {
+            ConsumerIrManager.CarrierFrequencyRange[] r = emitter.getCarrierFrequencies();
+            if (r == null || r.length == 0) return "38 kHz";
+            int min = Integer.MAX_VALUE;
+            int max = 0;
+            for (ConsumerIrManager.CarrierFrequencyRange f : r) {
+                min = Math.min(min, f.getMinFrequency());
+                max = Math.max(max, f.getMaxFrequency());
+            }
+            int carrier = irCarrier(emitter);
+            String range = min == max ? (min / 1000) + " kHz" : (min / 1000) + "–" + (max / 1000) + " kHz";
+            return range + (carrier == IrCodes.CARRIER_HZ ? "" : " · usando " + carrier / 1000 + " kHz");
+        } catch (RuntimeException e) {
+            return "38 kHz";
         }
     }
 
@@ -894,6 +976,7 @@ public class MainActivity extends Activity {
             case ProjectorCommands.KEY_VOLUME_UP: return IrCodes.VOLUME_UP;
             case ProjectorCommands.KEY_VOLUME_DOWN: return IrCodes.VOLUME_DOWN;
             case ProjectorCommands.KEY_WAKEUP: return IrCodes.POWER;
+            case KEY_MUTE: return IrCodes.MUTE;
             default: return -1;
         }
     }
@@ -1097,13 +1180,8 @@ public class MainActivity extends Activity {
         ConsumerIrManager ir = infrared();
         if (ir == null) return;
         setStatus("Enviando sinal infravermelho… aponte o celular para o projetor", Style.AMBER);
-        new Thread(() -> {
-            try {
-                ir.transmit(IrCodes.CARRIER_HZ, IrCodes.power());
-            } catch (RuntimeException e) {
-                setStatus("Falha ao enviar infravermelho: " + e.getMessage(), Style.RED);
-                return;
-            }
+        irWorker.execute(() -> {
+            if (!transmitIr(IrCodes.POWER)) return;
             if (turningOn) {
                 waking = true;
                 setStatus("Ligando o projetor… aguarde", Style.AMBER);
@@ -1122,7 +1200,7 @@ public class MainActivity extends Activity {
                     selectTab(0);
                 });
             }
-        }, "ir").start();
+        });
     }
 
     private final Runnable wakePoll = new Runnable() {
@@ -1222,6 +1300,12 @@ public class MainActivity extends Activity {
     }
 
     private void toggleMute() {
+        if (!connected || keysByInfrared()) {
+            if (infrared() != null) {
+                sendIr(IrCodes.MUTE);
+                return;
+            }
+        }
         if (volume > 0) {
             volumeBeforeMute = volume;
             setVolume(0);
@@ -2130,15 +2214,10 @@ public class MainActivity extends Activity {
         row(conn, R.drawable.ic_search, Style.COPPER, "Procurar o projetor no Wi-Fi", null, this::searchNetwork);
 
         LinearLayout free = section(page, "Sem a depuração", "Instale uma vez o Receptor do Controle no projetor (com a "
-                + "depuração ligada). Depois o app funciona igual com ela desligada. Menu e Acordar vão pelo infravermelho; "
-                + "Reiniciar abre o menu de energia do projetor.");
+                + "depuração ligada). Depois o app funciona igual com ela desligada. Sem conexão nenhuma, as teclas vão "
+                + "pelo infravermelho.");
         row(free, R.drawable.ic_download, Style.GOLD, "Instalar o receptor no projetor", null, this::installReceiver);
         row(free, R.drawable.ic_link, Style.ROSE, "Parear com o receptor", null, this::pairManually);
-        View irRow = row(free, R.drawable.ic_ir, Style.COPPER, "Setas e OK pelo infravermelho", null, null);
-        IosSwitch arrows = new IosSwitch(this);
-        arrows.setChecked(prefs.getBoolean("setas_ir", false), false);
-        arrows.setListener(on -> prefs.edit().putBoolean("setas_ir", on).apply());
-        ((LinearLayout) irRow).addView(arrows);
 
         LinearLayout screen = section(page, "Tela", "Quando o celular tem tela de 120 Hz, o app pede esse modo, e as animações "
                 + "ficam com 120 quadros por segundo. Se a taxa não subir, ligue a taxa de atualização alta nas "
@@ -2171,11 +2250,25 @@ public class MainActivity extends Activity {
         pad.addView(speedRow);
 
         boolean hasIr = infrared() != null;
-        LinearLayout ir = section(page, "Infravermelho", "Ligar, Desligar e, quando preciso, as setas usam o emissor do celular. "
-                + "Aponte a ponta de cima do celular para o projetor.");
-        row(ir, R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED, "Emissor do celular", hasIr ? "Disponível" : "Não encontrado", null);
+        LinearLayout ir = section(page, "Infravermelho", "Ligar e Desligar sempre usam o infravermelho. Setas, OK, Voltar, "
+                + "Início, Menu, volume e Sem som também vão por ele quando o app não está conectado pelo Wi-Fi, ou sempre, "
+                + "com a opção acima ligada. Aponte a ponta de cima do celular para a frente do projetor, a até 3 metros. "
+                + "Para testar, com o projetor ligado, toque em \"Testar\": o volume deve subir na tela dele.");
+        View keysRow = row(ir, R.drawable.ic_ir, Style.COPPER, "Teclas pelo infravermelho", null, null);
+        IosSwitch keys = new IosSwitch(this);
+        keys.setChecked(keysByInfrared(), false);
+        keys.setListener(on -> prefs.edit().putBoolean("teclas_ir", on).apply());
+        ((LinearLayout) keysRow).addView(keys);
+        row(ir, R.drawable.ic_ir, hasIr ? Style.GREEN : Style.RED, "Emissor do celular", hasIr ? irRangeText() : "Não encontrado", null);
+        if (hasIr) {
+            row(ir, R.drawable.ic_plus, Style.ROSE, "Testar: aumentar o volume", null, () -> {
+                sendIr(IrCodes.VOLUME_UP);
+                Toast.makeText(this, "Sinal enviado. O volume subiu no projetor?", Toast.LENGTH_SHORT).show();
+            });
+            row(ir, R.drawable.ic_home, Style.ROSE, "Testar: Início", null, () -> sendIr(IrCodes.HOME));
+        }
 
-        TextView version = text("Controle Projetor 6.2", 13, Style.TEXT3, Style.regular);
+        TextView version = text("Controle Projetor 6.3", 13, Style.TEXT3, Style.regular);
         version.setGravity(Gravity.CENTER);
         page.addView(version, matchWrap(0, dp(26), 0, 0));
         return constrained(page, 680);

@@ -41,6 +41,28 @@ public class IrCodesTest {
         if (!shapeOk) failures++;
         System.out.println((shapeOk ? "ok   " : "ERRO ") + "formato: " + power.length + " pulsos, " + us + " us");
 
+        // a press = the frame + one NEC repeat code, starting 108 ms after the frame
+        int[] press = IrCodes.press(IrCodes.VOLUME_UP);
+        int[] frame = IrCodes.necPattern(IrCodes.ADDRESS, IrCodes.VOLUME_UP);
+        boolean prefix = true;
+        for (int i = 0; i < frame.length; i++) prefix &= press[i] == frame[i];
+        int frameUs = 0;
+        for (int d : frame) frameUs += d;
+        int n = press.length;
+        boolean pressOk = prefix && n == frame.length + 4 && n % 2 == 1
+                && frameUs + press[frame.length] == 108000
+                && press[n - 3] == 9000 && press[n - 2] == 2250 && press[n - 1] == 560
+                && decode(press) == 0xF40BFF00;
+        if (!pressOk) failures++;
+        System.out.println((pressOk ? "ok   " : "ERRO ") + "toque = sinal + código de repetição 108 ms depois (" + n + " pulsos)");
+
+        boolean carrierOk = IrCodes.carrier(new int[][] {{30000, 57000}}) == 38000
+                && IrCodes.carrier(new int[][] {{36000, 36000}, {40000, 40000}}) == 36000
+                && IrCodes.carrier(new int[][] {{38400, 38400}, {56000, 56000}}) == 38400
+                && IrCodes.carrier(new int[0][]) == 38000;
+        if (!carrierOk) failures++;
+        System.out.println((carrierOk ? "ok   " : "ERRO ") + "frequência: 38 kHz, ou a mais próxima que o emissor aceita");
+
         if (failures > 0) System.exit(1);
     }
 
